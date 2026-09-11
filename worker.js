@@ -23,276 +23,321 @@
 
 import {
   getCurrentUser,
+  AuthError,
 } from "./backend/api/auth.js";
 
 import {
-  AuthError,
-} from "./backend/auth/verify-id-token.js";
+  requireUser,
+  AuthorizationError,
+} from "./backend/auth/authorize.js";
+
+import {
+  getGoogleAccessToken,
+} from "./backend/firebase/google-access-token.js";
 
 import {
   getCorsHeaders,
   handleCorsPreflight,
 } from "./backend/security/cors.js";
 
-const API_PREFIX = "/api";
 
-/**
- * Standard JSON response.
- */
 function json(
   data,
   status = 200,
-  headers = {},
+  headers = {}
 ) {
-  return Response.json(
-    data,
+  return new Response(
+    JSON.stringify(data),
     {
       status,
+
       headers: {
-        "Cache-Control":
-          "no-store",
+        "Content-Type":
+          "application/json; charset=utf-8",
 
         ...headers,
       },
-    },
+    }
   );
 }
 
-/**
- * Public health check.
- */
-function healthCheck(
-  request,
-  env,
-) {
-  return json(
-    {
-      ok: true,
-      service:
-        "fahmid-management-api",
-      status: "online",
-    },
-    200,
-    getCorsHeaders(
-      request,
-      env,
-    ),
-  );
-}
 
-/**
- * Route authenticated API requests.
- */
-async function routeRequest(
-  request,
-  env,
-) {
-  const url =
-    new URL(request.url);
-
-  /*
-   * Public health endpoint.
-   */
-  if (
-    url.pathname ===
-      "/api/health" &&
-    request.method === "GET"
-  ) {
-    return healthCheck(
-      request,
-      env,
-    );
-  }
-
-  /*
-   * Authentication endpoint.
-   */
-  if (
-    url.pathname ===
-      "/api/auth/me" &&
-    request.method === "GET"
-  ) {
-    const response =
-      await getCurrentUser(
-        request,
-      );
-
-    return addCorsHeaders(
-      response,
-      request,
-      env,
-    );
-  }
-
-  /*
-   * Everything else is not implemented yet.
-   */
-  return json(
-    {
-      ok: false,
-      error:
-        "ENDPOINT_NOT_IMPLEMENTED",
-      message:
-        "This API endpoint has not been implemented yet.",
-    },
-    501,
-    getCorsHeaders(
-      request,
-      env,
-    ),
-  );
-}
-
-/**
- * Add CORS headers to an existing response.
- */
-function addCorsHeaders(
+function withCors(
   response,
   request,
-  env,
+  env
 ) {
   const headers =
-    new Headers(
-      response.headers,
-    );
+    new Headers(response.headers);
 
   const corsHeaders =
     getCorsHeaders(
       request,
-      env,
+      env
     );
 
   for (
-    const [
-      key,
-      value,
-    ] of Object.entries(
-      corsHeaders,
-    )
+    const [key, value]
+    of Object.entries(corsHeaders)
   ) {
-    headers.set(
-      key,
-      value,
-    );
+    headers.set(key, value);
   }
 
   return new Response(
     response.body,
     {
-      status:
-        response.status,
-
-      statusText:
-        response.statusText,
-
+      status: response.status,
       headers,
-    },
+    }
   );
 }
 
-/**
- * Main Worker entry point.
- */
-export default {
-  async fetch(
-    request,
-    env,
-    ctx,
+
+function normalizePath(request) {
+  const url =
+    new URL(request.url);
+
+  const normalized =
+    url.pathname
+      .replace(/\/+/g, "/")
+      .replace(/\/$/, "");
+
+  return normalized || "/";
+}
+
+
+async function handleRequest(
+  request,
+  env
+) {
+  /*
+   * Provide the Firestore layer with
+   * a Google access-token provider.
+   *
+   * The actual Firebase credentials remain
+   * inside Cloudflare Worker secrets.
+   */
+  env.__getGoogleAccessToken =
+    () => getGoogleAccessToken(env);
+
+
+  const path =
+    normalizePath(request);
+
+  const method =
+    request.method.toUpperCase();
+
+
+  /*
+   * CORS preflight
+   */
+  if (method === "OPTIONS") {
+    return handleCorsPreflight(
+      request,
+      env
+    );
+  }
+
+
+  /*
+   * Public health check.
+   *
+   * This endpoint does not require
+   * Firebase authentication.
+   */
+  if (
+    method === "GET" &&
+    path === "/api/health"
   ) {
-    try {
-      const url =
-        new URL(
-          request.url,
-        );
+    return json({
+      ok: true,
 
-      /*
-       * CORS preflight.
-       */
-      if (
-        request.method ===
-        "OPTIONS"
-      ) {
-        return handleCorsPreflight(
-          request,
-          env,
-        );
-      }
+      service:
+        "fahmid-management-api",
 
-      /*
-       * Only /api routes belong here.
-       */
-      if (
-        !url.pathname.startsWith(
-          API_PREFIX,
-        )
-      ) {
-        return json(
-          {
-            ok: false,
-            error:
-              "NOT_FOUND",
-            message:
-              "API endpoint not found.",
-          },
-          404,
-          getCorsHeaders(
-            request,
-            env,
-          ),
-        );
-      }
+      timestamp:
+        new Date().toISOString(),
+    });
+  }
 
-      return await routeRequest(
+
+  /*
+   * Authenticated user information.
+   *
+   * Flow:
+   *
+   * Firebase ID token
+   *       ↓
+   * Verify token
+   *       ↓
+   * Get Firebase UID
+   *       ↓
+   * Read users/{uid}
+   *       ↓
+   * Get Fahmid role
+   */
+  if (
+    method === "GET" &&
+    path === "/api/auth/me"
+  ) {
+    const user =
+      await requireUser(
         request,
-        env,
+        env
+      );
+
+    return json({
+      ok: true,
+
+      user: {
+        uid: user.uid,
+
+        email:
+          user.claims.email,
+
+        emailVerified:
+          user.claims.emailVerified,
+
+        role:
+          user.role,
+
+        profile:
+          user.userRecord,
+      },
+    });
+  }
+
+
+  /*
+   * All other API routes will be
+   * implemented here through separate
+   * backend modules.
+   *
+   * We intentionally do NOT expose a
+   * generic Firestore endpoint.
+   */
+  return json(
+    {
+      ok: false,
+
+      error: {
+        code:
+          "ENDPOINT_NOT_IMPLEMENTED",
+
+        message:
+          "This Fahmid API endpoint has not been implemented yet.",
+      },
+    },
+
+    501
+  );
+}
+
+
+export default {
+  async fetch(request, env) {
+    try {
+      const response =
+        await handleRequest(
+          request,
+          env
+        );
+
+      return withCors(
+        response,
+        request,
+        env
       );
     } catch (error) {
+      console.error(
+        "Worker error:",
+        error
+      );
+
+
       /*
-       * Expected authentication errors.
+       * Authentication errors.
        */
       if (
         error instanceof AuthError
       ) {
-        return json(
-          {
-            ok: false,
-            error:
-              error.code,
-            message:
-              error.message,
-          },
-          error.status,
-          getCorsHeaders(
-            request,
-            env,
+        return withCors(
+          json(
+            {
+              ok: false,
+
+              error: {
+                code:
+                  "UNAUTHORIZED",
+
+                message:
+                  error.message,
+              },
+            },
+
+            error.status
           ),
+
+          request,
+          env
         );
       }
 
+
       /*
-       * Unexpected errors.
-       *
-       * Do not expose internal error details
+       * Authorization errors.
+       */
+      if (
+        error instanceof AuthorizationError
+      ) {
+        return withCors(
+          json(
+            {
+              ok: false,
+
+              error: {
+                code:
+                  "FORBIDDEN",
+
+                message:
+                  error.message,
+              },
+            },
+
+            error.status
+          ),
+
+          request,
+          env
+        );
+      }
+
+
+      /*
+       * Never expose internal errors,
+       * credentials, stack traces, or
+       * Firestore implementation details
        * to the browser.
        */
-      console.error(
-        "Worker request error:",
-        error,
-      );
+      return withCors(
+        json(
+          {
+            ok: false,
 
-      return json(
-        {
-          ok: false,
-          error:
-            "INTERNAL_SERVER_ERROR",
-          message:
-            "An unexpected server error occurred.",
-        },
-        500,
-        getCorsHeaders(
-          request,
-          env,
+            error: {
+              code:
+                "INTERNAL_ERROR",
+
+              message:
+                "An unexpected server error occurred.",
+            },
+          },
+
+          500
         ),
+
+        request,
+        env
       );
     }
   },
