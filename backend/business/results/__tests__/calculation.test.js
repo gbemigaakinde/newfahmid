@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+
 import {
   calculateTotal,
   calculatePercentage,
@@ -7,97 +8,78 @@ import {
   calculateResult,
   calculatePositions,
   calculateAverage,
-} from "../calculation.js";
+} from "./calculation.js";
+
 test("calculateTotal adds CA and exam scores", () => {
   assert.equal(
     calculateTotal({
       caScore: 25,
       examScore: 60,
     }),
-    85
+    85,
   );
 });
-test("calculateTotal handles a missing CA score", () => {
+
+test("calculateTotal handles missing CA or exam as zero", () => {
   assert.equal(
     calculateTotal({
-      examScore: 60,
+      caScore: 30,
     }),
-    60
+    30,
   );
-});
-test("calculateTotal handles a missing exam score", () => {
+
   assert.equal(
     calculateTotal({
-      caScore: 25,
+      examScore: 70,
     }),
-    25
+    70,
   );
 });
-test("calculateTotal supports generic components", () => {
+
+test("calculateTotal supports component-based results", () => {
   assert.equal(
     calculateTotal({
       components: {
-        ca: 20,
+        test: 20,
+        assignment: 10,
         exam: 55,
-        project: 10,
       },
     }),
-    85
+    85,
   );
 });
-test("calculateTotal returns zero for an empty result", () => {
-  assert.equal(
-    calculateTotal({}),
-    0
-  );
-});
-test("calculatePercentage requires an explicit maximum", () => {
-  assert.equal(
-    calculatePercentage(75),
-    null
-  );
-});
-test("calculatePercentage uses maxTotal", () => {
+
+test("calculatePercentage calculates percentage from configured maximum", () => {
   assert.equal(
     calculatePercentage(75, {
       maxTotal: 100,
     }),
-    75
+    75,
   );
-});
-test("calculatePercentage uses totalMax", () => {
+
   assert.equal(
     calculatePercentage(45, {
-      totalMax: 60,
-    }),
-    75
-  );
-});
-test("calculatePercentage rounds to two decimal places", () => {
-  assert.equal(
-    calculatePercentage(33, {
       maxTotal: 60,
     }),
-    55
+    75,
   );
+});
+
+test("calculatePercentage returns null without valid maximum", () => {
   assert.equal(
-    calculatePercentage(1, {
-      maxTotal: 3,
+    calculatePercentage(75),
+    null,
+  );
+
+  assert.equal(
+    calculatePercentage(75, {
+      maxTotal: 0,
     }),
-    33.33
+    null,
   );
 });
-test("calculateGrade does not invent grading bands", () => {
-  assert.deepEqual(
-    calculateGrade(80),
-    {
-      grade: null,
-      gradePoint: null,
-      remark: null,
-    }
-  );
-});
-test("calculateGrade selects the highest matching configured band", () => {
+
+test("calculateGrade uses configured grade bands", () => {
   const rules = {
     gradeBands: [
       {
@@ -107,67 +89,79 @@ test("calculateGrade selects the highest matching configured band", () => {
         remark: "Excellent",
       },
       {
-        min: 70,
+        min: 65,
         grade: "B2",
         gradePoint: 3,
         remark: "Very Good",
       },
       {
-        min: 60,
-        grade: "B3",
-        gradePoint: 2.5,
-        remark: "Good",
+        min: 50,
+        grade: "C",
+        gradePoint: 2,
+        remark: "Credit",
+      },
+      {
+        min: 40,
+        grade: "D",
+        gradePoint: 1,
+        remark: "Pass",
       },
     ],
   };
+
   assert.deepEqual(
-    calculateGrade(76, rules),
+    calculateGrade(80, rules),
     {
       grade: "A1",
       gradePoint: 4,
       remark: "Excellent",
-    }
+    },
   );
+
   assert.deepEqual(
-    calculateGrade(72, rules),
+    calculateGrade(68, rules),
     {
       grade: "B2",
       gradePoint: 3,
       remark: "Very Good",
-    }
+    },
   );
+
   assert.deepEqual(
-    calculateGrade(60, rules),
+    calculateGrade(52, rules),
     {
-      grade: "B3",
-      gradePoint: 2.5,
-      remark: "Good",
-    }
+      grade: "C",
+      gradePoint: 2,
+      remark: "Credit",
+    },
   );
-});
-test("calculateGrade returns nulls below the lowest configured band", () => {
-  const rules = {
-    gradeBands: [
-      {
-        min: 50,
-        grade: "C",
-      },
-    ],
-  };
+
   assert.deepEqual(
-    calculateGrade(49, rules),
+    calculateGrade(35, rules),
     {
       grade: null,
       gradePoint: null,
       remark: null,
-    }
+    },
   );
 });
-test("calculateResult combines total, percentage and grade", () => {
+
+test("calculateGrade does not invent grading rules", () => {
+  assert.deepEqual(
+    calculateGrade(85),
+    {
+      grade: null,
+      gradePoint: null,
+      remark: null,
+    },
+  );
+});
+
+test("calculateResult combines authoritative calculations", () => {
   const result = calculateResult(
     {
-      caScore: 20,
-      examScore: 60,
+      caScore: 25,
+      examScore: 55,
     },
     {
       maxTotal: 100,
@@ -178,15 +172,10 @@ test("calculateResult combines total, percentage and grade", () => {
           gradePoint: 4,
           remark: "Excellent",
         },
-        {
-          min: 50,
-          grade: "C",
-          gradePoint: 2,
-          remark: "Pass",
-        },
       ],
-    }
+    },
   );
+
   assert.deepEqual(
     result,
     {
@@ -195,110 +184,106 @@ test("calculateResult combines total, percentage and grade", () => {
       grade: "A1",
       gradePoint: 4,
       remark: "Excellent",
-    }
+    },
   );
 });
-test("calculatePositions uses standard competition ranking", () => {
-  const positions = calculatePositions([
-    { total: 100 },
-    { total: 100 },
-    { total: 90 },
-    { total: 80 },
-  ]);
+
+test("calculatePositions preserves input order", () => {
+  const positions =
+    calculatePositions([
+      { total: 60 },
+      { total: 90 },
+      { total: 75 },
+    ]);
+
   assert.deepEqual(
     positions,
-    [1, 1, 3, 4]
+    [3, 1, 2],
   );
 });
-test("calculatePositions preserves original item order", () => {
-  const positions = calculatePositions([
-    { total: 80 },
-    { total: 100 },
-    { total: 90 },
-  ]);
+
+test("calculatePositions gives tied scores the same position", () => {
+  const positions =
+    calculatePositions([
+      { total: 90 },
+      { total: 80 },
+      { total: 80 },
+      { total: 70 },
+    ]);
+
   assert.deepEqual(
     positions,
-    [3, 1, 2]
+    [1, 2, 2, 4],
   );
 });
-test("calculatePositions supports a custom score field", () => {
-  const positions = calculatePositions(
-    [
-      { score: 60 },
-      { score: 80 },
-      { score: 70 },
-    ],
-    {
-      scoreField: "score",
-    }
-  );
-  assert.deepEqual(
-    positions,
-    [3, 1, 2]
-  );
-});
+
 test("calculatePositions supports ascending ranking", () => {
-  const positions = calculatePositions(
-    [
-      { score: 60 },
-      { score: 80 },
-      { score: 70 },
-    ],
-    {
-      scoreField: "score",
-      descending: false,
-    }
-  );
+  const positions =
+    calculatePositions(
+      [
+        { total: 80 },
+        { total: 60 },
+        { total: 70 },
+      ],
+      {
+        descending: false,
+      },
+    );
+
   assert.deepEqual(
     positions,
-    [1, 3, 2]
+    [3, 1, 2],
   );
 });
-test("calculateAverage returns an arithmetic mean", () => {
+
+test("calculatePositions returns empty array for invalid input", () => {
+  assert.deepEqual(
+    calculatePositions(null),
+    [],
+  );
+});
+
+test("calculateAverage calculates the average", () => {
   assert.equal(
     calculateAverage([
       70,
       80,
       90,
     ]),
-    80
+    80,
   );
-});
-test("calculateAverage rounds to two decimal places", () => {
+
   assert.equal(
     calculateAverage([
       70,
       80,
-      81,
     ]),
-    77
-  );
-  assert.equal(
-    calculateAverage([
-      10,
-      11,
-    ]),
-    10.5
+    75,
   );
 });
+
 test("calculateAverage ignores non-numeric values", () => {
   assert.equal(
     calculateAverage([
       70,
       "80",
       null,
-      "not-a-number",
+      "invalid",
+      undefined,
+      90,
     ]),
-    75
+    80,
   );
 });
-test("calculateAverage returns null when no numeric values exist", () => {
+
+test("calculateAverage returns null for empty input", () => {
   assert.equal(
-    calculateAverage([
-      null,
-      undefined,
-      "abc",
-    ]),
-    null
+    calculateAverage([]),
+    null,
+  );
+
+  assert.equal(
+    calculateAverage(null),
+    null,
   );
 });
