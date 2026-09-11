@@ -44,6 +44,10 @@ import {
   handleSchoolRoute,
 } from "./backend/api/school-routes.js";
 
+import {
+  handleAdminRoute,
+} from "./backend/api/admin-routes.js";
+
 
 function json(
   data,
@@ -225,6 +229,20 @@ async function handleRequest(
     );
   }
 
+    const adminResponse =
+    await handleAdminRoute(
+      request,
+      env,
+      path
+    );
+
+  if (adminResponse) {
+    return json(
+      adminResponse.body,
+      adminResponse.status
+    );
+  }
+  
   /*
    * All other API routes will be
    * implemented here through separate
