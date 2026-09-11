@@ -9,10 +9,6 @@ import {
 } from "../auth/authorize.js";
 
 import {
-  getDocument,
-} from "../firebase/firestore.js";
-
-import {
   getDraft,
   listDrafts,
   saveDraft,
@@ -20,7 +16,6 @@ import {
 } from "../business/results/drafts.js";
 
 import {
-  getSubmission,
   getSubmissionById,
   listSubmissions,
   submitResults,
@@ -36,147 +31,94 @@ import {
   requireId,
 } from "../security/validation.js";
 
-async function readJson(
-  request
-) {
+async function readJson(request) {
   try {
     return await request.json();
   } catch {
-    const error =
-      new Error(
-        "Request body must contain valid JSON."
-      );
+    const error = new Error(
+      "Request body must contain valid JSON.",
+    );
 
     error.status = 400;
-    error.code =
-      "INVALID_JSON";
+    error.code = "INVALID_JSON";
 
     throw error;
   }
 }
 
-function result(
-  status,
-  body
-) {
+function result(status, body) {
   return {
     status,
     body: {
       ok:
         status >= 200 &&
         status < 300,
-
       ...body,
     },
   };
 }
 
-/**
- * Teacher routes:
- *
- * GET
- * /api/teacher/results/drafts
- *
- * POST
- * /api/teacher/results/drafts
- *
- * GET
- * /api/teacher/results/drafts/:pupilId/:term/:subject
- *
- * DELETE
- * /api/teacher/results/drafts/:pupilId/:term/:subject
- *
- * POST
- * /api/teacher/results/submissions
- *
- * GET
- * /api/teacher/results/submissions/:id
- *
- * Admin routes:
- *
- * GET
- * /api/admin/results/submissions
- *
- * GET
- * /api/admin/results/submissions/:id
- *
- * POST
- * /api/admin/results/submissions/:id/approve
- *
- * POST
- * /api/admin/results/submissions/:id/reject
- */
 export async function handleResultRoute(
   request,
   env,
-  path
+  path,
 ) {
   const method =
     request.method.toUpperCase();
 
   /*
-   * ---------------------------------------------------------
-   * TEACHER DRAFTS
-   * ---------------------------------------------------------
+   * -------------------------------------------------------------------------
+   * Teacher drafts
+   * -------------------------------------------------------------------------
    */
 
   if (
     path ===
-      "/api/teacher/results/drafts"
+    "/api/teacher/results/drafts"
   ) {
-    if (
-      method === "GET"
-    ) {
+    if (method === "GET") {
       const user =
         await requireTeacher(
           request,
-          env
+          env,
         );
 
       const url =
-        new URL(
-          request.url
-        );
+        new URL(request.url);
 
       const classId =
         requireId(
           url.searchParams.get(
-            "classId"
+            "classId",
           ),
-          "classId"
+          "classId",
         );
 
       const session =
         requireString(
           url.searchParams.get(
-            "session"
+            "session",
           ),
           "session",
-          {
-            maxLength: 50,
-          }
+          { maxLength: 50 },
         );
 
       const term =
         requireString(
           url.searchParams.get(
-            "term"
+            "term",
           ),
           "term",
-          {
-            maxLength: 100,
-          }
+          { maxLength: 100 },
         );
 
       const subject =
         requireString(
           url.searchParams.get(
-            "subject"
+            "subject",
           ),
           "subject",
-          {
-            maxLength: 200,
-          }
+          { maxLength: 200 },
         );
 
       const drafts =
@@ -189,200 +131,155 @@ export async function handleResultRoute(
             subject,
             teacherUid:
               user.uid,
-          }
+          },
         );
 
-      return result(
-        200,
-        {
-          drafts,
-        }
-      );
+      return result(200, {
+        drafts,
+      });
     }
 
-    if (
-      method === "POST"
-    ) {
+    if (method === "POST") {
       const body =
-        await readJson(
-          request
-        );
+        await readJson(request);
 
-      /*
-       * Bulk save support.
-       *
-       * {
-       *   "results": [...]
-       * }
-       *
-       * A single draft object is also accepted.
-       */
       if (
         Array.isArray(
-          body?.results
+          body?.results,
         )
       ) {
-        const saved =
-          [];
+        const saved = [];
 
         for (
           const draft of
-            body.results
+          body.results
         ) {
           saved.push(
             await saveDraft(
               request,
               env,
-              draft
-            )
+              draft,
+            ),
           );
         }
 
-        return result(
-          200,
-          {
-            drafts:
-              saved,
-          }
-        );
+        return result(200, {
+          drafts: saved,
+        });
       }
 
       const saved =
         await saveDraft(
           request,
           env,
-          body
+          body,
         );
 
-      return result(
-        200,
-        {
-          draft:
-            saved,
-        }
-      );
+      return result(200, {
+        draft: saved,
+      });
     }
+
+    return null;
   }
+
+  /*
+   * -------------------------------------------------------------------------
+   * Teacher single draft
+   * -------------------------------------------------------------------------
+   */
 
   const teacherDraftMatch =
     path.match(
-      /^\/api\/teacher\/results\/drafts\/([^/]+)\/([^/]+)\/([^/]+)$/
+      /^\/api\/teacher\/results\/drafts\/([^/]+)\/([^/]+)\/([^/]+)$/,
     );
 
-  if (
-    teacherDraftMatch
-  ) {
-    if (
-      method === "GET"
-    ) {
+  if (teacherDraftMatch) {
+    if (method === "GET") {
       await requireTeacher(
         request,
-        env
+        env,
       );
-
-      const pupilId =
-        decodeURIComponent(
-          teacherDraftMatch[1]
-        );
-
-      const term =
-        decodeURIComponent(
-          teacherDraftMatch[2]
-        );
-
-      const subject =
-        decodeURIComponent(
-          teacherDraftMatch[3]
-        );
 
       const draft =
         await getDraft(
           env,
           {
-            pupilId,
-            term,
-            subject,
-          }
+            pupilId:
+              decodeURIComponent(
+                teacherDraftMatch[1],
+              ),
+            term:
+              decodeURIComponent(
+                teacherDraftMatch[2],
+              ),
+            subject:
+              decodeURIComponent(
+                teacherDraftMatch[3],
+              ),
+          },
         );
 
       if (!draft) {
-        return result(
-          404,
-          {
-            error: {
-              code:
-                "DRAFT_NOT_FOUND",
-
-              message:
-                "Result draft not found.",
-            },
-          }
-        );
+        return result(404, {
+          error: {
+            code:
+              "DRAFT_NOT_FOUND",
+            message:
+              "Result draft not found.",
+          },
+        });
       }
 
-      return result(
-        200,
-        {
-          draft,
-        }
-      );
+      return result(200, {
+        draft,
+      });
     }
 
-    if (
-      method === "DELETE"
-    ) {
-      const pupilId =
-        decodeURIComponent(
-          teacherDraftMatch[1]
-        );
-
-      const term =
-        decodeURIComponent(
-          teacherDraftMatch[2]
-        );
-
-      const subject =
-        decodeURIComponent(
-          teacherDraftMatch[3]
-        );
-
+    if (method === "DELETE") {
       const deleted =
         await deleteDraft(
           request,
           env,
           {
-            pupilId,
-            term,
-            subject,
-          }
+            pupilId:
+              decodeURIComponent(
+                teacherDraftMatch[1],
+              ),
+            term:
+              decodeURIComponent(
+                teacherDraftMatch[2],
+              ),
+            subject:
+              decodeURIComponent(
+                teacherDraftMatch[3],
+              ),
+          },
         );
 
-      return result(
-        200,
-        {
-          deleted,
-        }
-      );
+      return result(200, {
+        deleted,
+      });
     }
+
+    return null;
   }
 
   /*
-   * ---------------------------------------------------------
-   * TEACHER SUBMISSIONS
-   * ---------------------------------------------------------
+   * -------------------------------------------------------------------------
+   * Teacher submissions
+   * -------------------------------------------------------------------------
    */
 
   if (
     path ===
-      "/api/teacher/results/submissions"
+    "/api/teacher/results/submissions"
   ) {
-    if (
-      method === "GET"
-    ) {
+    if (method === "GET") {
       const user =
         await requireTeacher(
           request,
-          env
+          env,
         );
 
       const submissions =
@@ -391,82 +288,63 @@ export async function handleResultRoute(
           {
             teacherUid:
               user.uid,
-          }
+          },
         );
 
-      return result(
-        200,
-        {
-          submissions,
-        }
-      );
+      return result(200, {
+        submissions,
+      });
     }
 
-    if (
-      method === "POST"
-    ) {
+    if (method === "POST") {
       const body =
-        await readJson(
-          request
-        );
-
-      const classId =
-        requireId(
-          body.classId,
-          "classId"
-        );
-
-      const session =
-        requireString(
-          body.session,
-          "session",
-          {
-            maxLength: 50,
-          }
-        );
-
-      const term =
-        requireString(
-          body.term,
-          "term",
-          {
-            maxLength: 100,
-          }
-        );
-
-      const subject =
-        requireString(
-          body.subject,
-          "subject",
-          {
-            maxLength: 200,
-          }
-        );
+        await readJson(request);
 
       const submission =
         await submitResults(
           request,
           env,
           {
-            classId,
-            session,
-            term,
-            subject,
-          }
+            classId:
+              requireId(
+                body.classId,
+                "classId",
+              ),
+
+            session:
+              requireString(
+                body.session,
+                "session",
+                { maxLength: 50 },
+              ),
+
+            term:
+              requireString(
+                body.term,
+                "term",
+                { maxLength: 100 },
+              ),
+
+            subject:
+              requireString(
+                body.subject,
+                "subject",
+                { maxLength: 200 },
+              ),
+          },
         );
 
-      return result(
-        200,
-        {
-          submission,
-        }
-      );
+      return result(200, {
+        submission,
+      });
     }
+
+    return null;
   }
 
   const teacherSubmissionMatch =
     path.match(
-      /^\/api\/teacher\/results\/submissions\/([^/]+)$/
+      /^\/api\/teacher\/results\/submissions\/([^/]+)$/,
     );
 
   if (
@@ -476,33 +354,26 @@ export async function handleResultRoute(
     const user =
       await requireTeacher(
         request,
-        env
-      );
-
-    const submissionId =
-      decodeURIComponent(
-        teacherSubmissionMatch[1]
+        env,
       );
 
     const submission =
       await getSubmissionById(
         env,
-        submissionId
+        decodeURIComponent(
+          teacherSubmissionMatch[1],
+        ),
       );
 
     if (!submission) {
-      return result(
-        404,
-        {
-          error: {
-            code:
-              "SUBMISSION_NOT_FOUND",
-
-            message:
-              "Result submission not found.",
-          },
-        }
-      );
+      return result(404, {
+        error: {
+          code:
+            "SUBMISSION_NOT_FOUND",
+          message:
+            "Result submission not found.",
+        },
+      });
     }
 
     if (
@@ -511,10 +382,9 @@ export async function handleResultRoute(
       submission.teacherId !==
         user.uid
     ) {
-      const error =
-        new Error(
-          "You do not have access to this result submission."
-        );
+      const error = new Error(
+        "You do not have access to this result submission.",
+      );
 
       error.status = 403;
       error.code =
@@ -523,43 +393,36 @@ export async function handleResultRoute(
       throw error;
     }
 
-    return result(
-      200,
-      {
-        submission,
-      }
-    );
+    return result(200, {
+      submission,
+    });
   }
 
   /*
-   * ---------------------------------------------------------
-   * ADMIN SUBMISSIONS
-   * ---------------------------------------------------------
+   * -------------------------------------------------------------------------
+   * Admin submissions
+   * -------------------------------------------------------------------------
    */
 
   if (
     path ===
-      "/api/admin/results/submissions"
+    "/api/admin/results/submissions"
   ) {
-    if (
-      method !== "GET"
-    ) {
+    if (method !== "GET") {
       return null;
     }
 
     await requireAdmin(
       request,
-      env
+      env,
     );
 
     const url =
-      new URL(
-        request.url
-      );
+      new URL(request.url);
 
     const status =
       url.searchParams.get(
-        "status"
+        "status",
       );
 
     const submissions =
@@ -567,22 +430,18 @@ export async function handleResultRoute(
         env,
         {
           status:
-            status ||
-            null,
-        }
+            status || null,
+        },
       );
 
-    return result(
-      200,
-      {
-        submissions,
-      }
-    );
+    return result(200, {
+      submissions,
+    });
   }
 
   const adminSubmissionMatch =
     path.match(
-      /^\/api\/admin\/results\/submissions\/([^/]+)$/
+      /^\/api\/admin\/results\/submissions\/([^/]+)$/,
     );
 
   if (
@@ -591,80 +450,74 @@ export async function handleResultRoute(
   ) {
     await requireAdmin(
       request,
-      env
+      env,
     );
-
-    const submissionId =
-      decodeURIComponent(
-        adminSubmissionMatch[1]
-      );
 
     const submission =
       await getSubmissionById(
         env,
-        submissionId
+        decodeURIComponent(
+          adminSubmissionMatch[1],
+        ),
       );
 
     if (!submission) {
-      return result(
-        404,
-        {
-          error: {
-            code:
-              "SUBMISSION_NOT_FOUND",
-
-            message:
-              "Result submission not found.",
-          },
-        }
-      );
+      return result(404, {
+        error: {
+          code:
+            "SUBMISSION_NOT_FOUND",
+          message:
+            "Result submission not found.",
+        },
+      });
     }
 
-    return result(
-      200,
-      {
-        submission,
-      }
-    );
+    return result(200, {
+      submission,
+    });
   }
+
+  /*
+   * -------------------------------------------------------------------------
+   * Admin approval
+   * -------------------------------------------------------------------------
+   */
 
   const approveMatch =
     path.match(
-      /^\/api\/admin\/results\/submissions\/([^/]+)\/approve$/
+      /^\/api\/admin\/results\/submissions\/([^/]+)\/approve$/,
     );
 
   if (
     approveMatch &&
     method === "POST"
   ) {
-    const submissionId =
-      decodeURIComponent(
-        approveMatch[1]
-      );
-
     const approval =
       await approveSubmission(
         request,
         env,
-        submissionId
+        decodeURIComponent(
+          approveMatch[1],
+        ),
       );
 
-    return result(
-      200,
-      {
-        message:
-          approval.alreadyApproved
-            ? "Result submission was already approved."
-            : "Result submission approved and published.",
+    return result(200, {
+      message:
+        "Result submission approved and published.",
 
-        ...approval,
-      }
-    );
+      ...approval,
+    });
   }
+
+  /*
+   * -------------------------------------------------------------------------
+   * Admin rejection
+   * -------------------------------------------------------------------------
+   */
 
   const rejectMatch =
     path.match(
-      /^\/api\/admin\/results\/submissions\/([^/]+)\/reject$/
+      /^\/api\/admin\/results\/submissions\/([^/]+)\/reject$/,
     );
 
   if (
@@ -672,9 +525,7 @@ export async function handleResultRoute(
     method === "POST"
   ) {
     const body =
-      await readJson(
-        request
-      );
+      await readJson(request);
 
     const reason =
       requireString(
@@ -683,28 +534,22 @@ export async function handleResultRoute(
         {
           minLength: 3,
           maxLength: 1000,
-        }
-      );
-
-    const submissionId =
-      decodeURIComponent(
-        rejectMatch[1]
+        },
       );
 
     const submission =
       await rejectSubmission(
         request,
         env,
-        submissionId,
-        reason
+        decodeURIComponent(
+          rejectMatch[1],
+        ),
+        reason,
       );
 
-    return result(
-      200,
-      {
-        submission,
-      }
-    );
+    return result(200, {
+      submission,
+    });
   }
 
   return null;
