@@ -16,4 +16,20 @@
   "vars": {
     "FRONTEND_ORIGIN": "http://localhost:3000"
   }
+
+  /*
+   * Firebase server credentials will NOT be stored here.
+   *
+   * Later they will be configured as Cloudflare Worker Secrets:
+   *
+   * FIREBASE_CLIENT_EMAIL
+   * FIREBASE_PRIVATE_KEY
+   *
+   * Example:
+   *
+   * wrangler secret put FIREBASE_CLIENT_EMAIL
+   * wrangler secret put FIREBASE_PRIVATE_KEY
+   *
+   * Never commit the real private key to GitHub.
+   */
 }
