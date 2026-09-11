@@ -3,6 +3,14 @@
  * Result Drafts
  *
  * Teacher-owned result entry and editing.
+ *
+ * Security rules:
+ * - Teacher must be authenticated.
+ * - Teacher must own the class.
+ * - Subject must belong to the class.
+ * - Pupil must belong to the class.
+ * - Locked/submitted results cannot be edited.
+ * - Calculated result fields are never trusted from the client.
  */
 
 import {
@@ -18,6 +26,7 @@ import {
 
 import {
   getClassById,
+  getPupilById,
 } from "../../api/school.js";
 
 import {
@@ -196,6 +205,92 @@ async function assertTeacherOwnsClass(
   return schoolClass;
 }
 
+/**
+ * Verify that a pupil belongs to the class supplied by the request.
+ *
+ * Supported pupil representations:
+ *
+ *   {
+ *     classId: "class-1"
+ *   }
+ *
+ * or:
+ *
+ *   {
+ *     class: {
+ *       id: "class-1"
+ *     }
+ *   }
+ *
+ * or:
+ *
+ *   {
+ *     class: {
+ *       classId: "class-1"
+ *     }
+ *   }
+ *
+ * We intentionally do not require the pupil to be active here.
+ * Historical results may legitimately need to reference pupils
+ * who are no longer active.
+ */
+async function assertPupilBelongsToClass(
+  env,
+  pupilId,
+  classId
+) {
+  const pupil =
+    await getPupilById(
+      env,
+      pupilId
+    );
+
+  if (!pupil) {
+    const error = new Error(
+      "Pupil not found."
+    );
+
+    error.status = 404;
+    error.code = "PUPIL_NOT_FOUND";
+
+    throw error;
+  }
+
+  const pupilClassId =
+    pupil.classId ??
+    pupil.class?.id ??
+    pupil.class?.classId ??
+    null;
+
+  if (!pupilClassId) {
+    const error = new Error(
+      "This pupil is not assigned to a class."
+    );
+
+    error.status = 400;
+    error.code = "PUPIL_CLASS_MISSING";
+
+    throw error;
+  }
+
+  if (
+    String(pupilClassId) !==
+    String(classId)
+  ) {
+    const error = new Error(
+      "This pupil does not belong to the selected class."
+    );
+
+    error.status = 403;
+    error.code =
+      "PUPIL_CLASS_MISMATCH";
+
+    throw error;
+  }
+
+  return pupil;
+}
+
 async function assertUnlockedAndEditable(
   env,
   {
@@ -283,8 +378,7 @@ function parseDraftDocument(document) {
 /**
  * Teacher-readable single draft.
  *
- * IMPORTANT:
- * Ownership is enforced here.
+ * Ownership and class/pupil consistency are enforced here.
  */
 export async function getDraft(
   request,
@@ -332,14 +426,40 @@ export async function getDraft(
     );
 
     error.status = 403;
-    error.code = "DRAFT_ACCESS_DENIED";
+    error.code =
+      "DRAFT_ACCESS_DENIED";
 
     throw error;
   }
 
-  await assertTeacherOwnsClass(
+  const schoolClass =
+    await assertTeacherOwnsClass(
+      env,
+      user.uid,
+      draft.classId
+    );
+
+  if (
+    !classHasSubject(
+      schoolClass,
+      draft.subject,
+      draft.subjectId
+    )
+  ) {
+    const error = new Error(
+      "The subject on this result does not belong to the class."
+    );
+
+    error.status = 400;
+    error.code =
+      "SUBJECT_NOT_IN_CLASS";
+
+    throw error;
+  }
+
+  await assertPupilBelongsToClass(
     env,
-    user.uid,
+    draft.pupilId,
     draft.classId
   );
 
@@ -447,12 +567,6 @@ export async function listDrafts(
       }
     );
 
-  /*
-   * parseDraftDocument is intentionally synchronous.
-   *
-   * The previous implementation declared it async,
-   * which caused Array.map() to return Promise objects.
-   */
   return drafts
     .map(parseDraftDocument)
     .filter(Boolean);
@@ -514,6 +628,19 @@ export async function saveDraft(
     throw error;
   }
 
+  /*
+   * SECURITY BOUNDARY:
+   *
+   * Never trust the class supplied by the browser.
+   * Load the pupil from Firestore and verify its actual
+   * class assignment.
+   */
+  await assertPupilBelongsToClass(
+    env,
+    draft.pupilId,
+    draft.classId
+  );
+
   await assertUnlockedAndEditable(
     env,
     {
@@ -566,6 +693,28 @@ export async function saveDraft(
     error.status = 403;
     error.code =
       "DRAFT_ACCESS_DENIED";
+
+    throw error;
+  }
+
+  /*
+   * If an existing draft somehow contains a stale class
+   * assignment, do not silently allow the new request to
+   * overwrite it.
+   */
+  if (
+    existing &&
+    existing.classId &&
+    String(existing.classId) !==
+      String(draft.classId)
+  ) {
+    const error = new Error(
+      "The existing result draft belongs to a different class."
+    );
+
+    error.status = 409;
+    error.code =
+      "DRAFT_CLASS_CONFLICT";
 
     throw error;
   }
@@ -711,9 +860,34 @@ export async function deleteDraft(
     throw error;
   }
 
-  await assertTeacherOwnsClass(
+  const schoolClass =
+    await assertTeacherOwnsClass(
+      env,
+      user.uid,
+      existing.classId
+    );
+
+  if (
+    !classHasSubject(
+      schoolClass,
+      existing.subject,
+      existing.subjectId
+    )
+  ) {
+    const error = new Error(
+      "The subject on this result does not belong to the class."
+    );
+
+    error.status = 400;
+    error.code =
+      "SUBJECT_NOT_IN_CLASS";
+
+    throw error;
+  }
+
+  await assertPupilBelongsToClass(
     env,
-    user.uid,
+    existing.pupilId,
     existing.classId
   );
 
