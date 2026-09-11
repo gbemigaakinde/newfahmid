@@ -51,6 +51,10 @@ import {
   handleAdminRoute,
 } from "./backend/api/admin-routes.js";
 
+import {
+  handleResultRoute,
+} from "./backend/api/result-routes.js";
+
 function json(
   data,
   status = 200,
@@ -86,8 +90,12 @@ function withCors(
     );
 
   for (
-    const [key, value]
-    of Object.entries(corsHeaders)
+    const [
+      key,
+      value,
+    ] of Object.entries(
+      corsHeaders
+    )
   ) {
     headers.set(
       key,
@@ -100,6 +108,7 @@ function withCors(
     {
       status:
         response.status,
+
       headers,
     }
   );
@@ -109,7 +118,9 @@ function normalizePath(
   request
 ) {
   const url =
-    new URL(request.url);
+    new URL(
+      request.url
+    );
 
   const normalized =
     url.pathname
@@ -122,7 +133,10 @@ function normalizePath(
         ""
       );
 
-  return normalized || "/";
+  return (
+    normalized ||
+    "/"
+  );
 }
 
 async function handleRequest(
@@ -151,7 +165,8 @@ async function handleRequest(
     request.method.toUpperCase();
 
   if (
-    method === "OPTIONS"
+    method ===
+    "OPTIONS"
   ) {
     return handleCorsPreflight(
       request,
@@ -169,8 +184,10 @@ async function handleRequest(
   ) {
     return json({
       ok: true,
+
       service:
         "fahmid-management-api",
+
       timestamp:
         new Date().toISOString(),
     });
@@ -192,6 +209,7 @@ async function handleRequest(
 
     return json({
       ok: true,
+
       user: {
         uid:
           user.uid,
@@ -210,6 +228,38 @@ async function handleRequest(
           user.userRecord,
       },
     });
+  }
+
+  /*
+   * ---------------------------------------------------------
+   * RESULTS API
+   *
+   * This is handled before the generic ADMIN and SCHOOL
+   * routers because result routes include /api/admin/results/*
+   * and /api/teacher/results/*.
+   * ---------------------------------------------------------
+   */
+  if (
+    path.startsWith(
+      "/api/teacher/results/"
+    ) ||
+    path.startsWith(
+      "/api/admin/results/"
+    )
+  ) {
+    const result =
+      await handleResultRoute(
+        request,
+        env,
+        path
+      );
+
+    if (result) {
+      return json(
+        result.body,
+        result.status
+      );
+    }
   }
 
   /*
@@ -261,9 +311,11 @@ async function handleRequest(
   return json(
     {
       ok: false,
+
       error: {
         code:
           "ENDPOINT_NOT_FOUND",
+
         message:
           "Fahmid API endpoint not found.",
       },
@@ -303,9 +355,11 @@ export default {
           json(
             {
               ok: false,
+
               error: {
                 code:
                   "UNAUTHORIZED",
+
                 message:
                   error.message,
               },
@@ -325,9 +379,11 @@ export default {
           json(
             {
               ok: false,
+
               error: {
                 code:
                   "FORBIDDEN",
+
                 message:
                   error.message,
               },
@@ -347,9 +403,11 @@ export default {
           json(
             {
               ok: false,
+
               error: {
                 code:
                   "VALIDATION_ERROR",
+
                 message:
                   error.message,
               },
@@ -361,13 +419,76 @@ export default {
         );
       }
 
+      /*
+       * ResultValidationError deliberately has the same
+       * status contract but is not necessarily an instanceof
+       * the generic ValidationError class.
+       */
+      if (
+        error?.name ===
+          "ResultValidationError"
+      ) {
+        return withCors(
+          json(
+            {
+              ok: false,
+
+              error: {
+                code:
+                  "VALIDATION_ERROR",
+
+                message:
+                  error.message,
+              },
+            },
+            400
+          ),
+          request,
+          env
+        );
+      }
+
+      /*
+       * Business errors created by result modules.
+       */
+      if (
+        Number.isInteger(
+          error?.status
+        ) &&
+        error.status >= 400 &&
+        error.status < 600
+      ) {
+        return withCors(
+          json(
+            {
+              ok: false,
+
+              error: {
+                code:
+                  error.code ||
+                  "REQUEST_FAILED",
+
+                message:
+                  error.message ||
+                  "The request could not be completed.",
+              },
+            },
+            error.status
+          ),
+          request,
+          env
+        );
+      }
+
       return withCors(
         json(
           {
             ok: false,
+
             error: {
               code:
                 "INTERNAL_ERROR",
+
               message:
                 "An unexpected server error occurred.",
             },
