@@ -1,37 +1,33 @@
 import {
-  getPupilById,
-} from "../../api/school.js";
+  getDocument,
+  setDocument,
+  updateDocument,
+  deleteDocument,
+} from "../../firebase/firestore.js";
 
 import {
   ValidationError,
-  requireId,
+  requireObject,
   requireString,
   optionalString,
+  requireBoolean,
 } from "../../security/validation.js";
 
 export async function getPupilDetails(
   env,
   pupilId
 ) {
-  requireId(
-    pupilId,
-    "pupilId"
-  );
-
-  const pupil =
-    await getPupilById(
-      env,
-      pupilId
+  if (!pupilId) {
+    throw new ValidationError(
+      "Pupil ID is required."
     );
-
-  if (!pupil) {
-    return null;
   }
 
-  return {
-    id: pupilId,
-    ...pupil,
-  };
+  return getDocument(
+    env,
+    "pupils",
+    pupilId
+  );
 }
 
 export function validatePupilPayload(
@@ -40,117 +36,277 @@ export function validatePupilPayload(
     partial = false,
   } = {}
 ) {
-  if (
-    !payload ||
-    typeof payload !== "object" ||
-    Array.isArray(payload)
-  ) {
-    throw new ValidationError(
-      "Pupil data must be an object."
-    );
-  }
+  const data = requireObject(
+    payload,
+    "Pupil data"
+  );
 
   const result = {};
 
-  if (
-    !partial ||
-    payload.name !== undefined
-  ) {
-    result.name =
-      requireString(
-        payload.name,
-        "name",
-        {
-          minLength: 1,
-          maxLength: 200,
-        }
-      );
+  if (!partial || data.name !== undefined) {
+    result.name = requireString(
+      data.name,
+      "name",
+      { maxLength: 200 }
+    );
   }
 
   if (
     !partial ||
-    payload.admissionNo !== undefined
+    data.admissionNo !== undefined
   ) {
     result.admissionNo =
       requireString(
-        payload.admissionNo,
+        data.admissionNo,
         "admissionNo",
-        {
-          minLength: 1,
-          maxLength: 100,
-        }
+        { maxLength: 100 }
       );
   }
 
-  if (
-    payload.email !== undefined
-  ) {
-    result.email =
-      optionalString(
-        payload.email,
-        "email",
-        254
-      );
+  if (data.email !== undefined) {
+    result.email = optionalString(
+      data.email,
+      "email",
+      { maxLength: 320 }
+    );
   }
 
-  if (
-    payload.class !== undefined
-  ) {
+  if (data.class !== undefined) {
     if (
-      payload.class === null
-    ) {
-      result.class = null;
-    } else if (
-      typeof payload.class !== "object" ||
-      Array.isArray(payload.class)
+      data.class === null ||
+      typeof data.class !== "object"
     ) {
       throw new ValidationError(
         "class must be an object."
       );
-    } else {
+    }
+
+    if (data.class.id !== undefined) {
       result.class = {
-        ...payload.class,
-      };
+        id: requireString(
+          data.class.id,
+          "class.id",
+          { maxLength: 100 }
+        ),
 
-      if (
-        payload.class.id !== undefined
-      ) {
-        result.class.id =
-          requireId(
-            payload.class.id,
-            "class.id"
-          );
-      }
-
-      if (
-        payload.class.name !== undefined
-      ) {
-        result.class.name =
-          requireString(
-            payload.class.name,
-            "class.name",
-            {
-              minLength: 1,
-              maxLength: 150,
+        ...(data.class.name !== undefined
+          ? {
+              name: requireString(
+                data.class.name,
+                "class.name",
+                { maxLength: 200 }
+              ),
             }
-          );
-      }
+          : {}),
+      };
     }
   }
 
+  if (data.status !== undefined) {
+    result.status = requireString(
+      data.status,
+      "status",
+      { maxLength: 50 }
+    );
+  }
+
+  if (data.isActive !== undefined) {
+    result.isActive = requireBoolean(
+      data.isActive,
+      "isActive"
+    );
+  }
+
+  /*
+   * Preserve the existing fee model.
+   *
+   * These values are raw inputs.
+   * The Worker, not the browser, performs
+   * the actual fee calculations.
+   */
   if (
-    payload.status !== undefined
+    data.feeAdjustmentPercent !==
+    undefined
   ) {
-    result.status =
+    const value =
+      Number(data.feeAdjustmentPercent);
+
+    if (!Number.isFinite(value)) {
+      throw new ValidationError(
+        "feeAdjustmentPercent must be numeric."
+      );
+    }
+
+    result.feeAdjustmentPercent =
+      value;
+  }
+
+  if (
+    data.feeAdjustmentAmount !==
+    undefined
+  ) {
+    const value =
+      Number(data.feeAdjustmentAmount);
+
+    if (!Number.isFinite(value)) {
+      throw new ValidationError(
+        "feeAdjustmentAmount must be numeric."
+      );
+    }
+
+    result.feeAdjustmentAmount =
+      value;
+  }
+
+  if (data.admissionSession !== undefined) {
+    result.admissionSession =
       requireString(
-        payload.status,
-        "status",
-        {
-          minLength: 1,
-          maxLength: 50,
-        }
+        data.admissionSession,
+        "admissionSession",
+        { maxLength: 50 }
+      );
+  }
+
+  if (data.admissionTerm !== undefined) {
+    result.admissionTerm =
+      requireString(
+        data.admissionTerm,
+        "admissionTerm",
+        { maxLength: 50 }
+      );
+  }
+
+  if (data.exitTerm !== undefined) {
+    result.exitTerm =
+      requireString(
+        data.exitTerm,
+        "exitTerm",
+        { maxLength: 50 }
       );
   }
 
   return result;
+}
+
+export async function createPupil(
+  env,
+  pupilId,
+  payload
+) {
+  if (!pupilId) {
+    throw new ValidationError(
+      "Pupil ID is required."
+    );
+  }
+
+  const existing =
+    await getDocument(
+      env,
+      "pupils",
+      pupilId
+    );
+
+  if (existing) {
+    throw new ValidationError(
+      "A pupil with this ID already exists."
+    );
+  }
+
+  const data =
+    validatePupilPayload(payload);
+
+  await setDocument(
+    env,
+    "pupils",
+    pupilId,
+    data
+  );
+
+  return {
+    id: pupilId,
+    ...data,
+  };
+}
+
+export async function updatePupil(
+  env,
+  pupilId,
+  payload
+) {
+  if (!pupilId) {
+    throw new ValidationError(
+      "Pupil ID is required."
+    );
+  }
+
+  const existing =
+    await getDocument(
+      env,
+      "pupils",
+      pupilId
+    );
+
+  if (!existing) {
+    return null;
+  }
+
+  const changes =
+    validatePupilPayload(
+      payload,
+      { partial: true }
+    );
+
+  if (
+    Object.keys(changes).length === 0
+  ) {
+    throw new ValidationError(
+      "No valid changes were supplied."
+    );
+  }
+
+  await updateDocument(
+    env,
+    "pupils",
+    pupilId,
+    changes
+  );
+
+  return {
+    id: pupilId,
+    ...existing,
+    ...changes,
+  };
+}
+
+export async function deletePupil(
+  env,
+  pupilId
+) {
+  const existing =
+    await getDocument(
+      env,
+      "pupils",
+      pupilId
+    );
+
+  if (!existing) {
+    return null;
+  }
+
+  /*
+   * We intentionally don't cascade-delete
+   * financial/results/attendance history here.
+   *
+   * That would be dangerous.
+   */
+  await deleteDocument(
+    env,
+    "pupils",
+    pupilId
+  );
+
+  return {
+    id: pupilId,
+    ...existing,
+  };
 }
