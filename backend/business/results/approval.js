@@ -56,21 +56,12 @@ import {
   makeLockId,
 } from "./drafts.js";
 
-/**
- * ---------------------------------------------------------------------------
- * Helpers
- * ---------------------------------------------------------------------------
- */
-
 function nowIso() {
   return new Date().toISOString();
 }
 
 function normalise(value) {
-  if (
-    value === undefined ||
-    value === null
-  ) {
+  if (value === undefined || value === null) {
     return "";
   }
 
@@ -82,24 +73,17 @@ function requireNonEmpty(
   message,
   code,
 ) {
-  const normalised =
-    normalise(value);
+  const result = normalise(value);
 
-  if (!normalised) {
+  if (!result) {
     throw new ResultValidationError(
       message,
       code,
     );
   }
 
-  return normalised;
+  return result;
 }
-
-/**
- * ---------------------------------------------------------------------------
- * Load submission
- * ---------------------------------------------------------------------------
- */
 
 async function loadSubmission(
   env,
@@ -121,12 +105,6 @@ async function loadSubmission(
 
   return snapshot;
 }
-
-/**
- * ---------------------------------------------------------------------------
- * Validate submission roster
- * ---------------------------------------------------------------------------
- */
 
 async function validateSubmissionRoster(
   env,
@@ -159,6 +137,13 @@ async function validateSubmissionRoster(
       classId,
     );
 
+  if (!schoolClass) {
+    throw new ResultValidationError(
+      "The submission class was not found.",
+      "CLASS_NOT_FOUND",
+    );
+  }
+
   assertTeacherOwnsClass(
     schoolClass,
     teacherUid,
@@ -185,40 +170,24 @@ async function validateSubmissionRoster(
   };
 }
 
-/**
- * ---------------------------------------------------------------------------
- * Load drafts belonging to submission
- * ---------------------------------------------------------------------------
- */
-
 async function loadSubmissionDrafts(
   env,
   submission,
 ) {
   const classId =
-    normalise(
-      submission.classId,
-    );
+    normalise(submission.classId);
 
   const session =
-    normalise(
-      submission.session,
-    );
+    normalise(submission.session);
 
   const term =
-    normalise(
-      submission.term,
-    );
+    normalise(submission.term);
 
   const subject =
-    normalise(
-      submission.subject,
-    );
+    normalise(submission.subject);
 
   const teacherUid =
-    normalise(
-      submission.teacherUid,
-    );
+    normalise(submission.teacherUid);
 
   if (
     !classId ||
@@ -237,90 +206,76 @@ async function loadSubmissionDrafts(
     {
       fieldFilter: {
         field: {
-          fieldPath:
-            "classId",
+          fieldPath: "classId",
         },
         op: "EQUAL",
         value: {
-          stringValue:
-            classId,
+          stringValue: classId,
         },
       },
     },
     {
       fieldFilter: {
         field: {
-          fieldPath:
-            "session",
+          fieldPath: "session",
         },
         op: "EQUAL",
         value: {
-          stringValue:
-            session,
+          stringValue: session,
         },
       },
     },
     {
       fieldFilter: {
         field: {
-          fieldPath:
-            "term",
+          fieldPath: "term",
         },
         op: "EQUAL",
         value: {
-          stringValue:
-            term,
+          stringValue: term,
         },
       },
     },
     {
       fieldFilter: {
         field: {
-          fieldPath:
-            "subject",
+          fieldPath: "subject",
         },
         op: "EQUAL",
         value: {
-          stringValue:
-            subject,
+          stringValue: subject,
         },
       },
     },
     {
       fieldFilter: {
         field: {
-          fieldPath:
-            "teacherId",
+          fieldPath: "teacherId",
         },
         op: "EQUAL",
         value: {
-          stringValue:
-            teacherUid,
+          stringValue: teacherUid,
         },
       },
     },
   ];
 
-  const structuredQuery = {
-    from: [
-      {
-        collectionId:
-          "results_draft",
-      },
-    ],
-    where: {
-      compositeFilter: {
-        op: "AND",
-        filters,
+  const drafts = await runQuery(
+    env,
+    {
+      from: [
+        {
+          collectionId: "results_draft",
+        },
+      ],
+      where: {
+        compositeFilter: {
+          op: "AND",
+          filters,
+        },
       },
     },
-  };
-
-  const drafts =
-    await runQuery(
-      env,
-      structuredQuery,
-    );
+  );
 
   if (!drafts.length) {
     throw new ResultValidationError(
@@ -332,12 +287,6 @@ async function loadSubmissionDrafts(
   return drafts;
 }
 
-/**
- * ---------------------------------------------------------------------------
- * Validate every draft before publication
- * ---------------------------------------------------------------------------
- */
-
 async function validateDraftsForApproval(
   env,
   drafts,
@@ -347,15 +296,11 @@ async function validateDraftsForApproval(
   const validated = [];
 
   for (const draft of drafts) {
-    validateResultDraft(
-      draft,
-    );
+    validateResultDraft(draft);
 
     if (
       String(draft.teacherId) !==
-      String(
-        submission.teacherUid,
-      )
+      String(submission.teacherUid)
     ) {
       throw new ResultValidationError(
         `Draft ${draft.id ?? draft.pupilId} belongs to another teacher.`,
@@ -365,9 +310,7 @@ async function validateDraftsForApproval(
 
     if (
       String(draft.classId) !==
-      String(
-        submission.classId,
-      )
+      String(submission.classId)
     ) {
       throw new ResultValidationError(
         `Draft ${draft.id ?? draft.pupilId} belongs to another class.`,
@@ -377,9 +320,7 @@ async function validateDraftsForApproval(
 
     if (
       String(draft.session) !==
-      String(
-        submission.session,
-      )
+      String(submission.session)
     ) {
       throw new ResultValidationError(
         `Draft ${draft.id ?? draft.pupilId} belongs to another session.`,
@@ -389,9 +330,7 @@ async function validateDraftsForApproval(
 
     if (
       String(draft.term) !==
-      String(
-        submission.term,
-      )
+      String(submission.term)
     ) {
       throw new ResultValidationError(
         `Draft ${draft.id ?? draft.pupilId} belongs to another term.`,
@@ -401,9 +340,7 @@ async function validateDraftsForApproval(
 
     if (
       String(draft.subject) !==
-      String(
-        submission.subject,
-      )
+      String(submission.subject)
     ) {
       throw new ResultValidationError(
         `Draft ${draft.id ?? draft.pupilId} belongs to another subject.`,
@@ -435,39 +372,23 @@ async function validateDraftsForApproval(
       submission.classId,
     );
 
-    /*
-     * Recalculate everything authoritative from raw score components.
-     */
-    const calculation =
-      calculateResult(
-        draft,
-      );
-
     validated.push({
       draft,
       pupil,
-      calculation,
+      calculation:
+        calculateResult(draft),
     });
   }
 
   return validated;
 }
 
-/**
- * ---------------------------------------------------------------------------
- * Detect published-result collisions
- * ---------------------------------------------------------------------------
- */
-
 async function assertNoPublishedResultCollision(
   env,
   validatedDrafts,
   submission,
 ) {
-  for (
-    const item of
-    validatedDrafts
-  ) {
+  for (const item of validatedDrafts) {
     const resultId =
       makeResultId({
         pupilId:
@@ -485,258 +406,144 @@ async function assertNoPublishedResultCollision(
         resultId,
       );
 
-    if (!existing) {
-      continue;
-    }
-
-    if (
-      existing.session &&
-      String(
-        existing.session,
-      ) ===
-        String(
-          submission.session,
-        )
-    ) {
+    if (existing) {
       throw new ResultValidationError(
-        `A published result already exists for pupil ${item.draft.pupilId}.`,
-        "RESULT_ALREADY_PUBLISHED",
+        `Published result ID collision detected for pupil ${item.draft.pupilId}.`,
+        "RESULT_ID_COLLISION",
       );
     }
-
-    /*
-     * Legacy result IDs do not contain session.
-     * Never overwrite an older session's result.
-     */
-    throw new ResultValidationError(
-      `Published result ID collision detected for pupil ${item.draft.pupilId}.`,
-      "RESULT_ID_COLLISION",
-    );
   }
 }
-
-/**
- * ---------------------------------------------------------------------------
- * Build published results
- * ---------------------------------------------------------------------------
- */
 
 function buildPublishedResults(
   validatedDrafts,
   submission,
   adminUid,
 ) {
-  const publishedAt =
-    nowIso();
+  const publishedAt = nowIso();
 
   return validatedDrafts.map(
     ({
       draft,
       pupil,
       calculation,
-    }) => {
-      const resultId =
-        makeResultId({
-          pupilId:
-            draft.pupilId,
-          term:
-            submission.term,
-          subject:
-            submission.subject,
-        });
-
-      return {
-        id: resultId,
-
+    }) => ({
+      id: makeResultId({
         pupilId:
           draft.pupilId,
-
-        pupilName:
-          pupil?.name ??
-          draft.pupilName ??
-          null,
-
-        classId:
-          submission.classId,
-
-        className:
-          submission.className ??
-          null,
-
-        teacherId:
-          submission.teacherUid,
-
-        teacherName:
-          submission.teacherName ??
-          null,
-
-        subject:
-          submission.subject,
-
-        subjectId:
-          draft.subjectId ??
-          submission.subjectId ??
-          null,
-
-        session:
-          submission.session,
-
         term:
           submission.term,
+        subject:
+          submission.subject,
+      }),
 
-        /*
-         * Preserve raw score components.
-         */
-        caScore:
-          draft.caScore,
+      pupilId:
+        draft.pupilId,
 
-        examScore:
-          draft.examScore,
+      pupilName:
+        pupil?.name ??
+        draft.pupilName ??
+        null,
 
-        /*
-         * These are authoritative server calculations.
-         */
-        total:
-          calculation.total,
+      classId:
+        submission.classId,
 
-        percentage:
-          calculation.percentage,
+      className:
+        submission.className ??
+        null,
 
-        grade:
-          calculation.grade,
+      teacherId:
+        submission.teacherUid,
 
-        remark:
-          calculation.remark,
+      teacherName:
+        submission.teacherName ??
+        null,
 
-        status:
-          "approved",
+      subject:
+        submission.subject,
 
-        approvedBy:
-          adminUid,
+      subjectId:
+        draft.subjectId ??
+        submission.subjectId ??
+        null,
 
-        approvedAt:
-          publishedAt,
+      session:
+        submission.session,
 
+      term:
+        submission.term,
+
+      caScore:
+        draft.caScore,
+
+      examScore:
+        draft.examScore,
+
+      total:
+        calculation.total,
+
+      percentage:
+        calculation.percentage,
+
+      grade:
+        calculation.grade,
+
+      gradePoint:
+        calculation.gradePoint,
+
+      remark:
+        calculation.remark,
+
+      status:
+        "approved",
+
+      approvedBy:
+        adminUid,
+
+      approvedAt:
         publishedAt,
 
-        sourceDraftId:
-          draft.id ??
-          null,
+      publishedAt,
 
-        updatedAt:
-          publishedAt,
+      sourceDraftId:
+        draft.id ?? null,
 
-        createdAt:
-          draft.createdAt ??
-          publishedAt,
-      };
-    },
-  );
-}
+      createdAt:
+        draft.createdAt ??
+        publishedAt,
 
-/**
- * ---------------------------------------------------------------------------
- * Calculate positions
- * ---------------------------------------------------------------------------
- */
-
-function applyPositions(
-  publishedResults,
-) {
-  if (
-    !publishedResults.length
-  ) {
-    return publishedResults;
-  }
-
-  const positionInput =
-    publishedResults.map(
-      (result) => ({
-        pupilId:
-          result.pupilId,
-        total:
-          result.total,
-        percentage:
-          result.percentage,
-      }),
-    );
-
-  const positions =
-    calculatePositions(
-      positionInput,
-    );
-
-  const positionMap =
-    new Map();
-
-  if (
-    Array.isArray(
-      positions,
-    )
-  ) {
-    for (
-      const position of
-      positions
-    ) {
-      if (
-        !position?.pupilId
-      ) {
-        continue;
-      }
-
-      positionMap.set(
-        String(
-          position.pupilId,
-        ),
-        position.position ??
-          position.rank ??
-          null,
-      );
-    }
-  } else if (
-    positions &&
-    typeof positions ===
-      "object"
-  ) {
-    for (
-      const [
-        pupilId,
-        position,
-      ] of Object.entries(
-        positions,
-      )
-    ) {
-      positionMap.set(
-        String(pupilId),
-        position,
-      );
-    }
-  }
-
-  return publishedResults.map(
-    (result) => ({
-      ...result,
-
-      position:
-        positionMap.get(
-          String(
-            result.pupilId,
-          ),
-        ) ??
-        result.position ??
-        null,
+      updatedAt:
+        publishedAt,
     }),
   );
 }
 
-/**
- * ---------------------------------------------------------------------------
- * Build atomic approval writes
- * ---------------------------------------------------------------------------
- *
- * This function intentionally contains no network calls.
- * It produces the complete Firestore commit payload.
- */
+function applyPositions(
+  publishedResults,
+) {
+  if (!publishedResults.length) {
+    return publishedResults;
+  }
+
+  const positions =
+    calculatePositions(
+      publishedResults.map(
+        (result) => ({
+          total:
+            result.total,
+        }),
+      ),
+    );
+
+  return publishedResults.map(
+    (result, index) => ({
+      ...result,
+      position:
+        positions[index] ??
+        null,
+    }),
+  );
+}
 
 function buildApprovalOperations({
   publishedResults,
@@ -746,51 +553,29 @@ function buildApprovalOperations({
 }) {
   const operations = [];
 
-  /*
-   * Every published result must be new.
-   *
-   * If another writer creates one between validation and commit,
-   * Firestore rejects the entire commit.
-   */
   for (
     const result of
     publishedResults
   ) {
     operations.push({
       type: "set",
-
-      collection:
-        "results",
-
-      documentId:
-        result.id,
-
-      data:
-        result,
-
+      collection: "results",
+      documentId: result.id,
+      data: result,
       precondition: {
         exists: false,
       },
     });
   }
 
-  /*
-   * The submission itself must still have the exact version we validated.
-   *
-   * This is the key concurrency guard.
-   */
   operations.push({
     type: "set",
-
     collection:
       "result_submissions",
-
     documentId:
       approvedSubmission.id,
-
     data:
       approvedSubmission,
-
     precondition:
       submissionUpdateTime
         ? {
@@ -802,21 +587,11 @@ function buildApprovalOperations({
           },
   });
 
-  /*
-   * The lock must not already exist.
-   */
   operations.push({
     type: "set",
-
-    collection:
-      "result_locks",
-
-    documentId:
-      lock.id,
-
-    data:
-      lock,
-
+    collection: "result_locks",
+    documentId: lock.id,
+    data: lock,
     precondition: {
       exists: false,
     },
@@ -825,21 +600,15 @@ function buildApprovalOperations({
   return operations;
 }
 
-/**
- * ---------------------------------------------------------------------------
- * Approve submission
- * ---------------------------------------------------------------------------
- */
-
 export async function approveSubmission(
-  env,
   request,
+  env,
   submissionId,
 ) {
   const admin =
     await requireAdmin(
-      env,
       request,
+      env,
     );
 
   if (!submissionId) {
@@ -849,40 +618,30 @@ export async function approveSubmission(
     );
   }
 
-  const submissionSnapshot =
+  const snapshot =
     await loadSubmission(
       env,
       submissionId,
     );
 
   const submission =
-    submissionSnapshot.document;
+    snapshot.document;
 
-  /*
-   * Verify deterministic submission identity.
-   */
-  const expectedSubmissionId =
+  const expectedId =
     makeSubmissionId({
       classId:
         submission.classId,
-
       session:
         submission.session,
-
       term:
         submission.term,
-
       subject:
         submission.subject,
     });
 
   if (
-    String(
-      expectedSubmissionId,
-    ) !==
-    String(
-      submissionId,
-    )
+    String(expectedId) !==
+    String(submissionId)
   ) {
     throw new ResultValidationError(
       "Submission identity does not match its stored data.",
@@ -890,9 +649,6 @@ export async function approveSubmission(
     );
   }
 
-  /*
-   * Approval is only valid from pending.
-   */
   if (
     submission.status !==
     "pending"
@@ -914,9 +670,7 @@ export async function approveSubmission(
 
   if (
     String(teacherUid) !==
-    String(
-      submission.teacherUid,
-    )
+    String(submission.teacherUid)
   ) {
     throw new ResultValidationError(
       "Submission teacher identity is inconsistent.",
@@ -924,21 +678,14 @@ export async function approveSubmission(
     );
   }
 
-  /*
-   * If a lock already exists while the submission is pending, the data
-   * is inconsistent. Do not attempt to repair it implicitly.
-   */
   const lockId =
     makeLockId({
       classId:
         submission.classId,
-
       session:
         submission.session,
-
       term:
         submission.term,
-
       subject:
         submission.subject,
     });
@@ -957,16 +704,13 @@ export async function approveSubmission(
     );
   }
 
-  /*
-   * Load and validate all drafts.
-   */
   const drafts =
     await loadSubmissionDrafts(
       env,
       submission,
     );
 
-  const validatedDrafts =
+  const validated =
     await validateDraftsForApproval(
       env,
       drafts,
@@ -974,21 +718,15 @@ export async function approveSubmission(
       schoolClass,
     );
 
-  /*
-   * Never overwrite historical published results.
-   */
   await assertNoPublishedResultCollision(
     env,
-    validatedDrafts,
+    validated,
     submission,
   );
 
-  /*
-   * Build authoritative results.
-   */
   let publishedResults =
     buildPublishedResults(
-      validatedDrafts,
+      validated,
       submission,
       admin.uid,
     );
@@ -997,6 +735,16 @@ export async function approveSubmission(
     applyPositions(
       publishedResults,
     );
+
+  if (
+    publishedResults.length + 2 >
+    500
+  ) {
+    throw new ResultValidationError(
+      "This submission contains too many pupil results to approve atomically.",
+      "ATOMIC_APPROVAL_WRITE_LIMIT",
+    );
+  }
 
   const approvedAt =
     nowIso();
@@ -1015,14 +763,14 @@ export async function approveSubmission(
 
     approvedAt,
 
-    updatedAt:
-      approvedAt,
-
     publishedAt:
       approvedAt,
 
     publishedResultCount:
       publishedResults.length,
+
+    updatedAt:
+      approvedAt,
   };
 
   const lock = {
@@ -1034,7 +782,7 @@ export async function approveSubmission(
 
     className:
       submission.className ??
-      schoolClass?.name ??
+      schoolClass.name ??
       null,
 
     term:
@@ -1062,198 +810,112 @@ export async function approveSubmission(
     reason:
       "Result submission approved and published.",
 
-    updatedAt:
+    createdAt:
       approvedAt,
 
-    createdAt:
+    updatedAt:
       approvedAt,
   };
 
-  /*
-   * Firestore commit has a 500-write limit.
-   *
-   * We need:
-   *
-   *   published results
-   *   + submission
-   *   + lock
-   *
-   * Therefore a submission with more than 498 result documents cannot
-   * be atomically approved in one commit.
-   */
-  if (
-    publishedResults.length +
-      2 >
-    500
-  ) {
-    throw new ResultValidationError(
-      "This submission contains too many pupil results to approve atomically.",
-      "ATOMIC_APPROVAL_WRITE_LIMIT",
-    );
-  }
-
-  const operations =
+  await commitWrites(
+    env,
     buildApprovalOperations({
       publishedResults,
       approvedSubmission,
       lock,
       submissionUpdateTime:
-        submissionSnapshot.updateTime,
-    });
-
-  /*
-   * ONE atomic Firestore commit.
-   *
-   * Either:
-   *
-   *   results + submission + lock
-   *
-   * all commit,
-   *
-   * or none commit.
-   */
-  await commitWrites(
-    env,
-    operations,
+        snapshot.updateTime,
+    }),
   );
 
-  /*
-   * Audit after the atomic state transition succeeds.
-   *
-   * Audit failure must not cause us to attempt the approval again,
-   * because the authoritative database transition has already succeeded.
-   */
-  await audit(
-    env,
-    {
-      action:
-        "RESULT_APPROVED",
-
-      actorUid:
-        admin.uid,
-
-      targetType:
-        "result_submission",
-
-      targetId:
-        submissionId,
-
-      metadata: {
-        classId:
-          submission.classId,
-
-        session:
-          submission.session,
-
-        term:
-          submission.term,
-
-        subject:
-          submission.subject,
-
-        teacherUid:
-          submission.teacherUid,
-
-        pupilCount:
-          publishedResults.length,
-      },
+  await audit(env, {
+    action:
+      "RESULT_APPROVED",
+    actorUid:
+      admin.uid,
+    targetType:
+      "result_submission",
+    targetId:
+      submissionId,
+    metadata: {
+      classId:
+        submission.classId,
+      session:
+        submission.session,
+      term:
+        submission.term,
+      subject:
+        submission.subject,
+      teacherUid:
+        submission.teacherUid,
+      pupilCount:
+        publishedResults.length,
     },
-  );
+  });
 
-  await audit(
-    env,
-    {
-      action:
-        "RESULT_PUBLISHED",
-
-      actorUid:
-        admin.uid,
-
-      targetType:
-        "result_submission",
-
-      targetId:
-        submissionId,
-
-      metadata: {
-        classId:
-          submission.classId,
-
-        session:
-          submission.session,
-
-        term:
-          submission.term,
-
-        subject:
-          submission.subject,
-
-        resultCount:
-          publishedResults.length,
-      },
+  await audit(env, {
+    action:
+      "RESULT_PUBLISHED",
+    actorUid:
+      admin.uid,
+    targetType:
+      "result_submission",
+    targetId:
+      submissionId,
+    metadata: {
+      classId:
+        submission.classId,
+      session:
+        submission.session,
+      term:
+        submission.term,
+      subject:
+        submission.subject,
+      resultCount:
+        publishedResults.length,
     },
-  );
+  });
 
-  await audit(
-    env,
-    {
-      action:
-        "RESULT_LOCKED",
-
-      actorUid:
-        admin.uid,
-
-      targetType:
-        "result_lock",
-
-      targetId:
-        lockId,
-
-      metadata: {
-        classId:
-          submission.classId,
-
-        session:
-          submission.session,
-
-        term:
-          submission.term,
-
-        subject:
-          submission.subject,
-      },
+  await audit(env, {
+    action:
+      "RESULT_LOCKED",
+    actorUid:
+      admin.uid,
+    targetType:
+      "result_lock",
+    targetId:
+      lockId,
+    metadata: {
+      classId:
+        submission.classId,
+      session:
+        submission.session,
+      term:
+        submission.term,
+      subject:
+        submission.subject,
     },
-  );
+  });
 
   return {
-    approved:
-      true,
-
+    approved: true,
     submission:
       approvedSubmission,
-
     lock,
-
     publishedResults,
   };
 }
 
-/**
- * ---------------------------------------------------------------------------
- * Reject submission
- * ---------------------------------------------------------------------------
- */
-
 export async function rejectSubmission(
-  env,
   request,
+  env,
   submissionId,
   reason,
 ) {
   const admin =
     await requireAdmin(
-      env,
       request,
+      env,
     );
 
   if (!submissionId) {
@@ -1274,8 +936,7 @@ export async function rejectSubmission(
   }
 
   if (
-    rejectionReason.length >
-    1000
+    rejectionReason.length > 1000
   ) {
     throw new ResultValidationError(
       "Rejection reason must not exceed 1000 characters.",
@@ -1283,14 +944,14 @@ export async function rejectSubmission(
     );
   }
 
-  const submissionSnapshot =
+  const snapshot =
     await loadSubmission(
       env,
       submissionId,
     );
 
   const submission =
-    submissionSnapshot.document;
+    snapshot.document;
 
   if (
     submission.status !==
@@ -1330,18 +991,11 @@ export async function rejectSubmission(
       rejectedAt,
   };
 
-  /*
-   * Use the exact version read during validation.
-   *
-   * This prevents two admins from simultaneously rejecting/reprocessing
-   * the same pending submission.
-   */
   await commitWrites(
     env,
     [
       {
-        type:
-          "set",
+        type: "set",
 
         collection:
           "result_submissions",
@@ -1353,67 +1007,49 @@ export async function rejectSubmission(
           rejectedSubmission,
 
         precondition:
-          submissionSnapshot.updateTime
+          snapshot.updateTime
             ? {
                 updateTime:
-                  submissionSnapshot.updateTime,
+                  snapshot.updateTime,
               }
             : {
-                exists:
-                  true,
+                exists: true,
               },
       },
     ],
   );
 
-  await audit(
-    env,
-    {
-      action:
-        "RESULT_REJECTED",
-
-      actorUid:
-        admin.uid,
-
-      targetType:
-        "result_submission",
-
-      targetId:
-        submissionId,
-
-      metadata: {
-        classId:
-          submission.classId,
-
-        session:
-          submission.session,
-
-        term:
-          submission.term,
-
-        subject:
-          submission.subject,
-
-        teacherUid:
-          submission.teacherUid,
-
-        rejectionReason,
-      },
+  await audit(env, {
+    action:
+      "RESULT_REJECTED",
+    actorUid:
+      admin.uid,
+    targetType:
+      "result_submission",
+    targetId:
+      submissionId,
+    metadata: {
+      classId:
+        submission.classId,
+      session:
+        submission.session,
+      term:
+        submission.term,
+      subject:
+        submission.subject,
+      teacherUid:
+        submission.teacherUid,
+      rejectionReason,
     },
-  );
+  });
 
   return {
-    rejected:
-      true,
-
+    rejected: true,
     submission:
       rejectedSubmission,
   };
 }
 
-/**
- * Exported for focused unit tests.
- */
 export {
   buildApprovalOperations,
 };
