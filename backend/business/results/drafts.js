@@ -1,6 +1,8 @@
 /**
  * FAHMID SCHOOL MANAGEMENT SYSTEM
  * Result Drafts
+ *
+ * Teacher-owned result entry and editing.
  */
 
 import {
@@ -35,14 +37,9 @@ import {
   calculateResult,
 } from "./calculation.js";
 
-const DRAFT_COLLECTION =
-  "results_draft";
-
-const SUBMISSION_COLLECTION =
-  "result_submissions";
-
-const LOCK_COLLECTION =
-  "result_locks";
+const DRAFT_COLLECTION = "results_draft";
+const SUBMISSION_COLLECTION = "result_submissions";
+const LOCK_COLLECTION = "result_locks";
 
 function makeResultId({
   pupilId,
@@ -50,7 +47,7 @@ function makeResultId({
   subject,
 }) {
   /*
-   * Preserve the legacy result/draft identity convention.
+   * Preserve the legacy Fahmid identity convention.
    *
    * Legacy:
    *   `${pupil.id}_${term}_${subject}`
@@ -76,23 +73,14 @@ function makeLockId({
   return `${classId}_${session}_${term}_${subject}`;
 }
 
-function getSubjectNames(
-  schoolClass
-) {
-  if (
-    !Array.isArray(
-      schoolClass?.subjects
-    )
-  ) {
+function getSubjectDefinitions(schoolClass) {
+  if (!Array.isArray(schoolClass?.subjects)) {
     return [];
   }
 
   return schoolClass.subjects
     .map((subject) => {
-      if (
-        typeof subject ===
-        "string"
-      ) {
+      if (typeof subject === "string") {
         return {
           id: null,
           name: subject,
@@ -102,8 +90,7 @@ function getSubjectNames(
 
       if (
         subject &&
-        typeof subject ===
-          "object"
+        typeof subject === "object"
       ) {
         return {
           id:
@@ -134,7 +121,7 @@ function classHasSubject(
   subjectId = null
 ) {
   const subjects =
-    getSubjectNames(
+    getSubjectDefinitions(
       schoolClass
     );
 
@@ -151,24 +138,16 @@ function classHasSubject(
 
       if (
         item.name &&
-        String(
-          item.name
-        ).toLowerCase() ===
-          String(
-            subject
-          ).toLowerCase()
+        String(item.name).toLowerCase() ===
+          String(subject).toLowerCase()
       ) {
         return true;
       }
 
       if (
         item.code &&
-        String(
-          item.code
-        ).toLowerCase() ===
-          String(
-            subject
-          ).toLowerCase()
+        String(item.code).toLowerCase() ===
+          String(subject).toLowerCase()
       ) {
         return true;
       }
@@ -190,14 +169,12 @@ async function assertTeacherOwnsClass(
     );
 
   if (!schoolClass) {
-    const error =
-      new Error(
-        "Class not found."
-      );
+    const error = new Error(
+      "Class not found."
+    );
 
     error.status = 404;
-    error.code =
-      "CLASS_NOT_FOUND";
+    error.code = "CLASS_NOT_FOUND";
 
     throw error;
   }
@@ -206,14 +183,12 @@ async function assertTeacherOwnsClass(
     schoolClass.teacherId !==
     teacherUid
   ) {
-    const error =
-      new Error(
-        "You are not the teacher assigned to this class."
-      );
+    const error = new Error(
+      "You are not the teacher assigned to this class."
+    );
 
     error.status = 403;
-    error.code =
-      "CLASS_ACCESS_DENIED";
+    error.code = "CLASS_ACCESS_DENIED";
 
     throw error;
   }
@@ -245,17 +220,13 @@ async function assertUnlockedAndEditable(
       lockId
     );
 
-  if (
-    lock?.locked === true
-  ) {
-    const error =
-      new Error(
-        "This result is locked and cannot be edited."
-      );
+  if (lock?.locked === true) {
+    const error = new Error(
+      "This result is locked and cannot be edited."
+    );
 
     error.status = 403;
-    error.code =
-      "RESULT_LOCKED";
+    error.code = "RESULT_LOCKED";
 
     throw error;
   }
@@ -276,15 +247,12 @@ async function assertUnlockedAndEditable(
     );
 
   if (
-    submission?.status ===
-      "pending" ||
-    submission?.status ===
-      "approved"
+    submission?.status === "pending" ||
+    submission?.status === "approved"
   ) {
-    const error =
-      new Error(
-        "This result submission cannot be edited in its current state."
-      );
+    const error = new Error(
+      "This result submission cannot be edited in its current state."
+    );
 
     error.status = 409;
     error.code =
@@ -296,25 +264,30 @@ async function assertUnlockedAndEditable(
   return submission;
 }
 
-async function parseDraftDocument(
-  document
-) {
+function parseDraftDocument(document) {
   if (!document) {
     return null;
   }
 
   return {
     ...document,
+
     calculated:
       calculateResult(
         document,
-        document.calculationRules ||
-          {}
+        document.calculationRules || {}
       ),
   };
 }
 
+/**
+ * Teacher-readable single draft.
+ *
+ * IMPORTANT:
+ * Ownership is enforced here.
+ */
 export async function getDraft(
+  request,
   env,
   {
     pupilId,
@@ -322,12 +295,14 @@ export async function getDraft(
     subject,
   }
 ) {
-  validatePupilId(
-    pupilId
-  );
+  const user =
+    await requireTeacher(
+      request,
+      env
+    );
 
+  validatePupilId(pupilId);
   validateTerm(term);
-
   validateSubject(subject);
 
   const draftId =
@@ -344,6 +319,30 @@ export async function getDraft(
       draftId
     );
 
+  if (!draft) {
+    return null;
+  }
+
+  if (
+    draft.teacherId !== user.uid &&
+    draft.teacherUid !== user.uid
+  ) {
+    const error = new Error(
+      "You do not have access to this result draft."
+    );
+
+    error.status = 403;
+    error.code = "DRAFT_ACCESS_DENIED";
+
+    throw error;
+  }
+
+  await assertTeacherOwnsClass(
+    env,
+    user.uid,
+    draft.classId
+  );
+
   return parseDraftDocument(
     draft
   );
@@ -359,21 +358,10 @@ export async function listDrafts(
     teacherUid,
   }
 ) {
-  validateClassId(
-    classId
-  );
-
-  validateSession(
-    session
-  );
-
-  validateTerm(
-    term
-  );
-
-  validateSubject(
-    subject
-  );
+  validateClassId(classId);
+  validateSession(session);
+  validateTerm(term);
+  validateSubject(subject);
 
   const filters = [
     {
@@ -387,6 +375,7 @@ export async function listDrafts(
         },
       },
     },
+
     {
       fieldFilter: {
         field: {
@@ -398,6 +387,7 @@ export async function listDrafts(
         },
       },
     },
+
     {
       fieldFilter: {
         field: {
@@ -409,6 +399,7 @@ export async function listDrafts(
         },
       },
     },
+
     {
       fieldFilter: {
         field: {
@@ -430,8 +421,7 @@ export async function listDrafts(
         },
         op: "EQUAL",
         value: {
-          stringValue:
-            teacherUid,
+          stringValue: teacherUid,
         },
       },
     });
@@ -457,9 +447,15 @@ export async function listDrafts(
       }
     );
 
-  return drafts.map(
-    parseDraftDocument
-  );
+  /*
+   * parseDraftDocument is intentionally synchronous.
+   *
+   * The previous implementation declared it async,
+   * which caused Array.map() to return Promise objects.
+   */
+  return drafts
+    .map(parseDraftDocument)
+    .filter(Boolean);
 }
 
 export async function saveDraft(
@@ -482,10 +478,9 @@ export async function saveDraft(
     draft.teacherId !==
     user.uid
   ) {
-    const error =
-      new Error(
-        "teacherId does not match the authenticated teacher."
-      );
+    const error = new Error(
+      "teacherId does not match the authenticated teacher."
+    );
 
     error.status = 403;
     error.code =
@@ -508,10 +503,9 @@ export async function saveDraft(
       draft.subjectId
     )
   ) {
-    const error =
-      new Error(
-        "The selected subject does not belong to this class."
-      );
+    const error = new Error(
+      "The selected subject does not belong to this class."
+    );
 
     error.status = 400;
     error.code =
@@ -556,25 +550,32 @@ export async function saveDraft(
       draftId
     );
 
+  /*
+   * Extra protection against accidental cross-teacher
+   * overwrites when the deterministic legacy ID already exists.
+   */
+  if (
+    existing &&
+    existing.teacherId !== user.uid &&
+    existing.teacherUid !== user.uid
+  ) {
+    const error = new Error(
+      "This result draft belongs to another teacher."
+    );
+
+    error.status = 403;
+    error.code =
+      "DRAFT_ACCESS_DENIED";
+
+    throw error;
+  }
+
   const now =
     new Date().toISOString();
 
-  const calculationRules =
-    existing?.calculationRules ??
-    null;
-
-  /*
-   * Preserve unknown existing fields.
-   * This is important because setDocument's "merge" option
-   * in the current Firestore helper is not a field-mask merge.
-   */
   const stored = {
     ...(existing || {}),
-
     ...draft,
-
-    id:
-      undefined,
 
     teacherId:
       user.uid,
@@ -589,7 +590,13 @@ export async function saveDraft(
       existing?.createdAt ??
       now,
 
-    calculationRules,
+    /*
+     * Do not inherit stale calculated values.
+     * They are always recomputed.
+     */
+    calculationRules:
+      existing?.calculationRules ??
+      null,
   };
 
   delete stored.id;
@@ -606,6 +613,7 @@ export async function saveDraft(
     env,
     {
       user,
+
       action:
         existing
           ? "RESULT_DRAFT_UPDATED"
@@ -644,8 +652,7 @@ export async function saveDraft(
     calculated:
       calculateResult(
         saved,
-        saved.calculationRules ||
-          {}
+        saved.calculationRules || {}
       ),
   };
 }
@@ -665,12 +672,8 @@ export async function deleteDraft(
       env
     );
 
-  validatePupilId(
-    pupilId
-  );
-
+  validatePupilId(pupilId);
   validateTerm(term);
-
   validateSubject(subject);
 
   const draftId =
@@ -697,10 +700,9 @@ export async function deleteDraft(
     existing.teacherUid !==
       user.uid
   ) {
-    const error =
-      new Error(
-        "You do not own this result draft."
-      );
+    const error = new Error(
+      "You do not own this result draft."
+    );
 
     error.status = 403;
     error.code =
