@@ -12,7 +12,7 @@
 
 function toNumber(
   value,
-  fallback = 0
+  fallback = 0,
 ) {
   const number =
     typeof value === "number"
@@ -24,27 +24,15 @@ function toNumber(
     : fallback;
 }
 
-/**
- * Calculate total from known raw score fields.
- *
- * Legacy Fahmid results use:
- *   caScore
- *   examScore
- *
- * Therefore:
- *   total = CA + Exam
- *
- * Generic components are also supported.
- */
 export function calculateTotal(
-  result
+  result,
 ) {
   const ca =
     result.caScore === null ||
     result.caScore === undefined
       ? null
       : toNumber(
-          result.caScore
+          result.caScore,
         );
 
   const exam =
@@ -52,7 +40,7 @@ export function calculateTotal(
     result.examScore === undefined
       ? null
       : toNumber(
-          result.examScore
+          result.examScore,
         );
 
   if (
@@ -74,7 +62,7 @@ export function calculateTotal(
 
     for (
       const value of Object.values(
-        result.components
+        result.components,
       )
     ) {
       if (
@@ -82,7 +70,7 @@ export function calculateTotal(
         value !== undefined
       ) {
         total += toNumber(
-          value
+          value,
         );
       }
     }
@@ -93,19 +81,9 @@ export function calculateTotal(
   return 0;
 }
 
-/**
- * Calculate percentage only when an authoritative maximum
- * has explicitly been supplied.
- *
- * Accepted maximums:
- *   rules.maxTotal
- *   rules.totalMax
- *
- * We do NOT assume that the historical exam was out of 100.
- */
 export function calculatePercentage(
   total,
-  rules = {}
+  rules = {},
 ) {
   const maxTotal =
     rules.maxTotal ??
@@ -122,7 +100,7 @@ export function calculatePercentage(
   const maximum =
     toNumber(
       maxTotal,
-      NaN
+      NaN,
     );
 
   if (
@@ -136,18 +114,13 @@ export function calculatePercentage(
     (
       (total / maximum) *
       100
-    ).toFixed(2)
+    ).toFixed(2),
   );
 }
 
-/**
- * Calculate a grade from explicitly configured grade bands.
- *
- * No default historical thresholds are embedded.
- */
 export function calculateGrade(
   percentage,
-  rules = {}
+  rules = {},
 ) {
   if (
     percentage === null ||
@@ -162,7 +135,7 @@ export function calculateGrade(
 
   const bands =
     Array.isArray(
-      rules.gradeBands
+      rules.gradeBands,
     )
       ? rules.gradeBands
       : null;
@@ -182,14 +155,14 @@ export function calculateGrade(
     [...bands].sort(
       (a, b) =>
         Number(b.min) -
-        Number(a.min)
+        Number(a.min),
     );
 
   const matched =
     ordered.find(
       (band) =>
         percentage >=
-        Number(band.min)
+        Number(band.min),
     );
 
   if (!matched) {
@@ -215,28 +188,25 @@ export function calculateGrade(
   };
 }
 
-/**
- * Calculate one authoritative result.
- */
 export function calculateResult(
   result,
-  rules = {}
+  rules = {},
 ) {
   const total =
     calculateTotal(
-      result
+      result,
     );
 
   const percentage =
     calculatePercentage(
       total,
-      rules
+      rules,
     );
 
   const gradeData =
     calculateGrade(
       percentage,
-      rules
+      rules,
     );
 
   return {
@@ -254,27 +224,12 @@ export function calculateResult(
   };
 }
 
-/**
- * Calculate class positions.
- *
- * Standard competition ranking:
- *
- * 100 -> 1
- * 100 -> 1
- * 90  -> 3
- * 80  -> 4
- *
- * `items` can contain either:
- *   total
- *
- * or another numeric field supplied through scoreField.
- */
 export function calculatePositions(
   items,
   {
     scoreField = "total",
     descending = true,
-  } = {}
+  } = {},
 ) {
   if (!Array.isArray(items)) {
     return [];
@@ -288,9 +243,9 @@ export function calculatePositions(
         score:
           toNumber(
             item?.[scoreField],
-            0
+            0,
           ),
-      })
+      }),
     );
 
   ranked.sort(
@@ -309,12 +264,12 @@ export function calculatePositions(
       return (
         a.index - b.index
       );
-    }
+    },
   );
 
   const positions =
     new Array(
-      ranked.length
+      ranked.length,
     );
 
   let previousScore = null;
@@ -345,17 +300,14 @@ export function calculatePositions(
 
       previousPosition =
         position;
-    }
+    },
   );
 
   return positions;
 }
 
-/**
- * Calculate the arithmetic average of numeric values.
- */
 export function calculateAverage(
-  values
+  values,
 ) {
   if (!Array.isArray(values)) {
     return null;
@@ -366,14 +318,14 @@ export function calculateAverage(
       .map((value) =>
         toNumber(
           value,
-          NaN
-        )
+          NaN,
+        ),
       )
       .filter(
         (value) =>
           Number.isFinite(
-            value
-          )
+            value,
+          ),
       );
 
   if (
@@ -386,13 +338,13 @@ export function calculateAverage(
     numbers.reduce(
       (sum, value) =>
         sum + value,
-      0
+      0,
     );
 
   return Number(
     (
       total /
       numbers.length
-    ).toFixed(2)
+    ).toFixed(2),
   );
 }
