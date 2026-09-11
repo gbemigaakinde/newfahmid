@@ -3,296 +3,216 @@ import assert from "node:assert/strict";
 
 import {
   buildApprovalOperations,
-} from "../approval.js";
+} from "./approval.js";
 
-test(
-  "buildApprovalOperations creates an atomic approval write set",
-  () => {
-    const publishedResults = [
-      {
-        id:
-          "pupil-1_First_English",
-        pupilId:
-          "pupil-1",
-        classId:
-          "class-1",
-        subject:
-          "English",
-        session:
-          "2026/2027",
-        term:
-          "First",
-        caScore:
-          25,
-        examScore:
-          60,
-        total:
-          85,
-        percentage:
-          85,
-        grade:
-          "A1",
-        remark:
-          "Excellent",
-        status:
-          "approved",
-      },
-    ];
-
-    const approvedSubmission = {
-      id:
-        "class-1_2026/2027_First_English",
-      classId:
-        "class-1",
-      session:
-        "2026/2027",
-      term:
-        "First",
-      subject:
-        "English",
-      teacherUid:
-        "teacher-1",
-      status:
-        "approved",
-      approvedBy:
-        "admin-1",
-    };
-
-    const lock = {
-      id:
-        "class-1_2026/2027_First_English",
-      classId:
-        "class-1",
-      session:
-        "2026/2027",
-      term:
-        "First",
-      subject:
-        "English",
-      locked:
-        true,
-      lockedBy:
-        "admin-1",
-    };
-
-    const operations =
-      buildApprovalOperations({
-        publishedResults,
-        approvedSubmission,
-        lock,
-        submissionUpdateTime:
-          "2026-09-11T12:00:00.123456Z",
-      });
-
-    assert.equal(
-      operations.length,
-      3,
-    );
-
-    const resultWrite =
-      operations[0];
-
-    assert.equal(
-      resultWrite.type,
-      "set",
-    );
-
-    assert.equal(
-      resultWrite.collection,
-      "results",
-    );
-
-    assert.equal(
-      resultWrite.documentId,
-      "pupil-1_First_English",
-    );
-
-    assert.deepEqual(
-      resultWrite.precondition,
-      {
-        exists:
-          false,
-      },
-    );
-
-    const submissionWrite =
-      operations[1];
-
-    assert.equal(
-      submissionWrite.collection,
-      "result_submissions",
-    );
-
-    assert.deepEqual(
-      submissionWrite.precondition,
-      {
-        updateTime:
-          "2026-09-11T12:00:00.123456Z",
-      },
-    );
-
-    const lockWrite =
-      operations[2];
-
-    assert.equal(
-      lockWrite.collection,
-      "result_locks",
-    );
-
-    assert.deepEqual(
-      lockWrite.precondition,
-      {
-        exists:
-          false,
-      },
-    );
-  },
-);
-
-test(
-  "every published result receives an exists=false precondition",
-  () => {
-    const publishedResults = [
-      {
-        id:
-          "pupil-1_First_Maths",
-        pupilId:
-          "pupil-1",
-      },
-      {
-        id:
-          "pupil-2_First_Maths",
-        pupilId:
-          "pupil-2",
-      },
-      {
-        id:
-          "pupil-3_First_Maths",
-        pupilId:
-          "pupil-3",
-      },
-    ];
-
-    const operations =
-      buildApprovalOperations({
-        publishedResults,
-
-        approvedSubmission: {
-          id:
-            "class-1_session_First_Maths",
-          status:
-            "approved",
-        },
-
-        lock: {
-          id:
-            "class-1_session_First_Maths",
-          locked:
-            true,
-        },
-
-        submissionUpdateTime:
-          "2026-09-11T12:00:00.123456Z",
-      });
-
-    assert.equal(
-      operations.length,
-      5,
-    );
-
-    for (
-      const operation of
-      operations.slice(0, 3)
-    ) {
-      assert.deepEqual(
-        operation.precondition,
+test("buildApprovalOperations creates result writes", () => {
+  const operations =
+    buildApprovalOperations({
+      publishedResults: [
         {
-          exists:
-            false,
+          id: "pupil-1_term-1_Mathematics",
+          pupilId: "pupil-1",
+          total: 80,
         },
-      );
-    }
-  },
-);
-
-test(
-  "submission write falls back to exists=true when updateTime is unavailable",
-  () => {
-    const operations =
-      buildApprovalOperations({
-        publishedResults: [
-          {
-            id:
-              "pupil-1_First_Maths",
-          },
-        ],
-
-        approvedSubmission: {
-          id:
-            "class-1_session_First_Maths",
+        {
+          id: "pupil-2_term-1_Mathematics",
+          pupilId: "pupil-2",
+          total: 70,
         },
-
-        lock: {
-          id:
-            "class-1_session_First_Maths",
-        },
-
-        submissionUpdateTime:
-          null,
-      });
-
-    assert.deepEqual(
-      operations[1]
-        .precondition,
-      {
-        exists:
-          true,
-      },
-    );
-  },
-);
-
-test(
-  "approval operation ordering is results, submission, then lock",
-  () => {
-    const operations =
-      buildApprovalOperations({
-        publishedResults: [
-          {
-            id:
-              "result-1",
-          },
-          {
-            id:
-              "result-2",
-          },
-        ],
-
-        approvedSubmission: {
-          id:
-            "submission-1",
-        },
-
-        lock: {
-          id:
-            "lock-1",
-        },
-
-        submissionUpdateTime:
-          "2026-09-11T12:00:00.123456Z",
-      });
-
-    assert.deepEqual(
-      operations.map(
-        (operation) =>
-          operation.collection,
-      ),
-      [
-        "results",
-        "results",
-        "result_submissions",
-        "result_locks",
       ],
+      approvedSubmission: {
+        id: "class-1_2026-2027_term-1_Mathematics",
+        status: "approved",
+      },
+      lock: {
+        id: "class-1_2026-2027_term-1_Mathematics",
+        locked: true,
+      },
+      submissionUpdateTime:
+        "2026-09-11T10:00:00.000Z",
+    });
+
+  assert.equal(
+    operations.length,
+    4,
+  );
+
+  assert.equal(
+    operations[0].type,
+    "set",
+  );
+
+  assert.equal(
+    operations[0].collection,
+    "results",
+  );
+
+  assert.deepEqual(
+    operations[0].precondition,
+    {
+      exists: false,
+    },
+  );
+
+  assert.equal(
+    operations[1].collection,
+    "results",
+  );
+
+  assert.deepEqual(
+    operations[1].precondition,
+    {
+      exists: false,
+    },
+  );
+});
+
+test("buildApprovalOperations protects submission with updateTime", () => {
+  const operations =
+    buildApprovalOperations({
+      publishedResults: [],
+      approvedSubmission: {
+        id: "submission-1",
+        status: "approved",
+      },
+      lock: {
+        id: "lock-1",
+        locked: true,
+      },
+      submissionUpdateTime:
+        "2026-09-11T10:00:00.000Z",
+    });
+
+  const submissionOperation =
+    operations.find(
+      (operation) =>
+        operation.collection ===
+        "result_submissions",
     );
-  },
-);
+
+  assert.ok(
+    submissionOperation,
+  );
+
+  assert.deepEqual(
+    submissionOperation.precondition,
+    {
+      updateTime:
+        "2026-09-11T10:00:00.000Z",
+    },
+  );
+});
+
+test("buildApprovalOperations falls back to exists precondition", () => {
+  const operations =
+    buildApprovalOperations({
+      publishedResults: [],
+      approvedSubmission: {
+        id: "submission-1",
+        status: "approved",
+      },
+      lock: {
+        id: "lock-1",
+        locked: true,
+      },
+      submissionUpdateTime: null,
+    });
+
+  const submissionOperation =
+    operations.find(
+      (operation) =>
+        operation.collection ===
+        "result_submissions",
+    );
+
+  assert.deepEqual(
+    submissionOperation.precondition,
+    {
+      exists: true,
+    },
+  );
+});
+
+test("buildApprovalOperations creates a lock only if it does not already exist", () => {
+  const operations =
+    buildApprovalOperations({
+      publishedResults: [],
+      approvedSubmission: {
+        id: "submission-1",
+        status: "approved",
+      },
+      lock: {
+        id: "lock-1",
+        locked: true,
+      },
+      submissionUpdateTime:
+        "2026-09-11T10:00:00.000Z",
+    });
+
+  const lockOperation =
+    operations.find(
+      (operation) =>
+        operation.collection ===
+        "result_locks",
+    );
+
+  assert.ok(
+    lockOperation,
+  );
+
+  assert.equal(
+    lockOperation.type,
+    "set",
+  );
+
+  assert.equal(
+    lockOperation.documentId,
+    "lock-1",
+  );
+
+  assert.deepEqual(
+    lockOperation.precondition,
+    {
+      exists: false,
+    },
+  );
+});
+
+test("buildApprovalOperations keeps all writes in one ordered operation list", () => {
+  const operations =
+    buildApprovalOperations({
+      publishedResults: [
+        {
+          id: "result-1",
+        },
+        {
+          id: "result-2",
+        },
+        {
+          id: "result-3",
+        },
+      ],
+      approvedSubmission: {
+        id: "submission-1",
+      },
+      lock: {
+        id: "lock-1",
+      },
+      submissionUpdateTime:
+        "2026-09-11T10:00:00.000Z",
+    });
+
+  assert.deepEqual(
+    operations.map(
+      (operation) =>
+        operation.collection,
+    ),
+    [
+      "results",
+      "results",
+      "results",
+      "result_submissions",
+      "result_locks",
+    ],
+  );
+});
