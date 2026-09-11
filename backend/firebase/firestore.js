@@ -1,13 +1,6 @@
 /**
  * FAHMID SCHOOL MANAGEMENT SYSTEM
  * Firestore Server Client
- *
- * This module is the single server-side interface between the
- * Cloudflare Worker and Firestore.
- *
- * IMPORTANT:
- * The actual Google authentication credentials are intentionally
- * placeholders until the Firebase service account is configured.
  */
 
 const FIRESTORE_BASE_URL =
@@ -35,32 +28,20 @@ function documentUrl(collection, documentId) {
 }
 
 function documentName(collection, documentId) {
-  return `projects/fahmid-school/databases/(default)/documents/${collection}/${documentId}`;
+  return `projects/fahmid-school/databases/(default)/documents/${collection}/${encodeDocumentId(documentId)}`;
 }
-
-/**
- * ---------------------------------------------------------------------------
- * Firestore value encoding
- * ---------------------------------------------------------------------------
- */
 
 function encodeFirestoreValue(value) {
   if (value === null) {
-    return {
-      nullValue: null,
-    };
+    return { nullValue: null };
   }
 
   if (typeof value === "string") {
-    return {
-      stringValue: value,
-    };
+    return { stringValue: value };
   }
 
   if (typeof value === "boolean") {
-    return {
-      booleanValue: value,
-    };
+    return { booleanValue: value };
   }
 
   if (typeof value === "number") {
@@ -71,14 +52,10 @@ function encodeFirestoreValue(value) {
     }
 
     if (Number.isInteger(value)) {
-      return {
-        integerValue: String(value),
-      };
+      return { integerValue: String(value) };
     }
 
-    return {
-      doubleValue: value,
-    };
+    return { doubleValue: value };
   }
 
   if (Array.isArray(value)) {
@@ -124,12 +101,6 @@ function encodeFirestoreFields(data = {}) {
   return fields;
 }
 
-/**
- * ---------------------------------------------------------------------------
- * Firestore value decoding
- * ---------------------------------------------------------------------------
- */
-
 function decodeFirestoreValue(value) {
   if (!value || typeof value !== "object") {
     return null;
@@ -172,9 +143,9 @@ function decodeFirestoreValue(value) {
   }
 
   if ("arrayValue" in value) {
-    return (
-      value.arrayValue.values || []
-    ).map(decodeFirestoreValue);
+    return (value.arrayValue.values || []).map(
+      decodeFirestoreValue,
+    );
   }
 
   if ("mapValue" in value) {
@@ -196,13 +167,6 @@ function decodeFirestoreFields(fields = {}) {
   return result;
 }
 
-/**
- * Decode a Firestore document into application data.
- *
- * Metadata such as updateTime is intentionally not exposed here.
- * Use getDocumentSnapshot() when optimistic concurrency information
- * is required.
- */
 export function decodeFirestoreDocument(document) {
   if (!document) {
     return null;
@@ -217,12 +181,6 @@ export function decodeFirestoreDocument(document) {
     ),
   };
 }
-
-/**
- * ---------------------------------------------------------------------------
- * Low-level Firestore HTTP request
- * ---------------------------------------------------------------------------
- */
 
 async function firestoreRequest(
   env,
@@ -292,12 +250,6 @@ async function firestoreRequest(
   return data;
 }
 
-/**
- * ---------------------------------------------------------------------------
- * Single-document reads
- * ---------------------------------------------------------------------------
- */
-
 export async function getDocument(
   env,
   collection,
@@ -315,12 +267,6 @@ export async function getDocument(
   return decodeFirestoreDocument(data);
 }
 
-/**
- * Get a document together with Firestore's optimistic-concurrency metadata.
- *
- * This is used by critical workflows that need to ensure a document has not
- * changed between validation and an atomic commit.
- */
 export async function getDocumentSnapshot(
   env,
   collection,
@@ -356,12 +302,6 @@ export async function getDocumentSnapshot(
     throw error;
   }
 }
-
-/**
- ---------------------------------------------------------------------------
- * Single-document writes
- * ---------------------------------------------------------------------------
- */
 
 export async function setDocument(
   env,
@@ -415,12 +355,6 @@ export async function deleteDocument(
   return true;
 }
 
-/**
- * ---------------------------------------------------------------------------
- * Queries
- * ---------------------------------------------------------------------------
- */
-
 export async function runQuery(
   env,
   structuredQuery,
@@ -453,11 +387,6 @@ export async function runQuery(
     );
 }
 
-/**
- * Query documents while retaining Firestore metadata.
- *
- * This is useful for optimistic-concurrency validation.
- */
 export async function runQueryWithMetadata(
   env,
   structuredQuery,
@@ -495,45 +424,6 @@ export async function runQueryWithMetadata(
         null,
     }));
 }
-
-/**
- * ---------------------------------------------------------------------------
- * Atomic commit support
- * ---------------------------------------------------------------------------
- *
- * Firestore's :commit endpoint applies every write atomically.
- *
- * Supported operation format:
- *
- * {
- *   type: "set",
- *   collection: "results",
- *   documentId: "abc",
- *   data: {...},
- *   precondition: {
- *     exists: false
- *   }
- * }
- *
- * or:
- *
- * {
- *   type: "set",
- *   collection: "result_submissions",
- *   documentId: "abc",
- *   data: {...},
- *   precondition: {
- *     updateTime: "..."
- *   }
- * }
- *
- * The precondition is especially important for approval workflows:
- *
- * - only the admin who validated the current pending submission can commit;
- * - a second concurrent approval will fail;
- * - an existing result cannot be silently overwritten;
- * - a pre-existing lock cannot be silently replaced.
- */
 
 function encodePrecondition(
   precondition,
@@ -591,7 +481,11 @@ function buildCommitWrite(
     );
   }
 
-  if (!documentId) {
+  if (
+    documentId === undefined ||
+    documentId === null ||
+    documentId === ""
+  ) {
     throw new TypeError(
       "Atomic write documentId is required.",
     );
@@ -631,13 +525,6 @@ function buildCommitWrite(
   return write;
 }
 
-/**
- * Commit a set of Firestore writes atomically.
- *
- * Firestore limits a transaction/commit to 500 writes. We enforce that
- * locally so callers receive a clear application error rather than sending
- * an oversized request.
- */
 export async function commitWrites(
   env,
   operations = [],
@@ -673,7 +560,9 @@ export async function commitWrites(
   }
 
   const writes =
-    operations.map(buildCommitWrite);
+    operations.map(
+      buildCommitWrite,
+    );
 
   const response =
     await firestoreRequest(
@@ -696,12 +585,6 @@ export async function commitWrites(
       [],
   };
 }
-
-/**
- ---------------------------------------------------------------------------
- * Exports
- ---------------------------------------------------------------------------
- */
 
 export {
   encodeFirestoreValue,
