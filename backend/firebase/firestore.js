@@ -12,305 +12,221 @@
 
 const FIRESTORE_BASE_URL =
   "https://firestore.googleapis.com/v1/projects/fahmid-school/databases/(default)/documents";
-
-/**
- * Check whether the Firebase server credentials have been configured.
- */
-function assertFirebaseConfigured(env) {
-  const clientEmail =
-    env?.FIREBASE_CLIENT_EMAIL;
-
-  const privateKey =
-    env?.FIREBASE_PRIVATE_KEY;
-
-  if (
-    !clientEmail ||
-    !privateKey
-  ) {
-    throw new Error(
-      "Firebase server credentials have not been configured.",
-    );
-  }
-}
-
-/**
- * Build a Firestore document URL.
- */
-function documentUrl(
-  documentPath,
-) {
-  const cleanPath =
-    String(documentPath)
-      .replace(/^\/+/, "");
-
-  return `${FIRESTORE_BASE_URL}/${cleanPath}`;
-}
-
-/**
- * Create a standard Firebase server error.
- */
-function createFirestoreError(
-  response,
-  data,
-) {
-  const error =
-    new Error(
-      data?.error?.message ||
-        `Firestore request failed with status ${response.status}.`,
-    );
-
-  error.status =
-    response.status;
-
-  error.code =
-    data?.error?.status ||
-    "FIRESTORE_ERROR";
-
+function createFirestoreError(message, status = 500, details = null) {
+  const error = new Error(message);
+  error.status = status;
+  error.details = details;
   return error;
 }
-
-/**
- * Make a Firestore REST API request.
- *
- * Authentication will be connected once the Firebase service-account
- * credentials are configured.
- */
-async function firestoreRequest(
-  env,
-  path,
-  options = {},
-) {
-  assertFirebaseConfigured(
-    env,
-  );
-
-  /*
-   * TODO:
-   *
-   * Generate a Google OAuth 2.0 access token using the Firebase
-   * service account.
-   *
-   * This will be implemented before this client is used against
-   * production Firestore.
-   */
-  const accessToken =
-    await getGoogleAccessToken(
-      env,
-    );
-
-  const headers =
-    new Headers(
-      options.headers || {},
-    );
-
-  headers.set(
-    "Authorization",
-    `Bearer ${accessToken}`,
-  );
-
-  headers.set(
-    "Content-Type",
-    "application/json",
-  );
-
-  const response =
-    await fetch(
-      path,
-      {
-        ...options,
-        headers,
-      },
-    );
-
-  let data = null;
-
-  try {
-    data =
-      await response.json();
-  } catch {
-    data = null;
+function encodeDocumentId(id) {
+  return encodeURIComponent(String(id));
+}
+function documentUrl(collection, documentId) {
+  return `${FIRESTORE_BASE_URL}/${collection}/${encodeDocumentId(documentId)}`;
+}
+function encodeFirestoreValue(value) {
+  if (value === null) {
+    return { nullValue: null };
   }
-
+  if (typeof value === "string") {
+    return { stringValue: value };
+  }
+  if (typeof value === "boolean") {
+    return { booleanValue: value };
+  }
+  if (typeof value === "number") {
+    if (Number.isInteger(value)) {
+      return { integerValue: String(value) };
+    }
+    return { doubleValue: value };
+  }
+  if (Array.isArray(value)) {
+    return {
+      arrayValue: {
+        values: value.map(encodeFirestoreValue),
+      },
+    };
+  }
+  if (value instanceof Date) {
+    return {
+      timestampValue: value.toISOString(),
+    };
+  }
+  if (typeof value === "object") {
+    const fields = {};
+    for (const [key, nestedValue] of Object.entries(value)) {
+      fields[key] = encodeFirestoreValue(nestedValue);
+    }
+    return {
+      mapValue: {
+        fields,
+      },
+    };
+  }
+  throw new TypeError(
+    `Unsupported Firestore value type: ${typeof value}`
+  );
+}
+function encodeFirestoreFields(data = {}) {
+  const fields = {};
+  for (const [key, value] of Object.entries(data)) {
+    fields[key] = encodeFirestoreValue(value);
+  }
+  return fields;
+}
+function decodeFirestoreValue(value) {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+  if ("nullValue" in value) {
+    return null;
+  }
+  if ("stringValue" in value) {
+    return value.stringValue;
+  }
+  if ("booleanValue" in value) {
+    return value.booleanValue;
+  }
+  if ("integerValue" in value) {
+    return Number(value.integerValue);
+  }
+  if ("doubleValue" in value) {
+    return value.doubleValue;
+  }
+  if ("timestampValue" in value) {
+    return value.timestampValue;
+  }
+  if ("referenceValue" in value) {
+    return value.referenceValue;
+  }
+  if ("bytesValue" in value) {
+    return value.bytesValue;
+  }
+  if ("geoPointValue" in value) {
+    return value.geoPointValue;
+  }
+  if ("arrayValue" in value) {
+    return (value.arrayValue.values || []).map(decodeFirestoreValue);
+  }
+  if ("mapValue" in value) {
+    return decodeFirestoreFields(value.mapValue.fields || {});
+  }
+  return null;
+}
+function decodeFirestoreFields(fields = {}) {
+  const result = {};
+  for (const [key, value] of Object.entries(fields)) {
+    result[key] = decodeFirestoreValue(value);
+  }
+  return result;
+}
+export function decodeFirestoreDocument(document) {
+  if (!document) {
+    return null;
+  }
+  return {
+    id: document.name?.split("/").pop() || null,
+    ...decodeFirestoreFields(document.fields || {}),
+  };
+}
+async function firestoreRequest(env, path, options = {}) {
+  const {
+    method = "GET",
+    body,
+  } = options;
+  const accessToken = await env.__getGoogleAccessToken();
+  const response = await fetch(
+    path.startsWith("https://")
+      ? path
+      : `${FIRESTORE_BASE_URL}/${path.replace(/^\/+/, "")}`,
+    {
+      method,
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    }
+  );
+  const text = await response.text();
+  let data = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = text;
+    }
+  }
   if (!response.ok) {
     throw createFirestoreError(
-      response,
-      data,
+      data?.error?.message ||
+        `Firestore request failed with status ${response.status}`,
+      response.status,
+      data
     );
   }
-
   return data;
 }
-
-/**
- * Get a Firestore document.
- */
-export async function getDocument(
-  env,
-  documentPath,
-) {
-  return firestoreRequest(
+export async function getDocument(env, collection, documentId) {
+  const data = await firestoreRequest(
     env,
-    documentUrl(
-      documentPath,
-    ),
-    {
-      method: "GET",
-    },
+    documentUrl(collection, documentId)
   );
+  return decodeFirestoreDocument(data);
 }
-
-/**
- * Create or replace a Firestore document.
- */
 export async function setDocument(
   env,
-  documentPath,
-  fields,
+  collection,
+  documentId,
+  data,
+  options = {}
 ) {
-  return firestoreRequest(
+  const query = options.merge
+    ? "?currentDocument.exists=true"
+    : "";
+  const response = await firestoreRequest(
     env,
-    documentUrl(
-      documentPath,
-    ),
+    `${documentUrl(collection, documentId)}${query}`,
     {
       method: "PATCH",
-      body:
-        JSON.stringify({
-          fields,
-        }),
-    },
+      body: {
+        fields: encodeFirestoreFields(data),
+      },
+    }
   );
+  return decodeFirestoreDocument(response);
 }
-
-/**
- * Update selected fields in a Firestore document.
- */
-export async function updateDocument(
-  env,
-  documentPath,
-  fields,
-) {
-  const url =
-    new URL(
-      documentUrl(
-        documentPath,
-      ),
-    );
-
-  const fieldPaths =
-    Object.keys(fields);
-
-  for (
-    const fieldPath of fieldPaths
-  ) {
-    url.searchParams.append(
-      "updateMask.fieldPaths",
-      fieldPath,
-    );
-  }
-
-  return firestoreRequest(
+export async function deleteDocument(env, collection, documentId) {
+  await firestoreRequest(
     env,
-    url.toString(),
-    {
-      method: "PATCH",
-      body:
-        JSON.stringify({
-          fields,
-        }),
-    },
-  );
-}
-
-/**
- * Delete a Firestore document.
- */
-export async function deleteDocument(
-  env,
-  documentPath,
-) {
-  return firestoreRequest(
-    env,
-    documentUrl(
-      documentPath,
-    ),
+    documentUrl(collection, documentId),
     {
       method: "DELETE",
-    },
+    }
   );
+  return true;
 }
-
-/**
- * Query Firestore.
- *
- * This is deliberately kept generic because the actual query
- * structures will be defined by each business module.
- */
-export async function runQuery(
-  env,
-  structuredQuery,
-) {
-  const url =
-    `${FIRESTORE_BASE_URL}:runQuery`;
-
-  return firestoreRequest(
+export async function runQuery(env, structuredQuery) {
+  const response = await firestoreRequest(
     env,
-    url,
+    `${FIRESTORE_BASE_URL}:runQuery`,
     {
       method: "POST",
-      body:
-        JSON.stringify({
-          structuredQuery,
-        }),
-    },
+      body: {
+        structuredQuery,
+      },
+    }
   );
-}
-
-/**
- * Google OAuth access-token generation.
- *
- * PLACEHOLDER FOR NOW.
- *
- * Before the Worker accesses real Firestore, this function will:
- *
- * 1. Read FIREBASE_CLIENT_EMAIL from Worker Secrets.
- * 2. Read FIREBASE_PRIVATE_KEY from Worker Secrets.
- * 3. Create a Google service-account JWT.
- * 4. Sign it using Web Crypto.
- * 5. Exchange it for a Google OAuth access token.
- * 6. Cache the token until shortly before expiration.
- */
-async function getGoogleAccessToken(
-  env,
-) {
-  /*
-   * This intentionally stops execution until the real credentials
-   * and OAuth implementation are installed.
-   */
-
-  if (
-    env?.FIREBASE_CLIENT_EMAIL ===
-      "PLACEHOLDER_FIREBASE_SERVICE_ACCOUNT_EMAIL"
-  ) {
-    throw new Error(
-      "Firebase service account is still using placeholder credentials.",
-    );
+  if (!Array.isArray(response)) {
+    return [];
   }
-
-  if (
-    !env?.FIREBASE_CLIENT_EMAIL ||
-    !env?.FIREBASE_PRIVATE_KEY
-  ) {
-    throw new Error(
-      "FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY are required.",
-    );
-  }
-
-  /*
-   * TODO:
-   * Implement Google service-account OAuth JWT exchange.
-   */
-  throw new Error(
-    "Google service-account authentication has not been configured yet.",
-  );
+  return response
+    .filter((item) => item.document)
+    .map((item) => decodeFirestoreDocument(item.document));
 }
+export {
+  encodeFirestoreValue,
+  encodeFirestoreFields,
+  decodeFirestoreValue,
+  decodeFirestoreFields,
+};
