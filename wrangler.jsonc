@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+
+  "name": "fahmid-management-api",
+
+  "main": "./worker.js",
+
+  "compatibility_date": "2026-09-11",
+
+  "workers_dev": true,
+
+  "observability": {
+    "enabled": true
+  }
+
+  /*
+   * Secrets and environment-specific configuration will be added later.
+   *
+   * DO NOT put Firebase private credentials, service-account private keys,
+   * API secrets, or other sensitive values directly in this file.
+   *
+   * They will be configured through Cloudflare Worker secrets/bindings.
+   */
+}
