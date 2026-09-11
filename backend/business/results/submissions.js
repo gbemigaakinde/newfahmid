@@ -27,6 +27,7 @@ import {
   validateSession,
   validateTerm,
   validateSubject,
+  validateGradeBands,
 } from "./validation.js";
 
 import {
@@ -109,21 +110,10 @@ export async function getSubmission(
     subject,
   }
 ) {
-  validateClassId(
-    classId
-  );
-
-  validateSession(
-    session
-  );
-
-  validateTerm(
-    term
-  );
-
-  validateSubject(
-    subject
-  );
+  validateClassId(classId);
+  validateSession(session);
+  validateTerm(term);
+  validateSubject(subject);
 
   const id =
     makeSubmissionId({
@@ -254,21 +244,10 @@ export async function submitResults(
       env
     );
 
-  validateClassId(
-    classId
-  );
-
-  validateSession(
-    session
-  );
-
-  validateTerm(
-    term
-  );
-
-  validateSubject(
-    subject
-  );
+  validateClassId(classId);
+  validateSession(session);
+  validateTerm(term);
+  validateSubject(subject);
 
   const schoolClass =
     await assertTeacherOwnsClass(
@@ -324,7 +303,7 @@ export async function submitResults(
 
   if (
     existing?.status ===
-      "pending"
+    "pending"
   ) {
     const error =
       new Error(
@@ -340,7 +319,7 @@ export async function submitResults(
 
   if (
     existing?.status ===
-      "approved"
+    "approved"
   ) {
     const error =
       new Error(
@@ -367,6 +346,24 @@ export async function submitResults(
       }
     );
 
+  /*
+   * A submission without any result drafts is invalid.
+   */
+  if (
+    drafts.length === 0
+  ) {
+    const error =
+      new Error(
+        "There are no result drafts to submit."
+      );
+
+    error.status = 409;
+    error.code =
+      "NO_RESULT_DRAFTS";
+
+    throw error;
+  }
+
   const pupilIds =
     new Set();
 
@@ -382,6 +379,21 @@ export async function submitResults(
     }
   }
 
+  if (
+    pupilIds.size === 0
+  ) {
+    const error =
+      new Error(
+        "No valid pupil results were found in this submission."
+      );
+
+    error.status = 409;
+    error.code =
+      "NO_VALID_RESULT_PUPILS";
+
+    throw error;
+  }
+
   const now =
     new Date().toISOString();
 
@@ -389,12 +401,15 @@ export async function submitResults(
     ...(existing || {}),
 
     classId,
+
     className:
       schoolClass.name ??
       null,
 
     session,
+
     term,
+
     subject,
 
     teacherUid:
@@ -421,13 +436,12 @@ export async function submitResults(
     updatedAt:
       now,
 
-    /*
-     * Preserve rejection history where present.
-     */
     rejectionReason:
       existing?.rejectionReason ??
       null,
   };
+
+  delete submission.id;
 
   const saved =
     await setDocument(
@@ -500,7 +514,7 @@ export async function rejectSubmission(
 
   if (
     submission.status !==
-      "pending"
+    "pending"
   ) {
     const error =
       new Error(
@@ -510,6 +524,43 @@ export async function rejectSubmission(
     error.status = 409;
     error.code =
       "INVALID_SUBMISSION_STATE";
+
+    throw error;
+  }
+
+  const cleanedReason =
+    typeof reason ===
+      "string"
+      ? reason.trim()
+      : "";
+
+  if (
+    cleanedReason.length === 0
+  ) {
+    const error =
+      new Error(
+        "A rejection reason is required."
+      );
+
+    error.status = 400;
+    error.code =
+      "REJECTION_REASON_REQUIRED";
+
+    throw error;
+  }
+
+  if (
+    cleanedReason.length >
+    1000
+  ) {
+    const error =
+      new Error(
+        "The rejection reason is too long."
+      );
+
+    error.status = 400;
+    error.code =
+      "REJECTION_REASON_TOO_LONG";
 
     throw error;
   }
@@ -530,11 +581,13 @@ export async function rejectSubmission(
       now,
 
     rejectionReason:
-      reason,
+      cleanedReason,
 
     updatedAt:
       now,
   };
+
+  delete updated.id;
 
   const saved =
     await setDocument(
@@ -563,7 +616,7 @@ export async function rejectSubmission(
           "rejected",
 
         rejectionReason:
-          reason,
+          cleanedReason,
       },
 
       request,
