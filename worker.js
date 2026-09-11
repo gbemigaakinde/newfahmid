@@ -40,6 +40,10 @@ import {
   handleCorsPreflight,
 } from "./backend/security/cors.js";
 
+import {
+  handleSchoolRoute,
+} from "./backend/api/school-routes.js";
+
 
 function json(
   data,
@@ -207,6 +211,19 @@ async function handleRequest(
     });
   }
 
+    const schoolResponse =
+    await handleSchoolRoute(
+      request,
+      env,
+      path
+    );
+
+  if (schoolResponse) {
+    return json(
+      schoolResponse.body,
+      schoolResponse.status
+    );
+  }
 
   /*
    * All other API routes will be
