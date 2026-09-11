@@ -11,14 +11,9 @@
 
   "observability": {
     "enabled": true
-  }
+  },
 
-  /*
-   * Secrets and environment-specific configuration will be added later.
-   *
-   * DO NOT put Firebase private credentials, service-account private keys,
-   * API secrets, or other sensitive values directly in this file.
-   *
-   * They will be configured through Cloudflare Worker secrets/bindings.
-   */
+  "vars": {
+    "FRONTEND_ORIGIN": "http://localhost:3000"
+  }
 }
