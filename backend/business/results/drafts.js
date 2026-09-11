@@ -19,278 +19,136 @@ import {
   deleteDocument,
   runQuery,
 } from "../../firebase/firestore.js";
-
-import {
-  requireTeacher,
-} from "../../auth/authorize.js";
-
 import {
   getClassById,
   getPupilById,
 } from "../../api/school.js";
-
 import {
-  validateDraftInput,
-  validateClassId,
-  validatePupilId,
-  validateSession,
-  validateTerm,
-  validateSubject,
+  requireTeacher,
+} from "../../auth/authorize.js";
+import {
+  validateResultDraft,
+  ResultValidationError,
 } from "./validation.js";
-
-import {
-  writeAuditLog,
-} from "../../security/audit.js";
-
 import {
   calculateResult,
 } from "./calculation.js";
-
-const DRAFT_COLLECTION = "results_draft";
-const SUBMISSION_COLLECTION = "result_submissions";
-const LOCK_COLLECTION = "result_locks";
-
-function makeResultId({
-  pupilId,
-  term,
-  subject,
-}) {
-  /*
-   * Preserve the legacy Fahmid identity convention.
-   *
-   * Legacy:
-   *   `${pupil.id}_${term}_${subject}`
-   */
-  return `${pupilId}_${term}_${subject}`;
-}
-
-function makeSubmissionId({
-  classId,
-  session,
-  term,
-  subject,
-}) {
-  return `${classId}_${session}_${term}_${subject}`;
-}
-
-function makeLockId({
-  classId,
-  session,
-  term,
-  subject,
-}) {
-  return `${classId}_${session}_${term}_${subject}`;
-}
-
-function getSubjectDefinitions(schoolClass) {
-  if (!Array.isArray(schoolClass?.subjects)) {
-    return [];
-  }
-
-  return schoolClass.subjects
-    .map((subject) => {
-      if (typeof subject === "string") {
-        return {
-          id: null,
-          name: subject,
-          code: null,
-        };
-      }
-
-      if (
-        subject &&
-        typeof subject === "object"
-      ) {
-        return {
-          id:
-            subject.id ??
-            subject.subjectId ??
-            null,
-
-          name:
-            subject.name ??
-            subject.subject ??
-            subject.title ??
-            null,
-
-          code:
-            subject.code ??
-            null,
-        };
-      }
-
-      return null;
-    })
-    .filter(Boolean);
-}
-
-function classHasSubject(
-  schoolClass,
-  subject,
-  subjectId = null
-) {
-  const subjects =
-    getSubjectDefinitions(
-      schoolClass
-    );
-
-  return subjects.some(
-    (item) => {
-      if (
-        subjectId &&
-        item.id &&
-        String(item.id) ===
-          String(subjectId)
-      ) {
-        return true;
-      }
-
-      if (
-        item.name &&
-        String(item.name).toLowerCase() ===
-          String(subject).toLowerCase()
-      ) {
-        return true;
-      }
-
-      if (
-        item.code &&
-        String(item.code).toLowerCase() ===
-          String(subject).toLowerCase()
-      ) {
-        return true;
-      }
-
-      return false;
-    }
-  );
-}
-
-async function assertTeacherOwnsClass(
-  env,
-  teacherUid,
-  classId
-) {
-  const schoolClass =
-    await getClassById(
-      env,
-      classId
-    );
-
-  if (!schoolClass) {
-    const error = new Error(
-      "Class not found."
-    );
-
-    error.status = 404;
-    error.code = "CLASS_NOT_FOUND";
-
-    throw error;
-  }
-
-  if (
-    schoolClass.teacherId !==
-    teacherUid
-  ) {
-    const error = new Error(
-      "You are not the teacher assigned to this class."
-    );
-
-    error.status = 403;
-    error.code = "CLASS_ACCESS_DENIED";
-
-    throw error;
-  }
-
-  return schoolClass;
-}
-
+import {
+  assertTeacherOwnsClass,
+  assertPupilBelongsToClass,
+  classHasSubject,
+} from "./roster-validation.js";
+import {
+  audit,
+} from "../../security/audit.js";
 /**
- * Verify that a pupil belongs to the class supplied by the request.
+ * ---------------------------------------------------------------------------
+ * Result draft identifiers
+ * ---------------------------------------------------------------------------
  *
- * Supported pupil representations:
+ * These identifiers intentionally preserve the legacy application's
+ * deterministic IDs.
  *
- *   {
- *     classId: "class-1"
- *   }
+ * Published result:
+ *   pupilId_term_subject
  *
- * or:
+ * Submission:
+ *   classId_session_term_subject
  *
- *   {
- *     class: {
- *       id: "class-1"
- *     }
- *   }
- *
- * or:
- *
- *   {
- *     class: {
- *       classId: "class-1"
- *     }
- *   }
- *
- * We intentionally do not require the pupil to be active here.
- * Historical results may legitimately need to reference pupils
- * who are no longer active.
+ * Lock:
+ *   classId_session_term_subject
  */
-async function assertPupilBelongsToClass(
-  env,
+export function makeResultId({
   pupilId,
-  classId
-) {
-  const pupil =
-    await getPupilById(
-      env,
-      pupilId
-    );
-
-  if (!pupil) {
-    const error = new Error(
-      "Pupil not found."
-    );
-
-    error.status = 404;
-    error.code = "PUPIL_NOT_FOUND";
-
-    throw error;
-  }
-
-  const pupilClassId =
-    pupil.classId ??
-    pupil.class?.id ??
-    pupil.class?.classId ??
-    null;
-
-  if (!pupilClassId) {
-    const error = new Error(
-      "This pupil is not assigned to a class."
-    );
-
-    error.status = 400;
-    error.code = "PUPIL_CLASS_MISSING";
-
-    throw error;
-  }
-
-  if (
-    String(pupilClassId) !==
-    String(classId)
-  ) {
-    const error = new Error(
-      "This pupil does not belong to the selected class."
-    );
-
-    error.status = 403;
-    error.code =
-      "PUPIL_CLASS_MISMATCH";
-
-    throw error;
-  }
-
-  return pupil;
+  term,
+  subject,
+}) {
+  return [
+    String(pupilId),
+    String(term),
+    String(subject),
+  ].join("_");
 }
-
+export function makeSubmissionId({
+  classId,
+  session,
+  term,
+  subject,
+}) {
+  return [
+    String(classId),
+    String(session),
+    String(term),
+    String(subject),
+  ].join("_");
+}
+export function makeLockId({
+  classId,
+  session,
+  term,
+  subject,
+}) {
+  return makeSubmissionId({
+    classId,
+    session,
+    term,
+    subject,
+  });
+}
+/**
+ * ---------------------------------------------------------------------------
+ * Internal helpers
+ * ---------------------------------------------------------------------------
+ */
+function normaliseSubject(subject) {
+  if (subject === undefined || subject === null) {
+    return "";
+  }
+  return String(subject).trim();
+}
+function normaliseTerm(term) {
+  if (term === undefined || term === null) {
+    return "";
+  }
+  return String(term).trim();
+}
+function normaliseSession(session) {
+  if (session === undefined || session === null) {
+    return "";
+  }
+  return String(session).trim();
+}
+/**
+ * Convert a Firestore draft document into the application's result shape.
+ *
+ * Important:
+ * calculated fields are NEVER trusted from the database/client.
+ * They are recalculated from the authoritative raw score components.
+ */
+export function parseDraftDocument(document) {
+  if (!document) {
+    return null;
+  }
+  const calculation = calculateResult(document);
+  return {
+    ...document,
+    total: calculation.total,
+    percentage: calculation.percentage,
+    grade: calculation.grade,
+    remark: calculation.remark,
+  };
+}
+/**
+ * Verify that a draft is still editable.
+ *
+ * A teacher may edit only while:
+ *
+ *   - no submission exists, or
+ *   - the submission has been rejected
+ *
+ * Once submitted/pending, approved, or locked, ordinary teacher editing
+ * is blocked.
+ */
 async function assertUnlockedAndEditable(
   env,
   {
@@ -298,642 +156,615 @@ async function assertUnlockedAndEditable(
     session,
     term,
     subject,
-  }
+  },
 ) {
-  const lockId =
-    makeLockId({
-      classId,
-      session,
-      term,
-      subject,
-    });
-
-  const lock =
-    await getDocument(
-      env,
-      LOCK_COLLECTION,
-      lockId
-    );
-
-  if (lock?.locked === true) {
-    const error = new Error(
-      "This result is locked and cannot be edited."
-    );
-
-    error.status = 403;
-    error.code = "RESULT_LOCKED";
-
-    throw error;
-  }
-
-  const submissionId =
-    makeSubmissionId({
-      classId,
-      session,
-      term,
-      subject,
-    });
-
-  const submission =
-    await getDocument(
-      env,
-      SUBMISSION_COLLECTION,
-      submissionId
-    );
-
-  if (
-    submission?.status === "pending" ||
-    submission?.status === "approved"
-  ) {
-    const error = new Error(
-      "This result submission cannot be edited in its current state."
-    );
-
-    error.status = 409;
-    error.code =
-      "RESULT_SUBMISSION_NOT_EDITABLE";
-
-    throw error;
-  }
-
-  return submission;
-}
-
-function parseDraftDocument(document) {
-  if (!document) {
-    return null;
-  }
-
-  return {
-    ...document,
-
-    calculated:
-      calculateResult(
-        document,
-        document.calculationRules || {}
-      ),
-  };
-}
-
-/**
- * Teacher-readable single draft.
- *
- * Ownership and class/pupil consistency are enforced here.
- */
-export async function getDraft(
-  request,
-  env,
-  {
-    pupilId,
-    term,
-    subject,
-  }
-) {
-  const user =
-    await requireTeacher(
-      request,
-      env
-    );
-
-  validatePupilId(pupilId);
-  validateTerm(term);
-  validateSubject(subject);
-
-  const draftId =
-    makeResultId({
-      pupilId,
-      term,
-      subject,
-    });
-
-  const draft =
-    await getDocument(
-      env,
-      DRAFT_COLLECTION,
-      draftId
-    );
-
-  if (!draft) {
-    return null;
-  }
-
-  if (
-    draft.teacherId !== user.uid &&
-    draft.teacherUid !== user.uid
-  ) {
-    const error = new Error(
-      "You do not have access to this result draft."
-    );
-
-    error.status = 403;
-    error.code =
-      "DRAFT_ACCESS_DENIED";
-
-    throw error;
-  }
-
-  const schoolClass =
-    await assertTeacherOwnsClass(
-      env,
-      user.uid,
-      draft.classId
-    );
-
-  if (
-    !classHasSubject(
-      schoolClass,
-      draft.subject,
-      draft.subjectId
-    )
-  ) {
-    const error = new Error(
-      "The subject on this result does not belong to the class."
-    );
-
-    error.status = 400;
-    error.code =
-      "SUBJECT_NOT_IN_CLASS";
-
-    throw error;
-  }
-
-  await assertPupilBelongsToClass(
-    env,
-    draft.pupilId,
-    draft.classId
-  );
-
-  return parseDraftDocument(
-    draft
-  );
-}
-
-export async function listDrafts(
-  env,
-  {
+  const lockId = makeLockId({
     classId,
     session,
     term,
     subject,
-    teacherUid,
+  });
+  const lock = await getDocument(
+    env,
+    "result_locks",
+    lockId,
+  );
+  if (lock?.locked === true) {
+    throw new ResultValidationError(
+      "This result is locked and cannot be edited.",
+      "RESULT_LOCKED",
+    );
   }
+  const submissionId = makeSubmissionId({
+    classId,
+    session,
+    term,
+    subject,
+  });
+  const submission = await getDocument(
+    env,
+    "result_submissions",
+    submissionId,
+  );
+  if (!submission) {
+    return;
+  }
+  if (submission.status === "pending") {
+    throw new ResultValidationError(
+      "This result has already been submitted and is awaiting review.",
+      "RESULT_SUBMITTED",
+    );
+  }
+  if (submission.status === "approved") {
+    throw new ResultValidationError(
+      "This result has already been approved and cannot be edited.",
+      "RESULT_APPROVED",
+    );
+  }
+  /*
+   * Rejected submissions are intentionally editable.
+   *
+   * Any other unexpected state is rejected rather than silently allowing
+   * modification.
+   */
+  if (
+    submission.status !== "rejected" &&
+    submission.status !== "draft"
+  ) {
+    throw new ResultValidationError(
+      `Result cannot be edited while submission is in status "${submission.status}".`,
+      "RESULT_NOT_EDITABLE",
+    );
+  }
+}
+/**
+ * Validate the complete roster relationship:
+ *
+ * teacher -> class -> subject -> pupil
+ *
+ * This prevents a teacher from submitting arbitrary pupil IDs or subjects
+ * belonging to another class.
+ */
+async function validateRosterForDraft(
+  env,
+  draft,
+  teacherUid,
 ) {
-  validateClassId(classId);
-  validateSession(session);
-  validateTerm(term);
-  validateSubject(subject);
-
-  const filters = [
-    {
-      fieldFilter: {
-        field: {
-          fieldPath: "classId",
-        },
-        op: "EQUAL",
-        value: {
-          stringValue: classId,
-        },
-      },
-    },
-
-    {
-      fieldFilter: {
-        field: {
-          fieldPath: "session",
-        },
-        op: "EQUAL",
-        value: {
-          stringValue: session,
-        },
-      },
-    },
-
-    {
-      fieldFilter: {
-        field: {
-          fieldPath: "term",
-        },
-        op: "EQUAL",
-        value: {
-          stringValue: term,
-        },
-      },
-    },
-
-    {
-      fieldFilter: {
-        field: {
-          fieldPath: "subject",
-        },
-        op: "EQUAL",
-        value: {
-          stringValue: subject,
-        },
-      },
-    },
-  ];
-
-  if (teacherUid) {
-    filters.push({
+  const schoolClass = await getClassById(
+    env,
+    draft.classId,
+  );
+  assertTeacherOwnsClass(
+    schoolClass,
+    teacherUid,
+  );
+  const pupil = await getPupilById(
+    env,
+    draft.pupilId,
+  );
+  assertPupilBelongsToClass(
+    pupil,
+    draft.classId,
+  );
+  if (
+    !classHasSubject(
+      schoolClass,
+      draft.subject,
+      draft.subjectId,
+    )
+  ) {
+    throw new ResultValidationError(
+      "The selected subject does not belong to this class.",
+      "INVALID_SUBJECT",
+    );
+  }
+  return {
+    schoolClass,
+    pupil,
+  };
+}
+/**
+ * ---------------------------------------------------------------------------
+ * Get one draft
+ * ---------------------------------------------------------------------------
+ */
+export async function getDraft(
+  env,
+  request,
+  draftId,
+) {
+  const user = await requireTeacher(
+    env,
+    request,
+  );
+  if (!draftId) {
+    throw new ResultValidationError(
+      "Draft ID is required.",
+      "MISSING_DRAFT_ID",
+    );
+  }
+  const draft = await getDocument(
+    env,
+    "results_draft",
+    draftId,
+  );
+  if (!draft) {
+    return null;
+  }
+  /*
+   * The stored teacher ID is authoritative for ownership checks.
+   */
+  if (
+    String(draft.teacherId) !== String(user.uid)
+  ) {
+    throw new ResultValidationError(
+      "You do not have access to this result draft.",
+      "DRAFT_ACCESS_DENIED",
+    );
+  }
+  await validateRosterForDraft(
+    env,
+    draft,
+    user.uid,
+  );
+  return parseDraftDocument(draft);
+}
+/**
+ * ---------------------------------------------------------------------------
+ * List drafts
+ * ---------------------------------------------------------------------------
+ *
+ * Filters:
+ *   teacherId
+ *   classId
+ *   pupilId
+ *   session
+ *   term
+ *   subject
+ */
+export async function listDrafts(
+  env,
+  filters = {},
+) {
+  const {
+    teacherId,
+    classId,
+    pupilId,
+    session,
+    term,
+    subject,
+  } = filters;
+  const filtersList = [];
+  if (teacherId) {
+    filtersList.push({
       fieldFilter: {
         field: {
           fieldPath: "teacherId",
         },
         op: "EQUAL",
         value: {
-          stringValue: teacherUid,
+          stringValue: String(teacherId),
         },
       },
     });
   }
-
-  const drafts =
-    await runQuery(
-      env,
+  if (classId) {
+    filtersList.push({
+      fieldFilter: {
+        field: {
+          fieldPath: "classId",
+        },
+        op: "EQUAL",
+        value: {
+          stringValue: String(classId),
+        },
+      },
+    });
+  }
+  if (pupilId) {
+    filtersList.push({
+      fieldFilter: {
+        field: {
+          fieldPath: "pupilId",
+        },
+        op: "EQUAL",
+        value: {
+          stringValue: String(pupilId),
+        },
+      },
+    });
+  }
+  if (session) {
+    filtersList.push({
+      fieldFilter: {
+        field: {
+          fieldPath: "session",
+        },
+        op: "EQUAL",
+        value: {
+          stringValue: String(session),
+        },
+      },
+    });
+  }
+  if (term) {
+    filtersList.push({
+      fieldFilter: {
+        field: {
+          fieldPath: "term",
+        },
+        op: "EQUAL",
+        value: {
+          stringValue: String(term),
+        },
+      },
+    });
+  }
+  if (subject) {
+    filtersList.push({
+      fieldFilter: {
+        field: {
+          fieldPath: "subject",
+        },
+        op: "EQUAL",
+        value: {
+          stringValue: String(subject),
+        },
+      },
+    });
+  }
+  const structuredQuery = {
+    from: [
       {
-        from: [
-          {
-            collectionId:
-              DRAFT_COLLECTION,
-          },
-        ],
-
-        where: {
-          compositeFilter: {
-            op: "AND",
-            filters,
-          },
-        },
-      }
-    );
-
-  return drafts
-    .map(parseDraftDocument)
-    .filter(Boolean);
-}
-
-export async function saveDraft(
-  request,
-  env,
-  input
-) {
-  const user =
-    await requireTeacher(
-      request,
-      env
-    );
-
-  const draft =
-    validateDraftInput(
-      input
-    );
-
-  if (
-    draft.teacherId !==
-    user.uid
-  ) {
-    const error = new Error(
-      "teacherId does not match the authenticated teacher."
-    );
-
-    error.status = 403;
-    error.code =
-      "TEACHER_ID_MISMATCH";
-
-    throw error;
-  }
-
-  const schoolClass =
-    await assertTeacherOwnsClass(
-      env,
-      user.uid,
-      draft.classId
-    );
-
-  if (
-    !classHasSubject(
-      schoolClass,
-      draft.subject,
-      draft.subjectId
-    )
-  ) {
-    const error = new Error(
-      "The selected subject does not belong to this class."
-    );
-
-    error.status = 400;
-    error.code =
-      "SUBJECT_NOT_IN_CLASS";
-
-    throw error;
-  }
-
-  /*
-   * SECURITY BOUNDARY:
-   *
-   * Never trust the class supplied by the browser.
-   * Load the pupil from Firestore and verify its actual
-   * class assignment.
-   */
-  await assertPupilBelongsToClass(
-    env,
-    draft.pupilId,
-    draft.classId
-  );
-
-  await assertUnlockedAndEditable(
-    env,
-    {
-      classId:
-        draft.classId,
-
-      session:
-        draft.session,
-
-      term:
-        draft.term,
-
-      subject:
-        draft.subject,
-    }
-  );
-
-  const draftId =
-    makeResultId({
-      pupilId:
-        draft.pupilId,
-
-      term:
-        draft.term,
-
-      subject:
-        draft.subject,
-    });
-
-  const existing =
-    await getDocument(
-      env,
-      DRAFT_COLLECTION,
-      draftId
-    );
-
-  /*
-   * Extra protection against accidental cross-teacher
-   * overwrites when the deterministic legacy ID already exists.
-   */
-  if (
-    existing &&
-    existing.teacherId !== user.uid &&
-    existing.teacherUid !== user.uid
-  ) {
-    const error = new Error(
-      "This result draft belongs to another teacher."
-    );
-
-    error.status = 403;
-    error.code =
-      "DRAFT_ACCESS_DENIED";
-
-    throw error;
-  }
-
-  /*
-   * If an existing draft somehow contains a stale class
-   * assignment, do not silently allow the new request to
-   * overwrite it.
-   */
-  if (
-    existing &&
-    existing.classId &&
-    String(existing.classId) !==
-      String(draft.classId)
-  ) {
-    const error = new Error(
-      "The existing result draft belongs to a different class."
-    );
-
-    error.status = 409;
-    error.code =
-      "DRAFT_CLASS_CONFLICT";
-
-    throw error;
-  }
-
-  const now =
-    new Date().toISOString();
-
-  const stored = {
-    ...(existing || {}),
-    ...draft,
-
-    teacherId:
-      user.uid,
-
-    teacherUid:
-      user.uid,
-
-    updatedAt:
-      now,
-
-    createdAt:
-      existing?.createdAt ??
-      now,
-
-    /*
-     * Do not inherit stale calculated values.
-     * They are always recomputed.
-     */
-    calculationRules:
-      existing?.calculationRules ??
-      null,
-  };
-
-  delete stored.id;
-
-  const saved =
-    await setDocument(
-      env,
-      DRAFT_COLLECTION,
-      draftId,
-      stored
-    );
-
-  await writeAuditLog(
-    env,
-    {
-      user,
-
-      action:
-        existing
-          ? "RESULT_DRAFT_UPDATED"
-          : "RESULT_DRAFT_CREATED",
-
-      collection:
-        DRAFT_COLLECTION,
-
-      documentId:
-        draftId,
-
-      changes: {
-        pupilId:
-          draft.pupilId,
-
-        classId:
-          draft.classId,
-
-        subject:
-          draft.subject,
-
-        term:
-          draft.term,
-
-        session:
-          draft.session,
+        collectionId: "results_draft",
       },
-
-      request,
-    }
-  );
-
-  return {
-    ...saved,
-
-    calculated:
-      calculateResult(
-        saved,
-        saved.calculationRules || {}
-      ),
+    ],
   };
-}
-
-export async function deleteDraft(
-  request,
-  env,
-  {
-    pupilId,
-    term,
-    subject,
+  if (filtersList.length === 1) {
+    structuredQuery.where = filtersList[0];
+  } else if (filtersList.length > 1) {
+    structuredQuery.where = {
+      compositeFilter: {
+        op: "AND",
+        filters: filtersList,
+      },
+    };
   }
-) {
-  const user =
-    await requireTeacher(
-      request,
-      env
-    );
-
-  validatePupilId(pupilId);
-  validateTerm(term);
-  validateSubject(subject);
-
-  const draftId =
-    makeResultId({
-      pupilId,
-      term,
-      subject,
-    });
-
-  const existing =
-    await getDocument(
-      env,
-      DRAFT_COLLECTION,
-      draftId
-    );
-
-  if (!existing) {
-    return false;
-  }
-
-  if (
-    existing.teacherId !==
-      user.uid &&
-    existing.teacherUid !==
-      user.uid
-  ) {
-    const error = new Error(
-      "You do not own this result draft."
-    );
-
-    error.status = 403;
-    error.code =
-      "DRAFT_ACCESS_DENIED";
-
-    throw error;
-  }
-
-  const schoolClass =
-    await assertTeacherOwnsClass(
-      env,
-      user.uid,
-      existing.classId
-    );
-
-  if (
-    !classHasSubject(
-      schoolClass,
-      existing.subject,
-      existing.subjectId
-    )
-  ) {
-    const error = new Error(
-      "The subject on this result does not belong to the class."
-    );
-
-    error.status = 400;
-    error.code =
-      "SUBJECT_NOT_IN_CLASS";
-
-    throw error;
-  }
-
-  await assertPupilBelongsToClass(
+  const documents = await runQuery(
     env,
-    existing.pupilId,
-    existing.classId
+    structuredQuery,
   );
-
+  return documents.map(parseDraftDocument);
+}
+/**
+ * ---------------------------------------------------------------------------
+ * Save draft
+ * ---------------------------------------------------------------------------
+ *
+ * Creates or updates a teacher result draft.
+ *
+ * Important:
+ *   - client-calculated total/percentage/grade/remark are ignored
+ *   - teacher ownership is checked server-side
+ *   - class ownership is checked server-side
+ *   - pupil membership is checked server-side
+ *   - subject membership is checked server-side
+ *   - locks/submission state are checked server-side
+ */
+export async function saveDraft(
+  env,
+  request,
+  input,
+) {
+  const user = await requireTeacher(
+    env,
+    request,
+  );
+  if (!input || typeof input !== "object") {
+    throw new ResultValidationError(
+      "Result draft payload is required.",
+      "INVALID_DRAFT",
+    );
+  }
+  const draft = {
+    ...input,
+  };
+  /*
+   * The authenticated teacher is authoritative.
+   *
+   * Never trust teacherId supplied by the browser.
+   */
+  draft.teacherId = user.uid;
+  /*
+   * Validate raw input before performing writes.
+   */
+  validateResultDraft(draft);
+  /*
+   * Normalise important identifiers.
+   */
+  draft.pupilId = String(draft.pupilId).trim();
+  draft.classId = String(draft.classId).trim();
+  draft.session = normaliseSession(draft.session);
+  draft.term = normaliseTerm(draft.term);
+  draft.subject = normaliseSubject(draft.subject);
+  if (!draft.pupilId) {
+    throw new ResultValidationError(
+      "Pupil ID is required.",
+      "MISSING_PUPIL_ID",
+    );
+  }
+  if (!draft.classId) {
+    throw new ResultValidationError(
+      "Class ID is required.",
+      "MISSING_CLASS_ID",
+    );
+  }
+  if (!draft.session) {
+    throw new ResultValidationError(
+      "Session is required.",
+      "MISSING_SESSION",
+    );
+  }
+  if (!draft.term) {
+    throw new ResultValidationError(
+      "Term is required.",
+      "MISSING_TERM",
+    );
+  }
+  if (!draft.subject) {
+    throw new ResultValidationError(
+      "Subject is required.",
+      "MISSING_SUBJECT",
+    );
+  }
+  /*
+   * Verify:
+   *
+   *   teacher -> class
+   *   pupil -> class
+   *   subject -> class
+   */
+  const {
+    schoolClass,
+  } = await validateRosterForDraft(
+    env,
+    draft,
+    user.uid,
+  );
+  /*
+   * Make sure the result is still editable.
+   */
   await assertUnlockedAndEditable(
     env,
     {
-      classId:
-        existing.classId,
-
-      session:
-        existing.session,
-
-      term:
-        existing.term,
-
-      subject:
-        existing.subject,
-    }
+      classId: draft.classId,
+      session: draft.session,
+      term: draft.term,
+      subject: draft.subject,
+    },
   );
-
+  /*
+   * Deterministic legacy-compatible draft ID.
+   *
+   * We intentionally use pupil + term + subject here so repeated saves
+   * update the same draft rather than creating duplicate records.
+   */
+  const draftId = makeResultId({
+    pupilId: draft.pupilId,
+    term: draft.term,
+    subject: draft.subject,
+  });
+  /*
+   * Prevent an existing draft belonging to another teacher from being
+   * overwritten.
+   */
+  const existing = await getDocument(
+    env,
+    "results_draft",
+    draftId,
+  );
+  if (
+    existing &&
+    String(existing.teacherId) !== String(user.uid)
+  ) {
+    throw new ResultValidationError(
+      "This result draft belongs to another teacher.",
+      "DRAFT_OWNERSHIP_CONFLICT",
+    );
+  }
+  /*
+   * Prevent a draft for the same pupil/term/subject from silently being
+   * moved to another class or session.
+   */
+  if (existing) {
+    if (
+      existing.classId &&
+      String(existing.classId) !== String(draft.classId)
+    ) {
+      throw new ResultValidationError(
+        "An existing draft for this pupil belongs to another class.",
+        "DRAFT_CLASS_CONFLICT",
+      );
+    }
+    if (
+      existing.session &&
+      String(existing.session) !== String(draft.session)
+    ) {
+      throw new ResultValidationError(
+        "An existing draft for this pupil belongs to another session.",
+        "DRAFT_SESSION_CONFLICT",
+      );
+    }
+    if (
+      existing.subjectId &&
+      draft.subjectId &&
+      String(existing.subjectId) !== String(draft.subjectId)
+    ) {
+      throw new ResultValidationError(
+        "An existing draft for this pupil uses another subject.",
+        "DRAFT_SUBJECT_CONFLICT",
+      );
+    }
+  }
+  /*
+   * Authoritative calculation.
+   *
+   * Any total/percentage/grade/remark supplied by the client is discarded.
+   */
+  const calculation = calculateResult(draft);
+  const now = new Date().toISOString();
+  const document = {
+    ...draft,
+    /*
+     * Explicitly preserve authoritative identity fields.
+     */
+    id: draftId,
+    teacherId: user.uid,
+    pupilId: draft.pupilId,
+    classId: draft.classId,
+    session: draft.session,
+    term: draft.term,
+    subject: draft.subject,
+    /*
+     * Server-calculated values.
+     */
+    total: calculation.total,
+    percentage: calculation.percentage,
+    grade: calculation.grade,
+    remark: calculation.remark,
+    /*
+     * Metadata.
+     */
+    updatedAt: now,
+    ...(existing
+      ? {}
+      : {
+          createdAt: now,
+        }),
+  };
+  /*
+   * Persist the draft.
+   *
+   * The existing Firestore helper's merge behavior is deliberately not
+   * relied upon here; this writes the complete authoritative draft.
+   */
+  await setDocument(
+    env,
+    "results_draft",
+    draftId,
+    document,
+  );
+  await audit(
+    env,
+    {
+      action: existing
+        ? "RESULT_DRAFT_UPDATED"
+        : "RESULT_DRAFT_CREATED",
+      actorUid: user.uid,
+      targetType: "result_draft",
+      targetId: draftId,
+      metadata: {
+        pupilId: document.pupilId,
+        classId: document.classId,
+        className: schoolClass?.name ?? null,
+        subject: document.subject,
+        subjectId: document.subjectId ?? null,
+        session: document.session,
+        term: document.term,
+      },
+    },
+  );
+  return parseDraftDocument(document);
+}
+/**
+ * ---------------------------------------------------------------------------
+ * Delete draft
+ * ---------------------------------------------------------------------------
+ */
+export async function deleteDraft(
+  env,
+  request,
+  draftId,
+) {
+  const user = await requireTeacher(
+    env,
+    request,
+  );
+  if (!draftId) {
+    throw new ResultValidationError(
+      "Draft ID is required.",
+      "MISSING_DRAFT_ID",
+    );
+  }
+  const existing = await getDocument(
+    env,
+    "results_draft",
+    draftId,
+  );
+  if (!existing) {
+    return {
+      deleted: false,
+      draftId,
+    };
+  }
+  /*
+   * Ownership check.
+   */
+  if (
+    String(existing.teacherId) !== String(user.uid)
+  ) {
+    throw new ResultValidationError(
+      "You do not have permission to delete this result draft.",
+      "DRAFT_ACCESS_DENIED",
+    );
+  }
+  /*
+   * Re-check the complete roster before allowing deletion.
+   *
+   * This prevents a teacher from using an old/forged draft ID to operate
+   * on a pupil or subject outside their current class roster.
+   */
+  await validateRosterForDraft(
+    env,
+    existing,
+    user.uid,
+  );
+  /*
+   * A draft may only be deleted while the result remains editable.
+   */
+  await assertUnlockedAndEditable(
+    env,
+    {
+      classId: existing.classId,
+      session: existing.session,
+      term: existing.term,
+      subject: existing.subject,
+    },
+  );
   await deleteDocument(
     env,
-    DRAFT_COLLECTION,
-    draftId
+    "results_draft",
+    draftId,
   );
-
-  await writeAuditLog(
+  await audit(
     env,
     {
-      user,
-
-      action:
-        "RESULT_DRAFT_DELETED",
-
-      collection:
-        DRAFT_COLLECTION,
-
-      documentId:
-        draftId,
-
-      deletedData:
-        existing,
-
-      request,
-    }
+      action: "RESULT_DRAFT_DELETED",
+      actorUid: user.uid,
+      targetType: "result_draft",
+      targetId: draftId,
+      metadata: {
+        pupilId: existing.pupilId,
+        classId: existing.classId,
+        subject: existing.subject,
+        subjectId: existing.subjectId ?? null,
+        session: existing.session,
+        term: existing.term,
+      },
+    },
   );
-
-  return true;
+  return {
+    deleted: true,
+    draftId,
+  };
 }
