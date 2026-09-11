@@ -1,90 +1,88 @@
 import {
-  getAllClasses,
-  getClassById,
-  getClassHierarchy,
-} from "../../api/school.js";
+  getDocument,
+  setDocument,
+  updateDocument,
+  deleteDocument,
+  runQuery,
+} from "../../firebase/firestore.js";
 
 import {
   ValidationError,
-  requireArray,
-  requireId,
+  requireObject,
   requireString,
-  sanitizeStringArray,
+  requireArray,
 } from "../../security/validation.js";
 
 export async function getClassDetails(
   env,
   classId
 ) {
-  requireId(classId, "classId");
-
-  const schoolClass =
-    await getClassById(
-      env,
-      classId
-    );
-
-  if (!schoolClass) {
-    return null;
-  }
-
-  return {
-    id: classId,
-    ...schoolClass,
-  };
+  return getDocument(
+    env,
+    "classes",
+    classId
+  );
 }
 
 export async function getOrderedClasses(
   env
 ) {
-  const classes =
-    await getAllClasses(env);
-
   const hierarchy =
-    await getClassHierarchy(env);
+    await getDocument(
+      env,
+      "settings",
+      "classHierarchy"
+    );
 
-  const orderedIds =
-    Array.isArray(
-      hierarchy.orderedClassIds
-    )
-      ? hierarchy.orderedClassIds
-      : [];
+  const classes =
+    await runQuery(
+      env,
+      "classes",
+      {
+        orderBy: [
+          {
+            field: {
+              fieldPath: "name",
+            },
+            direction: "ASCENDING",
+          },
+        ],
+      }
+    );
 
-  const classMap =
+  const byId =
     new Map(
-      classes.map(cls => [
-        cls.id,
-        {
-          id: cls.id,
-          ...cls,
-        },
+      classes.map(item => [
+        item.id,
+        item,
       ])
     );
 
   const ordered = [];
 
-  for (const classId of orderedIds) {
-    const schoolClass =
-      classMap.get(classId);
-
-    if (schoolClass) {
-      ordered.push(schoolClass);
-      classMap.delete(classId);
+  for (
+    const id of
+    hierarchy?.orderedClassIds || []
+  ) {
+    if (byId.has(id)) {
+      ordered.push(
+        byId.get(id)
+      );
+      byId.delete(id);
     }
   }
 
   /*
-   * New classes not yet added to the
-   * hierarchy are appended alphabetically.
+   * Preserve classes that have not yet
+   * been inserted into the hierarchy.
    */
   const remaining =
-    Array.from(
-      classMap.values()
-    ).sort((a, b) =>
-      String(a.name || "")
-        .localeCompare(
-          String(b.name || "")
-        )
+    [...byId.values()].sort(
+      (a, b) =>
+        String(a.name || "")
+          .localeCompare(
+            String(b.name || "")
+          )
     );
 
   return [
@@ -95,35 +93,36 @@ export async function getOrderedClasses(
 
 export async function getNextClass(
   env,
-  currentClassId
+  classId
 ) {
-  requireId(
-    currentClassId,
-    "currentClassId"
-  );
+  const hierarchy =
+    await getDocument(
+      env,
+      "settings",
+      "classHierarchy"
+    );
 
-  const classes =
-    await getOrderedClasses(env);
+  const ids =
+    hierarchy?.orderedClassIds || [];
 
   const index =
-    classes.findIndex(
-      cls =>
-        cls.id === currentClassId
-    );
-
-  if (index === -1) {
-    throw new ValidationError(
-      "Current class was not found in the class hierarchy."
-    );
-  }
+    ids.indexOf(classId);
 
   if (
-    index === classes.length - 1
+    index === -1 ||
+    index >= ids.length - 1
   ) {
     return null;
   }
 
-  return classes[index + 1];
+  const nextId =
+    ids[index + 1];
+
+  return getDocument(
+    env,
+    "classes",
+    nextId
+  );
 }
 
 export function validateClassPayload(
@@ -132,53 +131,63 @@ export function validateClassPayload(
     partial = false,
   } = {}
 ) {
-  if (
-    !payload ||
-    typeof payload !== "object" ||
-    Array.isArray(payload)
-  ) {
-    throw new ValidationError(
-      "Class data must be an object."
-    );
-  }
+  const data = requireObject(
+    payload,
+    "Class data"
+  );
 
   const result = {};
 
-  if (
-    !partial ||
-    payload.name !== undefined
-  ) {
-    result.name =
-      requireString(
-        payload.name,
-        "name",
-        {
-          minLength: 1,
-          maxLength: 150,
-        }
-      );
+  if (!partial || data.name !== undefined) {
+    result.name = requireString(
+      data.name,
+      "name",
+      { maxLength: 200 }
+    );
   }
 
-  if (
-    payload.teacherId !== undefined
-  ) {
+  if (data.teacherId !== undefined) {
     result.teacherId =
-      payload.teacherId === null ||
-      payload.teacherId === ""
+      data.teacherId === null
         ? null
-        : requireId(
-            payload.teacherId,
-            "teacherId"
+        : requireString(
+            data.teacherId,
+            "teacherId",
+            { maxLength: 128 }
           );
   }
 
-  if (
-    payload.subjects !== undefined
-  ) {
-    result.subjects =
-      sanitizeStringArray(
-        payload.subjects,
+  if (data.subjects !== undefined) {
+    const subjects =
+      requireArray(
+        data.subjects,
         "subjects"
+      );
+
+    result.subjects =
+      subjects.map(
+        (subject, index) => {
+          if (
+            typeof subject ===
+            "string"
+          ) {
+            return subject.trim();
+          }
+
+          if (
+            subject &&
+            typeof subject ===
+              "object"
+          ) {
+            return {
+              ...subject,
+            };
+          }
+
+          throw new ValidationError(
+            `subjects[${index}] is invalid.`
+          );
+        }
       );
   }
 
@@ -186,25 +195,150 @@ export function validateClassPayload(
 }
 
 export function validateClassHierarchy(
-  orderedClassIds
+  payload
 ) {
+  const data = requireObject(
+    payload,
+    "Class hierarchy"
+  );
+
   const ids =
-    sanitizeStringArray(
-      orderedClassIds,
-      "orderedClassIds",
-      500
+    requireArray(
+      data.orderedClassIds,
+      "orderedClassIds"
     );
 
-  const unique =
-    new Set(ids);
+  const cleaned =
+    ids.map(
+      (id, index) =>
+        requireString(
+          id,
+          `orderedClassIds[${index}]`,
+          { maxLength: 100 }
+        )
+    );
 
   if (
-    unique.size !== ids.length
+    new Set(cleaned).size !==
+    cleaned.length
   ) {
     throw new ValidationError(
       "Class hierarchy contains duplicate class IDs."
     );
   }
 
-  return ids;
+  return {
+    orderedClassIds: cleaned,
+  };
+}
+
+export async function createClass(
+  env,
+  classId,
+  payload
+) {
+  if (!classId) {
+    throw new ValidationError(
+      "Class ID is required."
+    );
+  }
+
+  const existing =
+    await getDocument(
+      env,
+      "classes",
+      classId
+    );
+
+  if (existing) {
+    throw new ValidationError(
+      "A class with this ID already exists."
+    );
+  }
+
+  const data =
+    validateClassPayload(payload);
+
+  await setDocument(
+    env,
+    "classes",
+    classId,
+    data
+  );
+
+  return {
+    id: classId,
+    ...data,
+  };
+}
+
+export async function updateClass(
+  env,
+  classId,
+  payload
+) {
+  const existing =
+    await getDocument(
+      env,
+      "classes",
+      classId
+    );
+
+  if (!existing) {
+    return null;
+  }
+
+  const changes =
+    validateClassPayload(
+      payload,
+      { partial: true }
+    );
+
+  if (
+    Object.keys(changes).length === 0
+  ) {
+    throw new ValidationError(
+      "No valid changes were supplied."
+    );
+  }
+
+  await updateDocument(
+    env,
+    "classes",
+    classId,
+    changes
+  );
+
+  return {
+    id: classId,
+    ...existing,
+    ...changes,
+  };
+}
+
+export async function deleteClass(
+  env,
+  classId
+) {
+  const existing =
+    await getDocument(
+      env,
+      "classes",
+      classId
+    );
+
+  if (!existing) {
+    return null;
+  }
+
+  await deleteDocument(
+    env,
+    "classes",
+    classId
+  );
+
+  return {
+    id: classId,
+    ...existing,
+  };
 }
