@@ -1,0 +1,15 @@
+{
+  "name": "fahmid-management-system",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Fahmid School Management System",
+  "scripts": {
+    "dev:worker": "wrangler dev",
+    "deploy:worker": "wrangler deploy",
+    "worker:types": "wrangler types"
+  },
+  "devDependencies": {
+    "wrangler": "^4.68.0"
+  }
+}
