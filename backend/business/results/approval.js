@@ -1,6 +1,14 @@
 /**
  * FAHMID SCHOOL MANAGEMENT SYSTEM
  * Result Approval & Publishing
+ *
+ * Admin approval is authoritative.
+ *
+ * IMPORTANT:
+ * The current Firestore abstraction does not expose transactions
+ * or batched writes. Therefore this module uses deterministic IDs,
+ * state guards, validation and recovery checks to make the workflow
+ * as safe and repeatable as possible.
  */
 
 import {
@@ -25,6 +33,7 @@ import {
 } from "./submissions.js";
 
 import {
+  validateDraftInput,
   validateGradeBands,
 } from "./validation.js";
 
@@ -37,14 +46,9 @@ import {
   writeAuditLog,
 } from "../../security/audit.js";
 
-const RESULT_COLLECTION =
-  "results";
-
-const LOCK_COLLECTION =
-  "result_locks";
-
-const SUBMISSION_COLLECTION =
-  "result_submissions";
+const RESULT_COLLECTION = "results";
+const LOCK_COLLECTION = "result_locks";
+const SUBMISSION_COLLECTION = "result_submissions";
 
 function makeResultId({
   pupilId,
@@ -52,21 +56,12 @@ function makeResultId({
   subject,
 }) {
   /*
-   * Preserve legacy production result IDs.
+   * Preserve the existing/legacy result identity convention.
    */
   return `${pupilId}_${term}_${subject}`;
 }
 
 function makeLockId({
-  classId,
-  session,
-  term,
-  subject,
-}) {
-  return `${classId}_${session}_${term}_${subject}`;
-}
-
-function makeSubmissionId({
   classId,
   session,
   term,
@@ -136,24 +131,16 @@ function classHasSubject(
 
       if (
         name &&
-        String(
-          name
-        ).toLowerCase() ===
-          String(
-            subject
-          ).toLowerCase()
+        String(name).toLowerCase() ===
+          String(subject).toLowerCase()
       ) {
         return true;
       }
 
       if (
         code &&
-        String(
-          code
-        ).toLowerCase() ===
-          String(
-            subject
-          ).toLowerCase()
+        String(code).toLowerCase() ===
+          String(subject).toLowerCase()
       ) {
         return true;
       }
@@ -163,22 +150,14 @@ function classHasSubject(
   );
 }
 
-/**
- * Fetch result calculation rules.
- *
- * The rules can be supplied from settings later.
- *
- * For now we accept explicitly provided rules but do not
- * invent historical grade thresholds.
- */
 async function getCalculationRules(
   env,
   submission
 ) {
   /*
-   * A future settings document can provide these.
+   * The settings document is optional.
    *
-   * The fallback is deliberately empty.
+   * No historical grading thresholds are invented here.
    */
   const settings =
     await getDocument(
@@ -207,7 +186,10 @@ async function getCalculationRules(
   };
 
   if (
-    rules.gradeBands
+    rules.gradeBands !==
+    undefined &&
+    rules.gradeBands !==
+    null
   ) {
     rules.gradeBands =
       validateGradeBands(
@@ -216,6 +198,109 @@ async function getCalculationRules(
   }
 
   return rules;
+}
+
+function createResultValidationError(
+  message,
+  code = "INVALID_RESULT_DRAFT"
+) {
+  const error =
+    new Error(message);
+
+  error.status = 409;
+  error.code = code;
+
+  return error;
+}
+
+function ensureDraftMatchesSubmission(
+  draft,
+  submission
+) {
+  if (
+    draft.classId !==
+    submission.classId
+  ) {
+    throw createResultValidationError(
+      "A result draft belongs to a different class.",
+      "RESULT_CLASS_MISMATCH"
+    );
+  }
+
+  if (
+    draft.session !==
+    submission.session
+  ) {
+    throw createResultValidationError(
+      "A result draft belongs to a different session.",
+      "RESULT_SESSION_MISMATCH"
+    );
+  }
+
+  if (
+    draft.term !==
+    submission.term
+  ) {
+    throw createResultValidationError(
+      "A result draft belongs to a different term.",
+      "RESULT_TERM_MISMATCH"
+    );
+  }
+
+  if (
+    String(draft.subject).toLowerCase() !==
+    String(submission.subject).toLowerCase()
+  ) {
+    throw createResultValidationError(
+      "A result draft belongs to a different subject.",
+      "RESULT_SUBJECT_MISMATCH"
+    );
+  }
+
+  const expectedTeacher =
+    submission.teacherUid ||
+    submission.teacherId;
+
+  const actualTeacher =
+    draft.teacherUid ||
+    draft.teacherId;
+
+  if (
+    expectedTeacher &&
+    actualTeacher !==
+      expectedTeacher
+  ) {
+    throw createResultValidationError(
+      "A result draft belongs to a different teacher.",
+      "RESULT_TEACHER_MISMATCH"
+    );
+  }
+}
+
+function validateAndNormalizeDraft(
+  draft
+) {
+  /*
+   * Re-run server validation at approval time.
+   *
+   * This protects against malformed historical/manual documents.
+   */
+  const validated =
+    validateDraftInput(
+      draft
+    );
+
+  return {
+    ...draft,
+
+    ...validated,
+
+    /*
+     * Never allow the stored ID field to become part
+     * of the authoritative result payload.
+     */
+    id: undefined,
+  };
 }
 
 async function getPublishedResult(
@@ -229,17 +314,207 @@ async function getPublishedResult(
   );
 }
 
+async function ensureExistingPublishedResultIsCompatible(
+  env,
+  {
+    resultId,
+    draft,
+    submission,
+  }
+) {
+  const existing =
+    await getPublishedResult(
+      env,
+      resultId
+    );
+
+  if (!existing) {
+    return null;
+  }
+
+  /*
+   * Never overwrite a result belonging to a different
+   * class/session/teacher through an accidental legacy-ID
+   * collision.
+   */
+  if (
+    existing.classId &&
+    existing.classId !==
+      submission.classId
+  ) {
+    throw createResultValidationError(
+      "An existing published result belongs to another class.",
+      "RESULT_ID_COLLISION"
+    );
+  }
+
+  if (
+    existing.session &&
+    existing.session !==
+      submission.session
+  ) {
+    throw createResultValidationError(
+      "An existing published result belongs to another session.",
+      "RESULT_ID_COLLISION"
+    );
+  }
+
+  if (
+    existing.teacherId &&
+    existing.teacherId !==
+      (
+        submission.teacherUid ||
+        submission.teacherId
+      )
+  ) {
+    throw createResultValidationError(
+      "An existing published result belongs to another teacher.",
+      "RESULT_ID_COLLISION"
+    );
+  }
+
+  return existing;
+}
+
 /**
- * Approve a pending submission.
+ * Recover a previously completed approval.
  *
- * IMPORTANT:
- * This function intentionally uses deterministic IDs and an
- * approval-state guard so repeated approval requests are
- * idempotent at the application level.
+ * This is deliberately separate from the normal approval path.
  *
- * The current Firestore abstraction does not expose transactions
- * or batched writes, so true cross-document atomicity is not
- * available yet.
+ * If the submission says approved, we do not republish blindly.
+ * We verify that the lock exists. If it does not, we recreate the
+ * lock from the already-approved submission.
+ */
+async function recoverApprovedSubmission(
+  request,
+  env,
+  admin,
+  submission
+) {
+  const {
+    classId,
+    className,
+    session,
+    term,
+    subject,
+  } = submission;
+
+  const lockId =
+    makeLockId({
+      classId,
+      session,
+      term,
+      subject,
+    });
+
+  const existingLock =
+    await getDocument(
+      env,
+      LOCK_COLLECTION,
+      lockId
+    );
+
+  if (
+    existingLock?.locked === true
+  ) {
+    return {
+      submission,
+      lock: existingLock,
+      alreadyApproved: true,
+      recovered: false,
+    };
+  }
+
+  const now =
+    new Date().toISOString();
+
+  const lock = {
+    ...(existingLock || {}),
+
+    classId,
+
+    className:
+      className ??
+      null,
+
+    term,
+    subject,
+    session,
+
+    locked: true,
+
+    lockedAt:
+      existingLock?.lockedAt ??
+      now,
+
+    lockedBy:
+      existingLock?.lockedBy ??
+      submission.approvedBy ??
+      admin.uid,
+
+    reason:
+      existingLock?.reason ??
+      "Result submission approved and published.",
+
+    submissionId:
+      submission.id ??
+      null,
+
+    createdAt:
+      existingLock?.createdAt ??
+      now,
+
+    updatedAt:
+      now,
+  };
+
+  delete lock.id;
+
+  const savedLock =
+    await setDocument(
+      env,
+      LOCK_COLLECTION,
+      lockId,
+      lock
+    );
+
+  await writeAuditLog(
+    env,
+    {
+      user: admin,
+
+      action:
+        "RESULT_LOCK_RECOVERED",
+
+      collection:
+        LOCK_COLLECTION,
+
+      documentId:
+        lockId,
+
+      changes: {
+        locked:
+          true,
+
+        submissionId:
+          submission.id ??
+          null,
+      },
+
+      request,
+    }
+  );
+
+  return {
+    submission,
+    lock: savedLock,
+    alreadyApproved: true,
+    recovered: true,
+  };
+}
+
+/**
+ * Approve and publish a pending result submission.
  */
 export async function approveSubmission(
   request,
@@ -271,20 +546,29 @@ export async function approveSubmission(
     throw error;
   }
 
+  /*
+   * Recovery/idempotency guard.
+   */
   if (
     submission.status ===
-      "approved"
+    "approved"
   ) {
-    return {
-      submission,
-      alreadyApproved:
-        true,
-    };
+    return recoverApprovedSubmission(
+      request,
+      env,
+      admin,
+      {
+        ...submission,
+        id:
+          submission.id ??
+          submissionId,
+      }
+    );
   }
 
   if (
     submission.status !==
-      "pending"
+    "pending"
   ) {
     const error =
       new Error(
@@ -328,7 +612,9 @@ export async function approveSubmission(
   if (
     !classHasSubject(
       schoolClass,
-      subject
+      subject,
+      submission.subjectId ??
+        null
     )
   ) {
     const error =
@@ -360,28 +646,8 @@ export async function approveSubmission(
 
   if (
     existingLock?.locked ===
-      true
+    true
   ) {
-    /*
-     * If a previous approval completed the lock, make this
-     * request idempotent rather than publishing a second time.
-     */
-    const alreadyApproved =
-      submission.status ===
-      "approved";
-
-    if (
-      alreadyApproved
-    ) {
-      return {
-        submission,
-        lock:
-          existingLock,
-        alreadyApproved:
-          true,
-      };
-    }
-
     const error =
       new Error(
         "This result is already locked."
@@ -402,6 +668,7 @@ export async function approveSubmission(
         session,
         term,
         subject,
+
         teacherUid:
           submission.teacherUid ||
           submission.teacherId,
@@ -423,6 +690,23 @@ export async function approveSubmission(
     throw error;
   }
 
+  /*
+   * Revalidate every draft against the actual submission.
+   */
+  const validatedDrafts =
+    drafts.map(
+      (draft) => {
+        ensureDraftMatchesSubmission(
+          draft,
+          submission
+        );
+
+        return validateAndNormalizeDraft(
+          draft
+        );
+      }
+    );
+
   const rules =
     await getCalculationRules(
       env,
@@ -430,9 +714,10 @@ export async function approveSubmission(
     );
 
   const calculatedResults =
-    drafts.map(
+    validatedDrafts.map(
       (draft) => ({
         draft,
+
         calculated:
           calculateResult(
             draft,
@@ -440,18 +725,19 @@ export async function approveSubmission(
               ...rules,
 
               /*
-               * A draft's own rules are only considered if
-               * explicitly stored by the backend.
+               * Draft-level rules are only used if they
+               * were previously stored by the backend.
                */
-              ...(draft.calculationRules ||
-                {}),
+              ...(draft.calculationRules || {}),
             }
           }),
       })
     );
 
   /*
-   * Calculate positions across this submitted class/subject.
+   * Standard competition ranking.
+   *
+   * The same ordering is used for the published result documents.
    */
   const positions =
     calculatePositions(
@@ -469,26 +755,20 @@ export async function approveSubmission(
   const now =
     new Date().toISOString();
 
-  const publishedResults =
+  /*
+   * Validate all deterministic result identities BEFORE
+   * writing any result documents.
+   *
+   * This minimizes partial writes caused by predictable
+   * validation/collision errors.
+   */
+  const existingResults =
     [];
 
   for (
-    let index = 0;
-    index <
-    calculatedResults.length;
-    index += 1
+    const draft of
+      validatedDrafts
   ) {
-    const entry =
-      calculatedResults[
-        index
-      ];
-
-    const draft =
-      entry.draft;
-
-    const calculated =
-      entry.calculated;
-
     const resultId =
       makeResultId({
         pupilId:
@@ -502,15 +782,52 @@ export async function approveSubmission(
       });
 
     const existing =
-      await getPublishedResult(
+      await ensureExistingPublishedResultIsCompatible(
         env,
-        resultId
+        {
+          resultId,
+          draft,
+          submission,
+        }
       );
 
-    /*
-     * Preserve existing historical fields, while authoritative
-     * calculated fields are overwritten by this approval.
-     */
+    existingResults.push({
+      resultId,
+      existing,
+    });
+  }
+
+  const publishedResults =
+    [];
+
+  /*
+   * Publish authoritative result documents.
+   */
+  for (
+    let index = 0;
+    index <
+      calculatedResults.length;
+    index += 1
+  ) {
+    const entry =
+      calculatedResults[
+        index
+      ];
+
+    const draft =
+      entry.draft;
+
+    const calculated =
+      entry.calculated;
+
+    const {
+      resultId,
+      existing,
+    } =
+      existingResults[
+        index
+      ];
+
     const published = {
       ...(existing || {}),
 
@@ -535,8 +852,7 @@ export async function approveSubmission(
         calculated.total,
 
       /*
-       * Preserve the legacy `score` field as an alias where
-       * appropriate.
+       * Legacy-compatible alias.
        */
       score:
         calculated.total,
@@ -556,22 +872,18 @@ export async function approveSubmission(
       position:
         positions[index],
 
-      classId:
-        classId,
+      classId,
 
       className:
         className ??
         schoolClass.name ??
         null,
 
-      session:
-        session,
+      session,
 
-      term:
-        term,
+      term,
 
-      subject:
-        subject,
+      subject,
 
       teacherId:
         submission.teacherUid ||
@@ -636,7 +948,10 @@ export async function approveSubmission(
   }
 
   /*
-   * Mark submission approved.
+   * Mark the submission approved.
+   *
+   * This happens only after all result documents have been
+   * successfully written.
    */
   const updatedSubmission = {
     ...submission,
@@ -656,6 +971,8 @@ export async function approveSubmission(
     publishedAt:
       now,
   };
+
+  delete updatedSubmission.id;
 
   const savedSubmission =
     await setDocument(
@@ -692,7 +1009,7 @@ export async function approveSubmission(
   );
 
   /*
-   * Finally create the immutable lock.
+   * Create the immutable lock LAST.
    */
   const lock = {
     classId,
@@ -752,8 +1069,7 @@ export async function approveSubmission(
         locked:
           true,
 
-        submissionId:
-          submissionId,
+        submissionId,
       },
 
       request,
@@ -771,6 +1087,9 @@ export async function approveSubmission(
       publishedResults,
 
     alreadyApproved:
+      false,
+
+    recovered:
       false,
   };
 }
