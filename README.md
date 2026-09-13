@@ -1,11 +1,11 @@
 # newfahmid
 
-> A short tagline or one‑sentence description of the project.  
+> A short tagline or one‑sentence description of the project.
 > (Add a brief overview of what the project does and why it matters.)
 
 ---
 
-## 📦 Features
+## Features
 
 - Feature 1 – *Brief description*
 - Feature 2 – *Brief description*
@@ -15,7 +15,7 @@
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -43,9 +43,9 @@ npm start   # or yarn start
 
 ---
 
-## 📖 Usage
+## Usage
 
-Provide a short example of how to use the project.  
+Provide a short example of how to use the project.
 For instance:
 
 ```js
@@ -58,7 +58,7 @@ exampleFunction();
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) before submitting a pull request.
 
@@ -69,13 +69,13 @@ We welcome contributions! Please read our [Contributing Guide](CONTRIBUTING.md) 
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 📬 Contact
+## Contact
 
 - **Author**: Oluwagbemiga Akinde
 - **GitHub**: [gbemigaakinde](https://github.com/gbemigaakinde)
