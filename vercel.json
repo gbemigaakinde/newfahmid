@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": false,
+  "outputDirectory": "frontend/public",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/portal", "destination": "/portal.html" },
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/teacher", "destination": "/teacher.html" },
+    { "source": "/pupil", "destination": "/pupil.html" }
+  ]
+}
