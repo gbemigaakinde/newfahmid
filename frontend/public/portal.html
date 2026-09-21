@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Fahmid School Portal — Loading your dashboard.">
+  <meta name="theme-color" content="#1B3A7A">
+  <title>Portal — Fahmid Nursery &amp; Primary School</title>
+
+  <!-- Same fonts as login.html -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/jpeg" href="IMG_4628.jpeg">
+  <link rel="apple-touch-icon" href="IMG_4628.jpeg">
+  <link rel="manifest" href="/manifest.json">
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Fahmid School">
+
+  <style>
+    /* ── PORTAL LOADING PAGE ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: var(--ink-900);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-body);
+      overflow: hidden;
+    }
+
+    /* ── ANIMATED BACKGROUND ── */
+    .portal-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: var(--ink-900);
+      overflow: hidden;
+    }
+
+    .portal-bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      animation: orbFloat 8s ease-in-out infinite;
+    }
+
+    .portal-bg-orb:nth-child(1) {
+      width: 600px;
+      height: 600px;
+      background: var(--accent);
+      top: -200px;
+      right: -100px;
+      animation-delay: 0s;
+    }
+
+    .portal-bg-orb:nth-child(2) {
+      width: 400px;
+      height: 400px;
+      background: var(--accent);
+      bottom: -150px;
+      left: -100px;
+      animation-delay: -4s;
+      opacity: 0.08;
+    }
+
+    .portal-bg-orb:nth-child(3) {
+      width: 250px;
+      height: 250px;
+      background: white;
+      top: 40%;
+      left: 30%;
+      animation-delay: -2s;
+      opacity: 0.03;
+    }
+
+    @keyframes orbFloat {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-30px) scale(1.05); }
+    }
+
+    /* ── CARD ── */
+    .portal-card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 480px;
+      margin: var(--s-5);
+      background: var(--surface);
+      border-radius: var(--radius-2xl);
+      padding: var(--s-12) var(--s-10);
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.06),
+        0 32px 64px rgba(0,0,0,0.4),
+        0 8px 24px rgba(0,0,0,0.3);
+      animation: cardIn 0.6s var(--ease-out) both;
+    }
+
+    @keyframes cardIn {
+      from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* ── LOGO ── */
+    .portal-logo {
+      display: flex;
+      align-items: center;
+      gap: var(--s-3);
+      margin-bottom: var(--s-10);
+      justify-content: center;
+    }
+
+    .portal-logo-name {
+      font-family: var(--font-display);
+      font-size: var(--text-xl);
+      color: var(--ink-900);
+    }
+
+    /* ── SPINNER ── */
+    .portal-spinner-wrap {
+      display: flex;
+      justify-content: center;
+      margin-bottom: var(--s-8);
+    }
+
+    .portal-spinner {
+      width: 56px;
+      height: 56px;
+      position: relative;
+    }
+
+    /* Outer track */
+    .portal-spinner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 3px solid var(--surface-border);
+    }
+
+    /* Spinning arc */
+    .portal-spinner::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      border-top-color: var(--accent);
+      border-right-color: var(--accent);
+      animation: spinArc 0.9s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+    }
+
+    @keyframes spinArc {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── TEXT ── */
+    .portal-title {
+      font-family: var(--font-display);
+      font-size: var(--text-2xl);
+      color: var(--ink-900);
+      text-align: center;
+      margin-bottom: var(--s-2);
+    }
+
+    .portal-status {
+      font-size: var(--text-sm);
+      color: var(--ink-500);
+      text-align: center;
+      min-height: 1.5em;
+      transition: opacity 0.3s ease;
+    }
+
+    /* ── PROGRESS TRACK ── */
+    .portal-progress {
+      margin-top: var(--s-8);
+      height: 3px;
+      background: var(--surface-border);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+    }
+
+    .portal-progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: var(--radius-pill);
+      width: 0%;
+      animation: progressPulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes progressPulse {
+      0%   { width: 0%; opacity: 1; }
+      60%  { width: 80%; opacity: 1; }
+      85%  { width: 92%; opacity: 0.8; }
+      100% { width: 96%; opacity: 0.6; }
+    }
+
+    /* ── STEP DOTS ── */
+    .portal-steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--s-3);
+      margin-top: var(--s-6);
+    }
+
+    .portal-step {
+      display: flex;
+      align-items: center;
+      gap: var(--s-2);
+      font-size: var(--text-xs);
+      font-weight: var(--w-medium);
+      color: var(--ink-400);
+      transition: color 0.3s ease;
+    }
+
+    .portal-step.done { color: var(--accent); }
+    .portal-step.active { color: var(--ink-700); }
+
+    .portal-step-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--surface-border);
+      transition: background 0.3s ease, transform 0.3s ease;
+      flex-shrink: 0;
+    }
+
+    .portal-step.done .portal-step-dot {
+      background: var(--accent);
+    }
+
+    .portal-step.active .portal-step-dot {
+      background: var(--ink-700);
+      transform: scale(1.3);
+      animation: dotPulse 1s ease-in-out infinite;
+    }
+
+    @keyframes dotPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(27,58,122,0.4); }
+      50% { box-shadow: 0 0 0 4px rgba(27,58,122,0); }
+    }
+
+    /* Divider between dots */
+    .portal-step-divider {
+      width: 20px;
+      height: 1px;
+      background: var(--surface-border);
+    }
+
+    /* ── ERROR STATE ── */
+    .portal-card.error .portal-spinner::after {
+      border-top-color: var(--red, #b91c1c);
+      border-right-color: var(--red, #b91c1c);
+      animation: none;
+      transform: rotate(45deg);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Animated background -->
+  <div class="portal-bg" aria-hidden="true">
+    <div class="portal-bg-orb"></div>
+    <div class="portal-bg-orb"></div>
+    <div class="portal-bg-orb"></div>
+  </div>
+
+  <!-- Loading card -->
+  <div class="portal-card" id="portal-card">
+
+    <!-- Logo -->
+    <div class="portal-logo">
+      <div class="nav-logo-icon">
+        <img src="IMG_4629.png" alt="Fahmid School logo">
+      </div>
+      <span class="portal-logo-name">Fahmid School</span>
+    </div>
+
+    <!-- Spinner -->
+    <div class="portal-spinner-wrap" aria-hidden="true">
+      <div class="portal-spinner"></div>
+    </div>
+
+    <!-- Text -->
+    <h1 class="portal-title">Setting Things Up</h1>
+    <p class="portal-status" id="portal-status" aria-live="polite">Verifying your session…</p>
+
+    <!-- Progress bar -->
+    <div class="portal-progress" aria-hidden="true">
+      <div class="portal-progress-fill" id="portal-progress-fill"></div>
+    </div>
+
+    <!-- Step indicators -->
+    <div class="portal-steps" aria-hidden="true">
+      <div class="portal-step active" id="step-auth">
+        <span class="portal-step-dot"></span>
+        <span>Auth</span>
+      </div>
+      <div class="portal-step-divider"></div>
+      <div class="portal-step" id="step-role">
+        <span class="portal-step-dot"></span>
+        <span>Role</span>
+      </div>
+      <div class="portal-step-divider"></div>
+      <div class="portal-step" id="step-redirect">
+        <span class="portal-step-dot"></span>
+        <span>Portal</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Toast container -->
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="script.js"></script>
+
+<script type="module">
+    import {
+      watchAuthState,
+      logout as firebaseLogout,
+    } from "../js/firebase-auth.js";
+
+    import {
+      isSessionWithinTimeframe,
+      clearLoginTimestamp,
+      handleApiError,
+    } from "../js/session.js";
+
+    import { api } from "../js/api-client.js";
+
+    /* ── UI helpers ── */
+    const statusEl  = document.getElementById('portal-status');
+    const card      = document.getElementById('portal-card');
+    const stepAuth  = document.getElementById('step-auth');
+    const stepRole  = document.getElementById('step-role');
+    const stepRedir = document.getElementById('step-redirect');
+
+    function setStatus(msg) {
+      statusEl.style.opacity = '0';
+      setTimeout(() => {
+        statusEl.textContent = msg;
+        statusEl.style.opacity = '1';
+      }, 180);
+    }
+
+    function markDone(el)   { el.classList.remove('active'); el.classList.add('done'); }
+    function markActive(el) { el.classList.remove('done');   el.classList.add('active'); }
+
+    const ROLE_PAGES = {
+      admin: 'admin.html',
+      teacher: 'teacher.html',
+      pupil: 'pupil.html',
+    };
+
+    /* ── MAIN PORTAL LOGIC ── */
+    function initPortal() {
+      setStatus('Verifying your session…');
+
+      const unsubscribe = watchAuthState(async (user) => {
+        unsubscribe();
+
+        if (!user) {
+          console.warn('No auth session found — redirecting to login.');
+          setStatus('Please log in to continue.');
+          setTimeout(() => window.location.replace('login'), 1200);
+          return;
+        }
+
+        // Double-check the login-timeframe window. session.js also
+        // enforces this in the background on portal pages that call
+        // requireRole(), but checking here means we never briefly
+        // flash the portal for an expired session.
+        if (!isSessionWithinTimeframe()) {
+          console.warn('Session timeframe expired — redirecting to login.');
+          setStatus('Your session has expired. Please log in again.');
+          clearLoginTimestamp();
+          await firebaseLogout().catch(() => {});
+          setTimeout(() => window.location.replace('login'), 1200);
+          return;
+        }
+
+        try {
+          markDone(stepAuth);
+          markActive(stepRole);
+          setStatus('Checking your access level…');
+
+          // The Worker retries its own Firestore reads internally, so
+          // a single call here is enough — no client-side retry loop
+          // against the database is needed any more.
+          const { user: profile } = await api.get('/api/auth/me');
+          const role = profile?.role;
+          const destination = ROLE_PAGES[role];
+
+          if (!destination) {
+            throw new Error('Unknown or missing role: ' + role);
+          }
+
+          markDone(stepRole);
+          markActive(stepRedir);
+          setStatus(`Welcome! Opening your ${role} portal…`);
+
+          setTimeout(() => {
+            window.location.replace(destination);
+          }, 900);
+
+        } catch (error) {
+          console.error('Portal redirect error:', error);
+          card.classList.add('error');
+          setStatus('Error loading your profile. Redirecting to login…');
+
+          handleApiError(error, 'Unable to load your profile');
+
+          await firebaseLogout().catch(() => {});
+
+          setTimeout(() => {
+            window.location.replace('login');
+          }, 3000);
+        }
+      });
+    }
+
+    initPortal();
+
+    let alreadyLoaded = false;
+    watchAuthState((user) => {
+      if (user) {
+        alreadyLoaded = true;
+        return;
+      }
+      if (alreadyLoaded) {
+        setStatus('Session expired. Please log in again.');
+        if (window.showToast) {
+          window.showToast('Session expired. Please log in again.', 'warning');
+        }
+        setTimeout(() => window.location.replace('login'), 1200);
+      }
+    });
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  </script>
+
+</body>
+</html>
