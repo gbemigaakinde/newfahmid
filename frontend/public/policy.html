@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Official school policies of Fahmid Nursery and Primary School — covering admissions, safeguarding, behaviour, health and safety, and more.">
+  <meta name="theme-color" content="#1B3A7A">
+  <title>School Policy — Fahmid Nursery &amp; Primary School</title>
+  <link rel="canonical" href="https://fahmidschool.com.ng/policy.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest" defer></script>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/jpeg" href="IMG_4628.jpeg">
+  <link rel="apple-touch-icon" href="IMG_4628.jpeg">
+
+  <style>
+    /* ============================================================
+       POLICY PAGE — SCREEN STYLES
+       ============================================================ */
+
+    .policy-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--s-12);
+      align-items: start;
+    }
+
+    @media (min-width: 1024px) {
+      .policy-layout {
+        grid-template-columns: 260px 1fr;
+        gap: var(--s-16);
+      }
+    }
+
+    /* Sticky sidebar */
+    .policy-sidebar {
+      position: static;
+    }
+
+    @media (min-width: 1024px) {
+      .policy-sidebar {
+        position: sticky;
+        top: calc(var(--nav-height) + var(--s-8));
+      }
+    }
+
+    .toc-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+    }
+
+    .toc-header {
+      padding: var(--s-5) var(--s-6);
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: var(--s-3);
+    }
+
+    .toc-header svg {
+      width: 18px;
+      height: 18px;
+      color: rgba(255,255,255,0.8);
+      flex-shrink: 0;
+    }
+
+    .toc-header-title {
+      font-size: var(--text-sm);
+      font-weight: var(--w-semibold);
+      color: white;
+      letter-spacing: 0.04em;
+    }
+
+    .toc-list {
+      padding: var(--s-4) 0;
+    }
+
+    .toc-list a {
+      display: flex;
+      align-items: center;
+      gap: var(--s-3);
+      padding: var(--s-3) var(--s-6);
+      font-size: var(--text-sm);
+      color: var(--ink-700);
+      font-weight: var(--w-medium);
+      border-left: 3px solid transparent;
+      transition: all var(--t-fast);
+      line-height: 1.4;
+    }
+
+    .toc-list a:hover,
+    .toc-list a.active {
+      color: var(--accent);
+      background: var(--accent-pale);
+      border-left-color: var(--accent);
+    }
+
+    .toc-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      background: var(--surface-alt);
+      border-radius: 50%;
+      font-size: var(--text-xs);
+      font-weight: var(--w-semibold);
+      color: var(--ink-500);
+      flex-shrink: 0;
+      transition: all var(--t-fast);
+    }
+
+    .toc-list a:hover .toc-number,
+    .toc-list a.active .toc-number {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Meta bar */
+    .policy-meta-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--s-4);
+      padding: var(--s-4) var(--s-6);
+      background: var(--accent-pale);
+      border: 1px solid rgba(27,58,122,0.12);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--s-12);
+    }
+
+    .policy-meta-item {
+      display: flex;
+      align-items: center;
+      gap: var(--s-2);
+      font-size: var(--text-sm);
+      color: var(--ink-700);
+    }
+
+    .policy-meta-item svg {
+      width: 16px;
+      height: 16px;
+      color: var(--accent);
+    }
+
+    .policy-meta-item strong {
+      font-weight: var(--w-semibold);
+      color: var(--ink-900);
+    }
+
+    /* Policy sections */
+    .policy-section {
+      margin-bottom: var(--s-16);
+      padding-bottom: var(--s-16);
+      border-bottom: 1px solid var(--surface-border);
+      scroll-margin-top: calc(var(--nav-height) + var(--s-8));
+    }
+
+    .policy-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .policy-section-header {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--s-5);
+      margin-bottom: var(--s-8);
+    }
+
+    .policy-section-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .policy-section-icon svg {
+      width: 22px;
+      height: 22px;
+      color: white;
+    }
+
+    .policy-section-number {
+      font-size: var(--text-xs);
+      font-weight: var(--w-semibold);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: var(--s-1);
+    }
+
+    .policy-section h2 {
+      font-family: var(--font-display);
+      font-size: clamp(var(--text-2xl), 3vw, var(--text-3xl));
+      color: var(--ink-900);
+      line-height: 1.2;
+    }
+
+    .policy-body h3 {
+      font-family: var(--font-display);
+      font-size: var(--text-xl);
+      color: var(--ink-900);
+      margin-top: var(--s-8);
+      margin-bottom: var(--s-3);
+    }
+
+    .policy-body h3:first-child {
+      margin-top: 0;
+    }
+
+    .policy-body p {
+      font-size: var(--text-base);
+      color: var(--ink-700);
+      line-height: 1.8;
+      margin-bottom: var(--s-4);
+    }
+
+    .policy-body ul,
+    .policy-body ol {
+      list-style: none;
+      padding: 0;
+      margin-bottom: var(--s-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--s-2);
+    }
+
+    .policy-body ul li,
+    .policy-body ol li {
+      font-size: var(--text-base);
+      color: var(--ink-700);
+      line-height: 1.7;
+      padding-left: var(--s-6);
+      position: relative;
+    }
+
+    .policy-body ul li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 11px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+    }
+
+    .policy-body ol {
+      counter-reset: policy-ol;
+    }
+
+    .policy-body ol li {
+      counter-increment: policy-ol;
+    }
+
+    .policy-body ol li::before {
+      content: counter(policy-ol) ".";
+      position: absolute;
+      left: 0;
+      top: 0;
+      font-size: var(--text-sm);
+      font-weight: var(--w-semibold);
+      color: var(--accent);
+    }
+
+    .policy-highlight {
+      background: var(--accent-pale);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+      padding: var(--s-5) var(--s-6);
+      margin-bottom: var(--s-6);
+    }
+
+    .policy-highlight p {
+      margin: 0;
+      font-size: var(--text-sm);
+      color: var(--ink-800);
+      font-weight: var(--w-medium);
+    }
+
+    .policy-alert {
+      background: #FEF3C7;
+      border-left: 4px solid var(--gold);
+      border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+      padding: var(--s-5) var(--s-6);
+      margin-bottom: var(--s-6);
+    }
+
+    .policy-alert p {
+      margin: 0;
+      font-size: var(--text-sm);
+      color: #92400E;
+    }
+
+    /* Print button */
+    .print-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--s-2);
+      padding: var(--s-3) var(--s-5);
+      font-size: var(--text-sm);
+      font-weight: var(--w-semibold);
+      color: var(--ink-600);
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      transition: all var(--t-fast);
+      text-decoration: none;
+    }
+
+    .print-btn:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--accent-pale);
+    }
+
+    .print-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Mobile TOC toggle */
+    .toc-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: var(--s-4) var(--s-5);
+      background: var(--accent-pale);
+      border: 1px solid rgba(27,58,122,0.15);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      font-size: var(--text-sm);
+      font-weight: var(--w-semibold);
+      color: var(--accent);
+      margin-bottom: var(--s-8);
+    }
+
+    .toc-toggle svg {
+      width: 18px;
+      height: 18px;
+      transition: transform var(--t-base);
+    }
+
+    .toc-toggle.open svg {
+      transform: rotate(180deg);
+    }
+
+    .toc-mobile-panel {
+      display: none;
+      margin-bottom: var(--s-8);
+    }
+
+    .toc-mobile-panel.open {
+      display: block;
+    }
+
+    @media (min-width: 1024px) {
+      .toc-toggle,
+      .toc-mobile-panel {
+        display: none !important;
+      }
+    }
+
+    /* Print header — hidden on screen */
+    .print-doc-header {
+      display: none;
+    }
+
+    /* ============================================================
+       PRINT STYLES
+       ============================================================ */
+    @media print {
+
+      /* Hide screen-only elements */
+      .policy-sidebar,
+      .toc-toggle,
+      .toc-mobile-panel,
+      .print-btn,
+      .cta-banner,
+      .page-hero,
+      .site-nav,
+      .nav-mobile-menu,
+      .nav-mobile-overlay,
+      .site-footer,
+      #toast-container,
+      .policy-meta-bar {
+        display: none !important;
+      }
+
+      /* Show the print letterhead */
+      .print-doc-header {
+        display: block !important;
+      }
+
+      /* Reset body */
+      body {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 10.5pt;
+        color: #1C1F2A;
+        background: white;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* Section padding reset */
+      .section {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+      }
+
+      /* Single column layout */
+      .policy-layout {
+        grid-template-columns: 1fr !important;
+        gap: 0 !important;
+      }
+
+      /* Fix reveal opacity */
+      .reveal {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+
+      /* Policy sections */
+      .policy-section {
+        page-break-inside: avoid;
+        margin-bottom: 1.8rem;
+        padding-bottom: 1.8rem;
+        border-bottom: 1px solid #D8DAE4;
+      }
+
+      .policy-section:last-child {
+        border-bottom: none;
+      }
+
+      /* Section headings */
+      .policy-section-header {
+        margin-bottom: 0.75rem;
+        gap: 0.6rem;
+      }
+
+      .policy-section-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .policy-section-icon svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .policy-section-number {
+        font-size: 7.5pt;
+        color: #C89F4D !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .policy-section h2 {
+        font-family: 'DM Serif Display', serif;
+        font-size: 14pt;
+        color: #1B3A7A !important;
+        line-height: 1.2;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .policy-body h3 {
+        font-family: 'DM Serif Display', serif;
+        font-size: 11pt;
+        color: #0D0F14 !important;
+        margin-top: 0.9rem;
+        margin-bottom: 0.3rem;
+      }
+
+      .policy-body p {
+        font-size: 10pt;
+        color: #1C1F2A !important;
+        line-height: 1.65;
+        margin-bottom: 0.4rem;
+      }
+
+      .policy-body ul li,
+      .policy-body ol li {
+        font-size: 10pt;
+        color: #1C1F2A !important;
+        line-height: 1.6;
+      }
+
+      .policy-body ul li::before {
+        background: #C89F4D !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .policy-body ol li::before {
+        color: #1B3A7A !important;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .policy-highlight {
+        background: #EAF0FD !important;
+        border-left: 3px solid #1B3A7A !important;
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 0.6rem;
+        border-radius: 0 4px 4px 0;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .policy-highlight p {
+        font-size: 9.5pt;
+        color: #1C1F2A !important;
+      }
+
+      .policy-alert {
+        background: #FEF3C7 !important;
+        border-left: 3px solid #C89F4D !important;
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 0.6rem;
+        border-radius: 0 4px 4px 0;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      .policy-alert p {
+        font-size: 9.5pt;
+        color: #92400E !important;
+      }
+
+      @page {
+        margin: 18mm 16mm 22mm 16mm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<header class="site-nav" id="site-nav" role="banner">
+  <div class="container nav-inner">
+    <a href="index.html" class="nav-logo" aria-label="Fahmid School — Home">
+      <div class="nav-logo-icon">
+        <img src="IMG_4629.png" alt="Fahmid School logo">
+      </div>
+      <div class="nav-logo-text">
+        <span class="nav-logo-name">Fahmid School</span>
+        <span class="nav-logo-tagline">Nursery &amp; Primary</span>
+      </div>
+    </a>
+    <nav aria-label="Main navigation">
+      <ul class="nav-links" role="list">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="academics.html">Academics</a></li>
+        <li><a href="admissions.html">Admissions</a></li>
+        <li><a href="school-life.html">School Life</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+    </nav>
+    <div class="nav-actions">
+      <a href="login" class="nav-portal-link">Portal Login</a>
+      <a href="admissions.html" class="btn btn-primary btn-sm nav-apply-btn">Apply Now</a>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Open navigation menu" aria-expanded="false" aria-controls="nav-mobile-menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="nav-mobile-overlay" id="nav-overlay" aria-hidden="true"></div>
+<nav class="nav-mobile-menu" id="nav-mobile-menu" aria-label="Mobile navigation">
+  <a href="index.html"><i data-lucide="home" style="width:18px;height:18px;"></i> Home</a>
+  <a href="about.html"><i data-lucide="info" style="width:18px;height:18px;"></i> About</a>
+  <a href="academics.html"><i data-lucide="book-open" style="width:18px;height:18px;"></i> Academics</a>
+  <a href="admissions.html"><i data-lucide="file-text" style="width:18px;height:18px;"></i> Admissions</a>
+  <a href="school-life.html"><i data-lucide="users" style="width:18px;height:18px;"></i> School Life</a>
+  <a href="gallery.html"><i data-lucide="image" style="width:18px;height:18px;"></i> Gallery</a>
+  <a href="news.html"><i data-lucide="newspaper" style="width:18px;height:18px;"></i> News &amp; Events</a>
+  <a href="contact.html"><i data-lucide="phone" style="width:18px;height:18px;"></i> Contact</a>
+  <div class="nav-mobile-divider"></div>
+  <a href="login"><i data-lucide="log-in" style="width:18px;height:18px;"></i> Portal Login</a>
+  <div class="nav-mobile-cta">
+    <a href="admissions.html" class="btn btn-primary" style="width:100%;justify-content:center;">Apply Now</a>
+  </div>
+</nav>
+
+<main id="main">
+
+  <div class="page-hero">
+    <div class="page-hero-bg">
+      <img src="IMG_4628.jpeg" alt="" aria-hidden="true" loading="eager">
+    </div>
+    <div class="container page-hero-inner">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Home</a>
+        <span class="breadcrumb-sep" aria-hidden="true">›</span>
+        <span aria-current="page">School Policy</span>
+      </nav>
+      <h1>School Policy</h1>
+      <p class="page-hero-lead">These are the rules and procedures that guide how our school runs — for the benefit of every pupil, parent, and member of staff.</p>
+    </div>
+  </div>
+
+  <section class="section" aria-label="School policies">
+    <div class="container">
+
+      <!-- PRINT LETTERHEAD -->
+      <div class="print-doc-header">
+        <div style="height:6px; background:#1B3A7A; margin-bottom:0; print-color-adjust:exact; -webkit-print-color-adjust:exact;"></div>
+        <div style="height:3px; background:#C89F4D; margin-bottom:1.5rem; print-color-adjust:exact; -webkit-print-color-adjust:exact;"></div>
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:1rem;">
+          <div>
+            <div style="font-family:'DM Serif Display',serif; font-size:20pt; color:#1B3A7A; line-height:1.1; print-color-adjust:exact; -webkit-print-color-adjust:exact;">Fahmid Nursery &amp; Primary School</div>
+            <div style="font-family:'DM Sans',sans-serif; font-size:8.5pt; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#C89F4D; margin-top:5px; print-color-adjust:exact; -webkit-print-color-adjust:exact;">18 Shittu Street, Adura Bus Stop, Alagbado, Ifako-Ijaiye, Lagos</div>
+            <div style="font-family:'DM Sans',sans-serif; font-size:8.5pt; color:#6B7490; margin-top:2px;">fahmidschool@gmail.com</div>
+          </div>
+          <div style="text-align:right; font-family:'DM Sans',sans-serif; font-size:9pt; color:#4B5268; line-height:1.9;">
+            <div style="font-weight:700; color:#1B3A7A; letter-spacing:0.05em; text-transform:uppercase; font-size:8pt; print-color-adjust:exact; -webkit-print-color-adjust:exact;">Official Policy Document</div>
+            <div>Last Reviewed: <strong style="color:#1C1F2A;">January 2026</strong></div>
+            <div>Next Review Due: <strong style="color:#1C1F2A;">January 2027</strong></div>
+            <div>Approved by: <strong style="color:#1C1F2A;">School Management</strong></div>
+          </div>
+        </div>
+        <div style="border-top:1.5px solid #D8DAE4; border-bottom:1.5px solid #D8DAE4; padding:0.75rem 0; margin-bottom:1.5rem; text-align:center;">
+          <div style="font-family:'DM Serif Display',serif; font-size:16pt; color:#0D0F14; letter-spacing:-0.01em; print-color-adjust:exact; -webkit-print-color-adjust:exact;">School Policy Handbook</div>
+          <div style="font-family:'DM Sans',sans-serif; font-size:8.5pt; color:#6B7490; margin-top:3px; letter-spacing:0.06em; text-transform:uppercase;">Nursery &amp; Primary — All Policies</div>
+        </div>
+      </div>
+
+      <!-- Screen meta bar -->
+      <div class="policy-meta-bar">
+        <div class="policy-meta-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>Last reviewed: <strong>January 2026</strong></span>
+        </div>
+        <div class="policy-meta-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Approved by: <strong>School Management</strong></span>
+        </div>
+        <div class="policy-meta-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>Next review due: <strong>January 2027</strong></span>
+        </div>
+        <button class="print-btn" onclick="window.print()">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print Policies
+        </button>
+      </div>
+
+      <div class="policy-layout">
+
+        <aside class="policy-sidebar" aria-label="Policy navigation">
+          <div class="toc-card">
+            <div class="toc-header">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              <span class="toc-header-title">Table of Contents</span>
+            </div>
+            <nav aria-label="Policy table of contents">
+              <div class="toc-list">
+                <a href="#admission"><span class="toc-number">1</span> Admission Policy</a>
+                <a href="#attendance"><span class="toc-number">2</span> Attendance Policy</a>
+                <a href="#safeguarding"><span class="toc-number">3</span> Child Protection &amp; Safeguarding</a>
+                <a href="#anti-bullying"><span class="toc-number">4</span> Anti-Bullying Policy</a>
+                <a href="#health-safety"><span class="toc-number">5</span> Health &amp; Safety Policy</a>
+                <a href="#behaviour"><span class="toc-number">6</span> Behaviour &amp; Discipline Policy</a>
+                <a href="#data-protection"><span class="toc-number">7</span> Data Protection &amp; Privacy Policy</a>
+                <a href="#staff-conduct"><span class="toc-number">8</span> Staff Conduct Policy</a>
+                <a href="#complaints"><span class="toc-number">9</span> Complaints &amp; Grievance Procedure</a>
+              </div>
+            </nav>
+          </div>
+        </aside>
+
+        <div class="policy-content">
+
+          <!-- 1. ADMISSION POLICY -->
+          <article class="policy-section reveal" id="admission">
+            <div class="policy-section-header">
+              <div class="policy-section-icon" style="background: linear-gradient(135deg, #1B3A7A, #2D5FBF);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              </div>
+              <div>
+                <div class="policy-section-number">Policy 01</div>
+                <h2>Admission Policy</h2>
+              </div>
+            </div>
+            <div class="policy-body">
+              <h3>What This Policy Covers</h3>
+              <p>This policy explains how Fahmid Nursery and Primary School handles applications for new pupils. It applies to all admissions at both the Nursery and Primary levels, and sets out what parents need to do, what we look for, and how we make our decisions when places are limited.</p>
+
+              <h3>Who We Admit</h3>
+              <p>We admit children between the ages of 2 and 12, subject to available spaces and the following age requirements:</p>
+              <ul>
+                <li>Nursery 1: your child must be at least 2 years old by the first day of the new term.</li>
+                <li>Primary 1: your child must be at least 5 years old and must have completed nursery or an equivalent pre-school programme.</li>
+                <li>Mid-term and mid-school transfers are considered based on available spaces and the child's readiness for the class level they are entering.</li>
+              </ul>
+
+              <h3>How to Apply</h3>
+              <ol>
+                <li>Collect and complete the Application Form from the school office or download it from our website.</li>
+                <li>Return the completed form with all required documents and the non-refundable application fee.</li>
+                <li>We will confirm receipt of your application within five working days.</li>
+                <li>Where appropriate, your child will be invited for a brief informal assessment and we may ask to meet with you as well.</li>
+                <li>If a place is offered, you will receive a formal letter and must confirm your acceptance within ten working days.</li>
+                <li>A place is only secured once the registration fee and any required deposits have been paid in full.</li>
+              </ol>
+
+              <h3>Documents You Will Need</h3>
+              <ul>
+                <li>Completed Application Form, signed by a parent or legal guardian.</li>
+                <li>Two recent passport photographs of your child.</li>
+                <li>A certified copy of your child's birth certificate.</li>
+                <li>Immunisation records and a health declaration from a registered doctor.</li>
+                <li>Most recent school report (for children transferring into Primary 2 or above).</li>
+                <li>A copy of valid ID for the parent or guardian submitting the application.</li>
+              </ul>
+
+              <h3>If We Have More Applications Than Places</h3>
+              <p>When a class is full, we give priority in the following order:</p>
+              <ol>
+                <li>Brothers or sisters of children already enrolled at the school.</li>
+                <li>Children of current members of staff.</li>
+                <li>Pupils returning after a period of absence.</li>
+                <li>All other applicants, in the order in which their complete applications were received.</li>
+              </ol>
+
+              <div class="policy-highlight">
+                <p>Fahmid School does not discriminate on the basis of gender, ethnicity, religion, disability, or family background. Every eligible child is considered fairly under this policy.</p>
+              </div>
+
+              <h3>Waiting List</h3>
+              <p>If a class is full, eligible applicants will be placed on a waiting list in date order. We will contact you as soon as a space becomes available.</p>
+            </div>
+          </article>
+
+          <!-- 2. ATTENDANCE POLICY -->
+          <article class="policy-section reveal" id="attendance">
+            <div class="policy-section-header">
+              <div class="policy-section-icon" style="background: linear-gradient(135deg, #0D9488, #0F766E);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <div>
+                <div class="policy-section-number">Policy 02</div>
+                <h2>Attendance Policy</h2>
+              </div>
+            </div>
+            <div class="policy-body">
+              <h3>Why Attendance Matters</h3>
+              <p>A child cannot learn what they miss. Regular attendance is one of the single biggest factors in how well a child performs academically, and it also affects their friendships and overall confidence. We expect all pupils to attend every school day unless there is a genuine reason they cannot.</p>
+
+              <h3>Our Expectations</h3>
+              <p>The school day runs from 7:40 AM to 3:30 PM. Pupils are expected to be on the premises and ready for morning assembly by 7:40 AM. We ask that every pupil achieves at least 90% attendance each term.</p>
+
+              <h3>How to Report an Absence</h3>
+              <ul>
+                <li>If your child cannot come to school, please call the school office by 8:00 AM on the first day of absence. You can also report via the parent portal.</li>
+                <li>When your child returns, please send a written note for the class teacher explaining the reason for the absence.</li>
+                <li>Absences lasting three or more days in a row must be supported by a medical certificate or similar documentation.</li>
+                <li>Any absence without an explanation will be recorded as unauthorised until we hear from you.</li>
+              </ul>
+
+              <h3>Authorised and Unauthorised Absences</h3>
+              <p>We will authorise absences for illness (with a doctor's note where relevant), bereavement of a close family member, medical appointments that cannot be scheduled outside school hours, and recognised religious observances. Holidays taken during term time will not normally be authorised. If you have an exceptional situation, please speak to the Head Teacher before making any plans.</p>
+
+              <h3>When Attendance Drops Below 85%</h3>
+              <p>If your child's attendance falls below 85% in any term, we will get in touch with you. We will arrange a meeting to understand what is going on and work with you on a plan to improve things. In some cases, a written Attendance Improvement Plan will be put in place.</p>
+
+              <h3>Punctuality</h3>
+              <p>A child who arrives after the register is closed will be marked as late. Persistent lateness is taken just as seriously as unauthorised absence, and we will speak with parents if it becomes a pattern.</p>
+            </div>
+          </article>
+
+          <!-- 3. SAFEGUARDING -->
+          <article class="policy-section reveal" id="safeguarding">
+            <div class="policy-section-header">
+              <div class="policy-section-icon" style="background: linear-gradient(135deg, #DC2626, #B91C1C);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <div>
+                <div class="policy-section-number">Policy 03</div>
+                <h2>Child Protection &amp; Safeguarding Policy</h2>
+              </div>
+            </div>
+            <div class="policy-body">
+              <div class="policy-alert">
+                <p>The safety and wellbeing of every child in our care comes before everything else. This policy is reviewed every year and takes precedence over all other school policies.</p>
+              </div>
+
+              <h3>Our Commitment</h3>
+              <p>Every child who walks through our gates deserves to feel safe. Fahmid School is committed to making sure that is always the case. All staff, volunteers, and contractors who work with children here are expected to take that commitment seriously and to speak up immediately if they have any concern about a child's welfare.</p>
+
+              <h3>Designated Safeguarding Lead</h3>
+              <p>The school has a designated Safeguarding Lead (DSL) who is responsible for all child protection matters on the premises. The DSL is trained, up to date, and is the first person any concern should be reported to — whether it comes from a staff member, a parent, or a pupil. The DSL's contact details are displayed in the school office and key areas of the building.</p>
+
+              <h3>Recognising Abuse and Neglect</h3>
+              <p>Abuse can take many forms — physical harm, emotional harm, sexual abuse, and neglect are all covered by this policy. All staff receive training to spot the signs, and any concern, however small, must be reported to the DSL on the same day. Staff should not try to handle or investigate concerns themselves.</p>
+
+              <h3>What Happens When a Concern is Raised</h3>
+              <ol>
+                <li>The staff member reports the concern to the DSL, both verbally and in writing, on the same day.</li>
+                <li>The DSL assesses the situation and decides what to do — this may include contacting the relevant authorities.</li>
+                <li>All concerns and actions taken are recorded securely.</li>
+                <li>If there is an immediate risk of harm, the DSL will contact the appropriate authority without delay.</li>
+              </ol>
+
+              <h3>Safe Recruitment</h3>
+              <p>Before anyone joins our staff or volunteers in any role involving children, we carry out identity checks, reference checks, and background screening. No one works unsupervised with pupils until this process is complete.</p>
+
+              <h3>Confidentiality</h3>
+              <p>Information about safeguarding concerns is only shared with people who need to know in order to keep the child safe. However, if keeping something confidential would put a child at risk, that confidence will not be maintained. The child's safety comes first.</p>
+
+              <h3>Online Safety</h3>
+              <p>Pupils are not permitted to bring personal mobile phones onto the school premises. Any device or equipment provided by the school is monitored, and pupils are taught about how to stay safe online as part of their regular lessons.</p>
+            </div>
+          </article>
+
+          <!-- 4. ANTI-BULLYING -->
+          <article class="policy-section reveal" id="anti-bullying">
+            <div class="policy-section-header">
+              <div class="policy-section-icon" style="background: linear-gradient(135deg, #9333EA, #7E22CE);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div>
+                <div class="policy-section-number">Policy 04</div>
+                <h2>Anti-Bullying Policy</h2>
+              </div>
+            </div>
+            <div class="policy-body">
+              <h3>Where We Stand</h3>
+              <p>Bullying is not something we tolerate at Fahmid School — not in any form. Every pupil has the right to come to school without being afraid, harassed, or made to feel small. When bullying happens, we deal with it quickly and firmly.</p>
+
+              <h3>What Counts as Bullying</h3>
+              <p>Bullying is any repeated, deliberate behaviour meant to hurt or intimidate someone. It can take several forms:</p>
+              <ul>
+                <li>Physical — hitting, pushing, kicking, or damaging another person's belongings.</li>
+                <li>Verbal — name-calling, threats, or the use of hurtful or offensive language.</li>
+                <li>Social — leaving someone out on purpose, spreading rumours, or turning others against them.</li>
+                <li>Online — using messages or social media to embarrass, threaten, or harass someone.</li>
+                <li>Discriminatory — targeting someone because of their religion, ethnicity, gender, disability, or any other personal characteristic.</li>
+              </ul>
+
+              <h3>Everyone Has a Role</h3>
+              <p>Preventing bullying is everyone's responsibility. Staff must step in whenever they see or suspect it. Pupils are encouraged to tell a trusted adult if they are being bullied or see it happening to someone else. Parents should contact the school as soon as they become aware of a concern — whether their child is the one being bullied or the one doing it.</p>
+
+              <h3>What We Do When It Is Reported</h3>
+              <ol>
+                <li>The pupil reports to their class teacher or any staff member they trust.</li>
+                <li>The class teacher records the incident and brings it to the Head Teacher.</li>
+                <li>The pupil who was bullied and the pupil responsible are each spoken to separately.</li>
+                <li>Parents of both children are informed and invited to meet the school.</li>
+                <li>Appropriate support and consequences are put in place for everyone involved.</li>
+              </ol>
+
+              <div class="policy-highlight">
+                <p>No pupil will ever be penalised for coming forward to report bullying. We take every report seriously, regardless of how minor it may seem at first.</p>
+              </div>
+
+              <h3>Prevention</h3>
+              <p>We do not wait for bullying to happen before we act. Through assemblies, class discussions, and the way we run our school day, we work to build a culture where pupils respect one another and look out for each other.</p>
+            </div>
+          </article>
+
+          <!-- 5. HEALTH AND SAFETY -->
+          <article class="policy-section reveal" id="health-safety">
+            <div class="policy-section-header">
+              <div class="policy-section-icon" style="background: linear-gradient(135deg, #22C55E, #16A34A);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              </div>
+              <div>
+                <div class="policy-section-number">Policy 05</div>
+                <h2>Health &amp; Safety Policy</h2>
+              </div>
+            </div>
+            <div class="policy-body">
+              <h3>Our Duty of Care</h3>
+              <p>The school has a responsibility to keep every pupil, member of staff, and visitor safe while they are on our premises. This policy explains how we meet that responsibility on a daily basis.</p>
+
+              <h3>Who Is Responsible</h3>
+              <p>The Head Teacher is responsible for health and safety across the school. All staff are required to act safely and to look out for the safety of others — pupils included. Pupils are expected to behave in a way that does not put themselves or anyone else at risk.</p>
+
+              <h3>First Aid</h3>
+              <ul>
+                <li>At least one trained first aider is on the premises throughout the school day.</li>
+                <li>First aid kits are stocked and maintained in the school office and at key points around the building.</li>
+                <li>Every first aid incident involving a pupil is recorded in the school's incident log.</li>
+                <li>Parents are informed promptly whenever their child has needed first aid treatment.</li>
+              </ul>
+
+              <h3>Medical Conditions and Medication</h3>
+              <p>If your child has a medical condition or allergy, please tell us when you register them. If your child needs to take medication during school hours, you must give us written authorisation and provide the medication in its original, clearly labelled container. All medication is kept safely and administered only by designated staff.</p>
+
+              <h3>Emergency Procedures</h3>
+              <p>We have written procedures in place for fires, medical emergencies, and other incidents. Fire drills are held at least twice each term. All staff are briefed on emergency procedures when they join the school and receive regular refresher training. Emergency assembly points are clearly marked throughout the premises.</p>
+
+              <h3>Premises and Equipment</h3>
+              <p>We inspect our buildings, grounds, and equipment regularly. Any hazard that is identified is reported and dealt with promptly. Pupils are not permitted to enter any area that is under maintenance or has been restricted.</p>
+
+              <h3>Infectious Illness</h3>
+              <p>To protect the health of all pupils and staff, please keep your child at home if they are unwell with something contagious. We follow current public health guidance on how long children should stay home for common illnesses. The school may ask you to keep your child home if they arrive showing symptoms of a contagious condition.</p>
+            </div>
+          </article>
+
+          <!-- 6. BEHAVIOUR AND DISCIPLINE -->
+          <article class="policy-section reveal" id="behaviour">
+            <div class="policy-section-header">
+              <div class="policy-section-icon" style="background: linear-gradient(135deg, #F59E0B, #D97706);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </div>
+              <div>
+                <div class="policy-section-number">Policy 06</div>
+                <h2>Behaviour &amp; Discipline Policy</h2>
+              </div>
+            </div>
+            <div class="policy-body">
+              <h3>Our Approach</h3>
+              <p>We believe children behave well when they know what is expected of them, feel respected, and see that good behaviour is noticed and valued. Our approach is built on clear expectations, consistent follow-through, and the belief that every child here is capable of conducting themselves well. We recognise good behaviour and deal with poor behaviour fairly.</p>
+
+              <h3>What We Expect From Every Pupil</h3>
+              <ul>
+                <li>Treat every person in the school — pupils, staff, and visitors — with basic respect and courtesy.</li>
+                <li>Follow instructions given by any member of staff without arguing or delaying.</li>
+                <li>Take care of school property and respect other people's belongings.</li>
+                <li>Behave responsibly in corridors, at assembly, and on school trips.</li>
+                <li>Be honest in their work and in their dealings with staff and classmates.</li>
+              </ul>
+
+              <h3>How We Recognise Good Behaviour</h3>
+              <p>We use verbal praise, written commendations, merit awards, Head Teacher certificates, and end-of-term prize giving to celebrate good conduct and hard work. We believe recognition goes a long way, and we try to acknowledge effort and improvement — not just results.</p>
+
+              <h3>How We Handle Poor Behaviour</h3>
+              <p>We deal with poor behaviour in steps, starting from the least serious:</p>
+              <ol>
+                <li>A verbal warning from the class teacher, with a clear explanation of what went wrong.</li>
+                <li>Removal of a privilege — such as break time — if the behaviour continues.</li>
+                <li>A written record of the incident and a note home to parents.</li>
+                <li>A meeting between the parents, the pupil, and the class teacher or Head Teacher.</li>
+                <li>In cases of serious or repeated misconduct, the Head Teacher may issue a formal suspension.</li>
+              </ol>
+
+              <h3>Serious Misconduct</h3>
+              <p>The following behaviours are treated as serious and will result in immediate escalation: physically attacking another pupil or a member of staff; verbal abuse, threatening behaviour, or harassment; deliberately damaging school property; dishonesty or deliberate deception; and bringing any prohibited item onto school grounds.</p>
+
+              <h3>Use of Physical Restraint</h3>
+              <p>Physical restraint will only be used by trained staff as a last resort, and only when there is a real and immediate risk of harm to the pupil or others. Any use of restraint will be recorded in writing and parents will be informed on the same day.</p>
+
+              <div class="policy-highlight">
+                <p>Corporal punishment is not permitted at Fahmid School in any form. When we discipline a child, the goal is always to change the behaviour — never to humiliate or harm them.</p>
+              </div>
+            </div>
+          </article>
+
+          <!-- 7. DATA PROTECTION -->
+          <article class="policy-section reveal" id="data-protection">
+            <div class="policy-section-header">
+              <div class="policy-section-icon" style="background: linear-gradient(135deg, #06B6D4, #0891B2);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+              <div>
+                <div class="policy-section-number">Policy 07</div>
+                <h2>Data Protection &amp; Privacy Policy</h2>
+              </div>
+            </div>
+            <div class="policy-body">
+              <h3>How We Handle Your Information</h3>
+              <p>To run the school well and give every child the best possible experience, we collect and hold certain personal information about pupils, parents, and staff. We handle all of this information responsibly, keep it secure, and only use it for the purposes described in this policy.</p>
+
+              <h3>What Information We Hold</h3>
+              <ul>
+                <li>Pupil records: full name, date of birth, contact details, medical information, attendance and academic records, and any disciplinary notes.</li>
+                <li>Family records: names and contact details for parents, guardians, and emergency contacts, as well as financial records where relevant.</li>
+                <li>Photographs and video footage taken during school activities for educational and communications purposes.</li>
+                <li>Staff records: employment history, qualifications, references, and payroll information.</li>
+              </ul>
+
+              <h3>Why We Use It</h3>
+              <p>We use personal information to manage enrolment and academic progress, communicate with parents, keep pupils safe, meet our legal obligations, and generally improve the quality of education we provide. We do not use your information for anything outside these purposes.</p>
+
+              <h3>How We Keep It Safe</h3>
+              <p>Paper records are kept in locked storage. Digital records are password-protected and access is restricted to staff who need it. We regularly review how we store information and only keep it for as long as is necessary.</p>
+
+              <h3>Who We Share It With</h3>
+              <p>We do not sell personal information to anyone. We only share data with outside parties when the law requires it, when it is necessary to protect a child's safety, or when a parent has given clear written consent.</p>
+
+              <h3>Photographs</h3>
+              <p>We may take photographs or video of pupils at school events and activities for use in newsletters, on our website, and on our social media pages. Parents are asked to indicate their consent for this when registering their child. You can withdraw that consent at any time by writing to the school office.</p>
+
+              <h3>Your Rights</h3>
+              <p>As a parent or guardian, you have the right to ask to see the information we hold about your child. Please send any such request in writing to the school office. We will respond within 30 days of receiving a valid request.</p>
+            </div>
+          </article>
+
+          <!-- 8. STAFF CONDUCT -->
+          <article class="policy-section reveal" id="staff-conduct">
+            <div class="policy-section-header">
+              <div class="policy-section-icon" style="background: linear-gradient(135deg, #3B82F6, #2563EB);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+              <div>
+                <div class="policy-section-number">Policy 08</div>
+                <h2>Staff Conduct Policy</h2>
+              </div>
+            </div>
+            <div class="policy-body">
+              <h3>What This Policy Is For</h3>
+              <p>This policy sets out the standards of conduct we expect from everyone who works at Fahmid School — teaching staff, support staff, and volunteers, whether on a permanent or temporary basis. All staff are expected to conduct themselves in a way that upholds the trust parents place in us and reflects well on the school.</p>
+
+              <h3>What We Expect</h3>
+              <ul>
+                <li>Treat all pupils, parents, colleagues, and visitors with dignity and respect at all times.</li>
+                <li>Maintain appropriate professional boundaries with pupils. Familiarity that goes beyond what is professionally appropriate is not acceptable.</li>
+                <li>Arrive on time and carry out all assigned duties with care and diligence.</li>
+                <li>Dress professionally in a way that is appropriate to the role and consistent with the school's standards.</li>
+                <li>Keep all information about pupils, families, and colleagues confidential.</li>
+                <li>Report any safeguarding concern without delay — no matter how minor it seems.</li>
+                <li>Take responsibility for keeping their own professional knowledge and skills up to date.</li>
+              </ul>
+
+              <h3>Social Media</h3>
+              <p>Staff must not post anything online that could damage the school's reputation, identify individual pupils, or share confidential information about the school or anyone connected to it. Staff must not use personal social media accounts to communicate with pupils or their families. Any use of the school's official platforms must follow our communications guidelines.</p>
+
+              <h3>Conflicts of Interest</h3>
+              <p>If a member of staff has a personal or financial relationship with a parent, contractor, or any other party that could affect their professional judgement, they must declare it to the Head Teacher as soon as possible.</p>
+
+              <h3>Disciplinary Action</h3>
+              <p>Breaches of this policy will be handled through the school's disciplinary process. Minor issues may be addressed through informal guidance. More serious or repeated breaches may result in formal disciplinary proceedings, up to and including dismissal. Any allegation of misconduct involving a child will be referred immediately to the appropriate authority.</p>
+            </div>
+          </article>
+
+          <!-- 9. COMPLAINTS -->
+          <article class="policy-section reveal" id="complaints">
+            <div class="policy-section-header">
+              <div class="policy-section-icon" style="background: linear-gradient(135deg, #64748B, #475569);">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div>
+                <div class="policy-section-number">Policy 09</div>
+                <h2>Complaints &amp; Grievance Procedure</h2>
+              </div>
+            </div>
+            <div class="policy-body">
+              <h3>We Want to Hear From You</h3>
+              <p>If something is not right, we want to know. We take all feedback seriously and make it a point to deal with concerns fairly and in good time. A parent who raises a concern is helping us do better — and that is always welcome.</p>
+
+              <h3>Step 1 — Talk to Us First</h3>
+              <p>In most cases, the fastest way to resolve a concern is to speak directly with your child's class teacher or the relevant member of staff. Many issues can be sorted out quickly through a straightforward conversation. Please do not wait until a small concern becomes a bigger problem — come and talk to us early.</p>
+
+              <h3>Step 2 — Make a Formal Complaint</h3>
+              <p>If speaking to a teacher has not resolved the matter to your satisfaction, you may submit a formal written complaint to the Head Teacher. Your complaint should include:</p>
+              <ul>
+                <li>Your full name and contact details.</li>
+                <li>The name of the child the complaint relates to.</li>
+                <li>A clear account of your concern, including relevant dates and what you have already done to try to resolve it.</li>
+                <li>What outcome you are hoping for.</li>
+              </ul>
+              <p>The Head Teacher will acknowledge your complaint within five working days and will aim to give you a full written response within fifteen working days of that acknowledgement.</p>
+
+              <h3>Step 3 — Escalation to the Management Board</h3>
+              <p>If you are still not satisfied after the Head Teacher's response, the matter can be referred to the School Management Board. The Board will review your complaint and the school's response and will issue a final written decision within twenty working days. The Board's decision is final under the school's internal process.</p>
+
+              <h3>A Few Important Points</h3>
+              <ul>
+                <li>All complaints are handled confidentially. Only those directly involved in resolving the matter will have access to the details.</li>
+                <li>No parent or pupil will suffer any negative consequence for raising a genuine concern in good faith.</li>
+                <li>Anonymous complaints will be considered, but we may not be able to fully investigate where we cannot get additional information.</li>
+                <li>Complaints that touch on safeguarding or child protection are handled under our separate Safeguarding Policy and will be referred to the appropriate authority where required.</li>
+              </ul>
+
+              <div class="policy-highlight">
+                <p>To make a formal complaint, please contact the school office in writing or write to us at: Fahmid Nursery and Primary School, 18 Shittu Street, Adura Bus Stop, Alagbado, Ifako-Ijaiye, Lagos. You can also reach us by email at <a href="mailto:fahmidschool@gmail.com" style="color: var(--accent); font-weight: var(--w-semibold);">fahmidschool@gmail.com</a>.</p>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-banner" aria-label="Contact call to action">
+    <div class="container">
+      <div class="cta-banner-inner">
+        <div class="cta-banner-text reveal">
+          <h2>Questions About Our Policies?</h2>
+          <p>If anything in this document is unclear or you would like to discuss any of our policies, please do not hesitate to contact us. We are always happy to talk.</p>
+        </div>
+        <div class="cta-banner-actions reveal reveal-delay-2">
+          <a href="contact.html" class="btn btn-gold btn-lg">Contact the School</a>
+          <a href="admissions.html" class="btn btn-ghost btn-lg">Apply for Admission</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer" role="contentinfo">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand-name">Fahmid School</div>
+        <p class="footer-brand-desc">Fahmid Nursery and Primary School has been running since 2007 in Alagbado, Lagos. We are a school that takes the education and character of every child seriously.</p>
+        <div class="footer-social">
+          <a href="https://www.facebook.com/fahmid.school.2025" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          </a>
+          <a href="https://instagram.com/fahmidschool" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+          <a href="https://wa.me/2348061427297" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" stroke="none" width="18" height="18"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+          </a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Quick Links</div>
+        <ul class="footer-links-list" role="list">
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="academics.html">Academics</a></li>
+          <li><a href="admissions.html">Admissions</a></li>
+          <li><a href="school-life.html">School Life</a></li>
+          <li><a href="gallery.html">Gallery</a></li>
+          <li><a href="news.html">News &amp; Events</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Information</div>
+        <ul class="footer-links-list" role="list">
+          <li><a href="contact.html">Contact Us</a></li>
+          <li><a href="policy.html">School Policy</a></li>
+          <li><a href="login">Parent Portal</a></li>
+          <li><a href="login">Staff Login</a></li>
+        </ul>
+      </div>
+      <div>
+        <div class="footer-col-title">Contact</div>
+        <div class="footer-contact-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>18 Shittu Street, Adura Bus Stop, Alagbado, Ifako-Ijaiye, Lagos</span>
+        </div>
+        <div class="footer-contact-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.45 2 2 0 0 1 3.59 1.27h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.12 6.12l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>
+          <a href="tel:+2348061427297" class="footer-contact-item">Call Us</a>
+        </div>
+        <div class="footer-contact-item">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          <a href="mailto:fahmidschool@gmail.com">Send Us an E-Mail</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copyright">&copy; <span id="copyright-year"></span> Fahmid Nursery and Primary School. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<script src="script.js" defer></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+
+  // Mobile TOC toggle
+  const tocToggle = document.getElementById('toc-toggle');
+  const tocPanel = document.getElementById('toc-mobile-panel');
+  if (tocToggle && tocPanel) {
+    tocToggle.addEventListener('click', () => {
+      const isOpen = tocPanel.classList.toggle('open');
+      tocToggle.classList.toggle('open', isOpen);
+      tocToggle.setAttribute('aria-expanded', isOpen);
+      tocPanel.setAttribute('aria-hidden', !isOpen);
+    });
+  }
+
+  // Active TOC link on scroll
+  const sections = document.querySelectorAll('.policy-section');
+  const tocLinks = document.querySelectorAll('.toc-list a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        tocLinks.forEach(link => {
+          link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, {
+    rootMargin: '-80px 0px -60% 0px',
+    threshold: 0
+  });
+
+  sections.forEach(section => observer.observe(section));
+</script>
+</body>
+</html>
