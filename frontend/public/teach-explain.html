@@ -1,0 +1,1863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Portal Guide — Fahmid Nursery & Primary School</title>
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Fahmid Nursery & Primary School">
+<meta property="og:title" content="Teacher Portal Complete Guide | Fahmid Nursery & Primary School">
+<meta property="og:description" content="A complete step-by-step guide to using the Fahmid Teacher Portal, including results entry, attendance, traits and skills, remarks, CBT tests, class promotion, and lesson notes.">
+<meta property="og:url" content="https://fahmidschool.com.ng/teach-explain.html">
+<meta property="og:image" content="https://fahmidschool.com.ng/teacher-portal.png">
+<meta property="og:image:secure_url" content="https://fahmidschool.com.ng/teacher-portal.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Fahmid Teacher Portal Complete Guide">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Teacher Portal Complete Guide | Fahmid Nursery & Primary School">
+<meta name="twitter:description" content="A complete step-by-step guide to using the Fahmid Teacher Portal.">
+<meta name="twitter:image" content="https://fahmidschool.com.ng/teacher-portal.png">
+
+<link rel="canonical" href="https://fahmidschool.com.ng/teach-explain.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1/src/index.js"></script>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:      #0f2352;
+    --blue:      #1a56db;
+    --blue-mid:  #2563eb;
+    --blue-soft: #dbeafe;
+    --blue-pale: #eff6ff;
+    --ink:       #0f172a;
+    --text:      #334155;
+    --muted:     #64748b;
+    --border:    #e2e8f0;
+    --surface:   #f8fafc;
+    --white:     #ffffff;
+    --green:     #16a34a;
+    --green-bg:  #f0fdf4;
+    --amber:     #d97706;
+    --amber-bg:  #fffbeb;
+    --red:       #dc2626;
+    --red-bg:    #fef2f2;
+    --purple:    #7c3aed;
+    --purple-bg: #faf5ff;
+
+    --r-sm: 6px;
+    --r-md: 10px;
+    --r-lg: 16px;
+    --r-xl: 22px;
+
+    --sh:    0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --sh-md: 0 4px 16px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+    --sh-lg: 0 12px 40px rgba(0,0,0,.12);
+
+    --font: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font);
+    background: #f1f5f9;
+    color: var(--text);
+    line-height: 1.65;
+    font-size: 1rem;
+    overflow-x: hidden;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, var(--navy) 0%, #1a3a6e 55%, #1e4d94 100%);
+    padding: 5rem 2rem 4rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .375rem 1rem;
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 999px;
+    font-size: .8125rem;
+    font-weight: 700;
+    color: rgba(255,255,255,.9);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-badge span { width: 6px; height: 6px; background: #86efac; border-radius: 50%; display: inline-block; }
+
+  .hero h1 {
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -.03em;
+    margin-bottom: 1rem;
+    line-height: 1.15;
+  }
+
+  .hero p {
+    font-size: 1.125rem;
+    color: rgba(255,255,255,.72);
+    max-width: 560px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.6;
+  }
+
+  .hero-toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-toc a {
+    display: inline-flex;
+    align-items: center;
+    gap: .375rem;
+    padding: .5rem 1rem;
+    background: rgba(255,255,255,.1);
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 999px;
+    color: rgba(255,255,255,.88);
+    text-decoration: none;
+    font-size: .8125rem;
+    font-weight: 600;
+    transition: all .2s;
+  }
+
+  .hero-toc a:hover {
+    background: rgba(255,255,255,.2);
+    color: #fff;
+    transform: translateY(-1px);
+  }
+
+  .hero-toc a i { font-size: 1rem; }
+
+  /* ── LAYOUT ── */
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  main { padding: 3rem 0 5rem; }
+
+  /* ── SECTION CARD ── */
+  .section-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--r-xl);
+    box-shadow: var(--sh);
+    margin-bottom: 2.5rem;
+    animation: fadein .4s ease both;
+    /* overflow: hidden intentionally removed — it was clipping .table-scroll */
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.75rem 2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+  }
+
+  .section-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: var(--r-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.375rem;
+    flex-shrink: 0;
+  }
+
+  .section-icon i { font-size: 1.5rem; }
+
+  .section-icon.blue   { background: var(--blue-soft); color: var(--blue); }
+  .section-icon.green  { background: var(--green-bg);  color: var(--green); }
+  .section-icon.amber  { background: var(--amber-bg);  color: var(--amber); }
+  .section-icon.purple { background: var(--purple-bg); color: var(--purple); }
+  .section-icon.red    { background: var(--red-bg);    color: var(--red); }
+  .section-icon.teal   { background: #f0fdfa;          color: #0d9488; }
+  .section-icon.slate  { background: #f1f5f9;          color: #475569; }
+  .section-icon.pink   { background: #fdf4ff;          color: #a21caf; }
+
+  .section-header-text h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--ink);
+    letter-spacing: -.02em;
+    margin-bottom: .125rem;
+  }
+
+  .section-header-text p {
+    font-size: .875rem;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .section-body {
+    padding: 1.75rem 2rem;
+    border-radius: 0 0 var(--r-xl) var(--r-xl);
+    overflow-x: auto;
+  }
+
+  /* ── STEP ── */
+  .steps { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  .step {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .step-num {
+    width: 36px;
+    height: 36px;
+    background: var(--blue-pale);
+    border: 2px solid var(--blue-soft);
+    color: var(--blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .8125rem;
+    font-weight: 800;
+    flex-shrink: 0;
+    font-family: var(--mono);
+  }
+
+  .step-content h4 {
+    font-size: .9375rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: .375rem;
+    margin-top: .375rem;
+    line-height: 1.3;
+  }
+
+  .step-content p {
+    font-size: .875rem;
+    color: var(--text);
+    line-height: 1.6;
+    margin-bottom: .5rem;
+  }
+
+  .step-content p:last-child { margin-bottom: 0; }
+
+  /* ── MOCK SCREEN ── */
+  .mockscreen {
+    background: #f0f4f8;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 1rem;
+    margin: 1rem 0;
+    font-size: .8125rem;
+    overflow-x: auto;
+  }
+
+  .mockscreen-bar {
+    background: var(--navy);
+    border-radius: var(--r-md) var(--r-md) 0 0;
+    padding: .625rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: -1rem -1rem .75rem;
+  }
+
+  .mockscreen-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .mockscreen-dot.r { background: #ef4444; }
+  .mockscreen-dot.y { background: #f59e0b; }
+  .mockscreen-dot.g { background: #22c55e; }
+
+  .mockscreen-title {
+    font-size: .6875rem;
+    font-weight: 600;
+    color: rgba(255,255,255,.55);
+    margin-left: .25rem;
+    font-family: var(--mono);
+  }
+
+  /* ── UI MOCKUPS ── */
+  .mock-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    box-shadow: var(--sh);
+  }
+
+  .mock-card-head {
+    padding: .875rem 1.125rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    font-size: .8125rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .mock-card-body { padding: 1rem 1.125rem; }
+
+  .mock-row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .625rem .75rem;
+    border-radius: var(--r-sm);
+    margin-bottom: .375rem;
+  }
+
+  .mock-row:hover { background: var(--surface); }
+
+  .mock-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: .2rem .625rem;
+    border-radius: 999px;
+    font-size: .6875rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    white-space: nowrap;
+  }
+
+  .mock-tag.green  { background: var(--green-bg);  color: var(--green); }
+  .mock-tag.amber  { background: var(--amber-bg);  color: var(--amber); }
+  .mock-tag.blue   { background: var(--blue-pale); color: var(--blue); }
+  .mock-tag.red    { background: var(--red-bg);    color: var(--red); }
+  .mock-tag.purple { background: var(--purple-bg); color: var(--purple); }
+
+  /* sidebar mock */
+  .mock-sidebar {
+    background: var(--navy);
+    border-radius: var(--r-md);
+    padding: .75rem .5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .mock-nav-item {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .5rem .75rem;
+    border-radius: var(--r-sm);
+    font-size: .75rem;
+    font-weight: 600;
+    color: rgba(255,255,255,.65);
+    cursor: default;
+  }
+
+  .mock-nav-item.active {
+    background: rgba(255,255,255,.18);
+    color: white;
+  }
+
+  .mock-nav-item .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .7; flex-shrink: 0;
+  }
+
+  /* input mock */
+  .mock-input {
+    width: 100%;
+    padding: .5rem .75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    font-size: .875rem;
+    color: var(--ink);
+    background: white;
+    font-family: var(--font);
+  }
+
+  .mock-input:focus {
+    outline: 2px solid var(--blue);
+    outline-offset: 1px;
+    border-color: transparent;
+  }
+
+  .mock-label {
+    display: block;
+    font-size: .625rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    margin-bottom: .3rem;
+  }
+
+  .mock-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .375rem;
+    padding: .5rem 1rem;
+    border-radius: 999px;
+    font-size: .8125rem;
+    font-weight: 700;
+    cursor: default;
+    border: none;
+    white-space: nowrap;
+  }
+
+  .mock-btn.primary { background: var(--blue); color: white; }
+  .mock-btn.success { background: var(--green); color: white; }
+  .mock-btn.warning { background: #f59e0b; color: white; }
+  .mock-btn.ghost   { background: white; color: var(--blue); border: 1px solid var(--blue-soft); }
+
+  .mock-select {
+    padding: .5rem .75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    font-size: .8125rem;
+    background: white;
+    color: var(--ink);
+    font-family: var(--font);
+    max-width: 100%;
+  }
+
+  /* ── INFO BOX ── */
+  .infobox {
+    display: flex;
+    gap: .75rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--r-md);
+    margin: 1rem 0;
+    font-size: .875rem;
+    line-height: 1.6;
+    border: 1px solid;
+  }
+
+  .infobox .icon { font-size: 1.125rem; flex-shrink: 0; margin-top: .0625rem; display: flex; align-items: flex-start; }
+  .infobox .icon i { font-size: 1.2rem; }
+  .infobox p { margin: 0; }
+  .infobox strong { display: block; margin-bottom: .25rem; }
+
+  .infobox.info   { background: var(--blue-pale); border-color: #bfdbfe; color: #1e40af; }
+  .infobox.tip    { background: var(--green-bg);  border-color: #bbf7d0; color: #14532d; }
+  .infobox.warn   { background: var(--amber-bg);  border-color: #fde68a; color: #92400e; }
+  .infobox.locked { background: #faf5ff;          border-color: #ddd6fe; color: #4c1d95; }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    margin: 1rem 0;
+  }
+
+  .flow-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .25rem;
+    padding: .75rem 1rem;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--ink);
+    text-align: center;
+    min-width: 80px;
+    box-shadow: var(--sh);
+  }
+
+  .flow-step i { font-size: 1.25rem; }
+  .flow-step.active { background: var(--blue); color: white; border-color: var(--blue); }
+  .flow-step.done   { background: var(--green); color: white; border-color: var(--green); }
+  .flow-step.warn   { background: var(--amber-bg); border-color: #fde68a; color: var(--amber); }
+  .flow-step.lock   { background: #faf5ff; border-color: #ddd6fe; color: var(--purple); }
+
+  .flow-arrow {
+    font-size: 1.25rem;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+
+  /* ── GRID LAYOUTS ── */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+
+  .feature-tile {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 1rem;
+    font-size: .875rem;
+  }
+
+  .feature-tile h5 {
+    font-size: .875rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: .375rem;
+  }
+
+  .feature-tile p {
+    font-size: .8125rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ── RESULT CARD MOCK ── */
+  .result-card-mock {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    overflow: hidden;
+    font-size: .8125rem;
+  }
+
+  .rcm-name {
+    padding: .625rem .875rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .rcm-fields {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .rcm-field {
+    padding: .625rem .75rem;
+    border-right: 1px solid var(--border);
+  }
+
+  .rcm-field:last-child { border-right: none; }
+
+  .rcm-field-label {
+    font-size: .5rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--muted);
+    margin-bottom: .375rem;
+  }
+
+  .rcm-field input {
+    width: 100%;
+    padding: 6px 4px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: .875rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .rcm-totals {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    background: var(--surface);
+  }
+
+  .rcm-total {
+    padding: .625rem .75rem;
+    border-right: 1px solid var(--border);
+    text-align: center;
+  }
+
+  .rcm-total:last-child { border-right: none; }
+
+  .rcm-total-label {
+    font-size: .5rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--muted);
+    margin-bottom: .25rem;
+  }
+
+  .rcm-total-val {
+    font-family: var(--mono);
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  .rcm-total-val.blue  { color: var(--blue); }
+  .rcm-total-val.green { color: var(--green); }
+  .rcm-total-val.auto  { color: #94a3b8; }
+
+  /* attendance register mock */
+  .att-mock {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .75rem;
+    min-width: 500px;
+  }
+  .att-mock th {
+    padding: 6px 8px;
+    background: var(--navy);
+    color: white;
+    text-align: center;
+    font-size: .5625rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    white-space: nowrap;
+  }
+  .att-mock th.name-col { text-align: left; background: #0a1c42; }
+  .att-mock td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: center; font-size: .75rem; white-space: nowrap; }
+  .att-mock td.name-col { text-align: left; font-weight: 600; color: var(--ink); background: white; white-space: nowrap; }
+  .att-mock td.present  { background: #dcfce7; color: var(--green); font-weight: 800; }
+  .att-mock td.absent   { background: #fee2e2; color: var(--red); font-weight: 800; }
+  .att-mock td.total    { background: var(--blue-pale); color: var(--navy); font-weight: 700; }
+  .att-mock tr:nth-child(even) td { background: #f8fafc; }
+  .att-mock tr:nth-child(even) td.present { background: #dcfce7; }
+  .att-mock tr:nth-child(even) td.absent  { background: #fee2e2; }
+  .att-mock tr:nth-child(even) td.total   { background: var(--blue-pale); }
+
+  /* table scroll wrapper — used for wide tables on mobile */
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--r-md);
+    border: 1px solid var(--border);
+  }
+
+  /* traits mock */
+  .traits-mock {
+    width: 100%; border-collapse: collapse; font-size: .75rem; min-width: 420px;
+  }
+  .traits-mock th {
+    padding: 5px 6px;
+    background: var(--navy);
+    color: white;
+    font-size: .5rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .traits-mock th.name-th { text-align: left; min-width: 100px; background: #0a1c42; }
+  .traits-mock td { padding: 5px 6px; border-bottom: 1px solid var(--border); text-align: center; }
+  .traits-mock td.name-td { text-align: left; font-weight: 600; color: var(--ink); font-size: .75rem; white-space: nowrap; }
+  .traits-mock select { width: 46px; border: 1px solid var(--border); border-radius: 3px; font-size: .75rem; padding: 2px; background: white; }
+
+  /* ── CBT CARD ── */
+  .cbt-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    padding: 1rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: .75rem;
+    box-shadow: var(--sh);
+  }
+
+  .cbt-card-body { flex: 1; min-width: 0; }
+  .cbt-card-title { font-size: .875rem; font-weight: 700; color: var(--ink); margin-bottom: .25rem; }
+  .cbt-card-meta  { font-size: .75rem; color: var(--muted); }
+  .cbt-card-actions { display: flex; gap: .375rem; flex-wrap: wrap; margin-top: .5rem; }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 1.5rem 0;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 2rem 1.5rem;
+    font-size: .8125rem;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    background: white;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .hero { padding: 3rem 1.25rem 2.5rem; }
+    .hero h1 { font-size: 1.75rem; }
+    .section-header, .section-body { padding: 1.25rem; }
+    .step { grid-template-columns: 28px 1fr; gap: .75rem; }
+    .step-num { width: 28px; height: 28px; font-size: .6875rem; }
+    .flow-step { min-width: 70px; padding: .5rem .625rem; font-size: .6875rem; }
+    .rcm-fields, .rcm-totals { grid-template-columns: 1fr 1fr; }
+    .section-header { flex-direction: row; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+
+    /* result card on mobile: stack to 2 cols */
+    .rcm-fields { grid-template-columns: 1fr 1fr; }
+    .rcm-totals { grid-template-columns: 1fr 1fr; }
+
+    /* week navigator on mobile */
+    .week-nav { flex-wrap: wrap; gap: .375rem; }
+    .week-nav-label { width: 100%; text-align: center; order: -1; }
+  }
+
+  @keyframes fadein {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-badge">
+    <span></span>
+    Fahmid Nursery &amp; Primary School
+  </div>
+  <h1>Teacher Portal<br>Complete Guide</h1>
+  <p>Everything you need to know — step by step — for every feature in your teacher portal.</p>
+  <nav class="hero-toc" aria-label="Jump to section">
+    <a href="#s-sidebar"><i class="ph ph-sidebar-simple"></i> Sidebar &amp; Login</a>
+    <a href="#s-dashboard"><i class="ph ph-chart-bar"></i> Dashboard</a>
+    <a href="#s-classes"><i class="ph ph-users-three"></i> My Classes</a>
+    <a href="#s-results"><i class="ph ph-clipboard-text"></i> Enter Results</a>
+    <a href="#s-attendance"><i class="ph ph-calendar-check"></i> Attendance</a>
+    <a href="#s-traits"><i class="ph ph-star"></i> Traits &amp; Skills</a>
+    <a href="#s-remarks"><i class="ph ph-chat-text"></i> Remarks</a>
+    <a href="#s-cbt"><i class="ph ph-monitor"></i> CBT Tests</a>
+    <a href="#s-promotions"><i class="ph ph-trend-up"></i> Promotions</a>
+    <a href="#s-lessonnotes"><i class="ph ph-book-open"></i> Lesson Notes</a>
+  </nav>
+</header>
+
+<main>
+<div class="container">
+
+<!-- 1. SIDEBAR -->
+<section class="section-card" id="s-sidebar">
+  <div class="section-header">
+    <div class="section-icon blue"><i class="ph ph-sidebar-simple"></i></div>
+    <div class="section-header-text">
+      <h2>Sidebar &amp; Navigation</h2>
+      <p>How to get around the portal on any device</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <p style="margin-bottom:1.25rem;">When you log in, the <strong>sidebar</strong> appears on the left side of the screen. It is your main navigation panel — every section of the portal is reachable from here. Your name appears at the bottom of the sidebar so you always know which account you are using.</p>
+
+    <div class="grid-2">
+      <div>
+        <p class="mock-label">What the sidebar looks like</p>
+        <div class="mock-sidebar">
+          <div class="mock-nav-item" style="padding:.5rem .75rem; font-size:.6875rem; font-weight:800; color:rgba(255,255,255,.35); text-transform:uppercase; letter-spacing:.08em;">Main</div>
+          <div class="mock-nav-item active"><span class="dot"></span> Dashboard</div>
+          <div class="mock-nav-item"><span class="dot"></span> My Classes</div>
+          <div class="mock-nav-item" style="padding:.5rem .75rem; font-size:.6875rem; font-weight:800; color:rgba(255,255,255,.35); text-transform:uppercase; letter-spacing:.08em; margin-top:.5rem;">Academic</div>
+          <div class="mock-nav-item"><span class="dot"></span> Enter Results</div>
+          <div class="mock-nav-item"><span class="dot"></span> Attendance</div>
+          <div class="mock-nav-item"><span class="dot"></span> Traits &amp; Skills</div>
+          <div class="mock-nav-item"><span class="dot"></span> Remarks</div>
+          <div class="mock-nav-item"><span class="dot"></span> CBT (Test/Exam)</div>
+          <div class="mock-nav-item" style="padding:.5rem .75rem; font-size:.6875rem; font-weight:800; color:rgba(255,255,255,.35); text-transform:uppercase; letter-spacing:.08em; margin-top:.5rem;">Admin</div>
+          <div class="mock-nav-item"><span class="dot"></span> Class Promotion</div>
+          <div class="mock-nav-item"><span class="dot"></span> Lesson Notes</div>
+          <div style="border-top:1px solid rgba(255,255,255,.1); margin:.5rem .25rem; padding-top:.5rem;">
+            <div class="mock-nav-item" style="color:rgba(255,255,255,.55); font-size:.6875rem;">Back to Site</div>
+            <div class="mock-nav-item" style="color:#fca5a5; font-size:.6875rem;">Logout</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <h4>Click any item to navigate</h4>
+              <p>Tap or click any link in the sidebar to go to that section. The active section is highlighted with a brighter background and a white left border accent.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <h4>On mobile — use the menu button</h4>
+              <p>On phones and tablets the sidebar hides automatically. Tap the <strong>menu button</strong> in the top-left corner to open it. Tap outside the sidebar (or press Escape) to close it again.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <h4>Logging out</h4>
+              <p>Scroll to the bottom of the sidebar and tap <strong>Logout</strong> (shown in red). You will be returned to the school homepage. Always log out when you finish, especially on shared computers.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="infobox info" style="margin-top:1rem;">
+          <div class="icon"><i class="ph ph-info"></i></div>
+          <p><strong>Data loads on login</strong><br>When you first log in, the portal loads your assigned classes and pupils in the background. If a section shows "Loading…", wait a few seconds and it will appear. If data does not load, refresh the page.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 2. DASHBOARD -->
+<section class="section-card" id="s-dashboard">
+  <div class="section-header">
+    <div class="section-icon blue"><i class="ph ph-chart-bar"></i></div>
+    <div class="section-header-text">
+      <h2>Dashboard</h2>
+      <p>Your home screen — a quick snapshot of your workload</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <p style="margin-bottom:1.25rem;">The Dashboard is the first thing you see after logging in. It gives you an instant summary and lets you jump to any key task with one tap.</p>
+
+    <div class="grid-2">
+      <div>
+        <p class="mock-label">Stats you will see</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:.75rem; margin-bottom:1rem;">
+          <div style="background:white; border:1px solid var(--border); border-radius:var(--r-md); padding:1rem; box-shadow:var(--sh);">
+            <div style="font-size:.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:.5rem;">My Classes</div>
+            <div style="font-size:2rem; font-weight:800; color:var(--ink); font-family:var(--mono);">1</div>
+          </div>
+          <div style="background:white; border:1px solid var(--border); border-radius:var(--r-md); padding:1rem; box-shadow:var(--sh);">
+            <div style="font-size:.6875rem; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:.5rem;">Pupils Assigned</div>
+            <div style="font-size:2rem; font-weight:800; color:var(--ink); font-family:var(--mono);">32</div>
+          </div>
+        </div>
+
+        <p class="mock-label">Quick action buttons</p>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:.5rem;">
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md); padding:.75rem; text-align:center; font-size:.8125rem; font-weight:600; color:var(--text);">Enter Results</div>
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md); padding:.75rem; text-align:center; font-size:.8125rem; font-weight:600; color:var(--text);">Attendance</div>
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md); padding:.75rem; text-align:center; font-size:.8125rem; font-weight:600; color:var(--text);">Traits &amp; Skills</div>
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md); padding:.75rem; text-align:center; font-size:.8125rem; font-weight:600; color:var(--text);">Remarks</div>
+        </div>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <h4>Check your stats</h4>
+            <p>The two number tiles show how many classes you are assigned to and the total number of pupils across those classes. These update automatically when admin adds or moves pupils.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <h4>Use Quick Actions</h4>
+            <p>The four buttons below the stats are shortcuts. Clicking any of them takes you straight to that section — it is exactly the same as clicking the same link in the sidebar.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 3. MY CLASSES -->
+<section class="section-card" id="s-classes">
+  <div class="section-header">
+    <div class="section-icon green"><i class="ph ph-users-three"></i></div>
+    <div class="section-header-text">
+      <h2>My Classes (My Pupils)</h2>
+      <p>A full list of every pupil assigned to your class(es)</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <p style="margin-bottom:1.25rem;">Click <strong>My Classes</strong> in the sidebar. You will see a table showing every pupil in your assigned class. The table shows each pupil's name, gender, and admission number. This is read-only — if a pupil is missing or the information is wrong, contact the admin.</p>
+
+    <div class="mockscreen">
+      <div class="mockscreen-bar">
+        <div class="mockscreen-dot r"></div><div class="mockscreen-dot y"></div><div class="mockscreen-dot g"></div>
+        <span class="mockscreen-title">My Pupils — table</span>
+      </div>
+      <div class="mock-card">
+        <div class="mock-card-head">All Pupils in My Class</div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:.8125rem; min-width:300px;">
+            <thead style="background:var(--surface);">
+              <tr>
+                <th style="padding:8px 12px; text-align:left; font-size:.625rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); border-bottom:1px solid var(--border);">Pupil Name</th>
+                <th style="padding:8px 12px; text-align:left; font-size:.625rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); border-bottom:1px solid var(--border);">Gender</th>
+                <th style="padding:8px 12px; text-align:left; font-size:.625rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); border-bottom:1px solid var(--border);">Admission No</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="padding:8px 12px; border-bottom:1px solid var(--border); font-weight:600;">Amina Yusuf</td><td style="padding:8px 12px; border-bottom:1px solid var(--border);">Female</td><td style="padding:8px 12px; border-bottom:1px solid var(--border); font-family:var(--mono);">FNP/2024/001</td></tr>
+              <tr style="background:var(--surface);"><td style="padding:8px 12px; border-bottom:1px solid var(--border); font-weight:600;">Chidi Okafor</td><td style="padding:8px 12px; border-bottom:1px solid var(--border);">Male</td><td style="padding:8px 12px; border-bottom:1px solid var(--border); font-family:var(--mono);">FNP/2024/002</td></tr>
+              <tr><td style="padding:8px 12px; font-weight:600;">Fatima Abdullahi</td><td style="padding:8px 12px;">Female</td><td style="padding:8px 12px; font-family:var(--mono);">FNP/2024/003</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="infobox info" style="margin-top:1rem;">
+      <div class="icon"><i class="ph ph-info"></i></div>
+      <p>If you have more than 20 pupils, the table splits into pages. Use the <strong>Previous</strong> and <strong>Next</strong> buttons that appear below the table to move between pages.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- 4. ENTER RESULTS -->
+<section class="section-card" id="s-results">
+  <div class="section-header">
+    <div class="section-icon blue"><i class="ph ph-clipboard-text"></i></div>
+    <div class="section-header-text">
+      <h2>Enter Results</h2>
+      <p>Record CA breakdown scores and exam scores for every pupil, then submit for admin approval</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <div class="infobox warn">
+      <div class="icon"><i class="ph ph-warning"></i></div>
+      <p><strong>Important: Pupils cannot see results until admin approves them.</strong><br>Saving a result stores it as a private draft. Only after you press "Submit for Approval" and admin approves it will pupils and parents see the scores on their report cards.</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <h3 style="font-size:1rem; font-weight:800; color:var(--ink); margin-bottom:1.25rem;">How to enter results — step by step</h3>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>Select Term, Class, and Subject</h4>
+          <p>At the top of the "Enter Results" section there is a filter bar with three dropdowns:</p>
+          <div style="display:flex; flex-wrap:wrap; gap:.75rem; margin:.75rem 0;">
+            <div>
+              <label class="mock-label">Term</label>
+              <select class="mock-select"><option>First Term</option><option>Second Term</option><option>Third Term</option></select>
+            </div>
+            <div>
+              <label class="mock-label">Class</label>
+              <select class="mock-select"><option>Basic 3</option></select>
+            </div>
+            <div>
+              <label class="mock-label">Subject</label>
+              <select class="mock-select"><option>— Select Subject —</option><option>Mathematics</option><option>English Language</option></select>
+            </div>
+          </div>
+          <p>The <strong>Class</strong> dropdown only appears if you teach more than one class. If you teach only one class it is selected for you automatically.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>The results appear as cards — one per pupil</h4>
+          <p>Once you select a subject, a card appears for each pupil in your class. Each card has three CA input fields and one Exam field:</p>
+
+          <div style="margin:.875rem 0; max-width:100%;">
+            <div class="result-card-mock">
+              <div class="rcm-name">Amina Yusuf</div>
+              <div class="rcm-fields">
+                <div class="rcm-field">
+                  <div class="rcm-field-label">Assignment (max 10)</div>
+                  <input type="number" value="8" placeholder="0–10">
+                </div>
+                <div class="rcm-field">
+                  <div class="rcm-field-label">Mid-Term (max 20)</div>
+                  <input type="number" value="17" placeholder="0–20">
+                </div>
+                <div class="rcm-field">
+                  <div class="rcm-field-label">Project (max 10)</div>
+                  <input type="number" value="9" placeholder="0–10">
+                </div>
+              </div>
+              <div class="rcm-totals">
+                <div class="rcm-total">
+                  <div class="rcm-total-label">CA Total (auto)</div>
+                  <div class="rcm-total-val blue">34</div>
+                </div>
+                <div class="rcm-total">
+                  <div class="rcm-total-label">Exam Score (max 60)</div>
+                  <input type="number" value="52" placeholder="0–60" style="width:60px; padding:4px; border:1px solid var(--border); border-radius:4px; text-align:center; font-family:var(--mono); font-size:.875rem; font-weight:700;">
+                </div>
+                <div class="rcm-total">
+                  <div class="rcm-total-label">Total Score</div>
+                  <div class="rcm-total-val green">86</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p><strong>CA Total</strong> is calculated for you automatically as you type. <strong>Total Score</strong> is also automatic: CA Total + Exam Score.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>Score limits are enforced automatically</h4>
+          <p>If you try to type a number above the maximum (e.g. 15 in Assignment which has a max of 10), the portal will cap it to 10 and show you a warning. You cannot accidentally save an invalid score.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h4>Press "Save All Results" when you finish entering scores</h4>
+          <p>The blue <strong>Save All Results</strong> button is at the bottom of the page. Clicking it saves all the scores you have entered as a <strong>private draft</strong>. The scores are stored safely but are <em>not visible to pupils yet</em>.</p>
+          <div style="margin:.5rem 0;">
+            <button class="mock-btn primary"><i class="ph ph-floppy-disk"></i> Save All Results</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <h4>Submit for Admin Approval when ready</h4>
+          <p>After saving, a banner appears at the bottom showing a summary. When you are satisfied that all scores are correct, press <strong>Submit for Admin Approval</strong>.</p>
+
+          <div style="background:var(--blue-pale); border:1px solid #bfdbfe; border-radius:var(--r-md); padding:1rem; margin:.875rem 0;">
+            <div style="font-size:.875rem; font-weight:700; color:#0c4a6e; margin-bottom:.5rem;">Ready to Submit for Approval?</div>
+            <p style="font-size:.8125rem; color:#075985; margin-bottom:.75rem;">Once submitted, results cannot be edited until admin reviews.</p>
+            <div style="display:flex; flex-wrap:wrap; gap:.5rem; margin-bottom:.75rem;">
+              <span class="mock-tag blue">Class: Basic 3</span>
+              <span class="mock-tag blue">Term: First Term</span>
+              <span class="mock-tag blue">Subject: Mathematics</span>
+              <span class="mock-tag blue">Pupils: 32</span>
+            </div>
+            <button class="mock-btn primary"><i class="ph ph-paper-plane-tilt"></i> Submit for Admin Approval</button>
+          </div>
+
+          <p>A confirmation dialog will appear asking you to confirm. After confirming, the submission goes to the admin for review.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="divider"></div>
+
+    <h3 style="font-size:1rem; font-weight:800; color:var(--ink); margin-bottom:1rem;">What the status banners mean</h3>
+
+    <div class="grid-2">
+      <div class="feature-tile">
+        <h5>Pending Admin Approval</h5>
+        <p>You have submitted, and the admin has not yet reviewed. <strong>Inputs are locked</strong> — you cannot edit until admin acts.</p>
+      </div>
+      <div class="feature-tile">
+        <h5>Results Rejected</h5>
+        <p>Admin found an error and sent the results back. A reason is shown in red. Inputs become editable again so you can fix and resubmit.</p>
+      </div>
+      <div class="feature-tile">
+        <h5>Results Locked / Approved</h5>
+        <p>Admin has approved and published the results. Pupils can now see them. You can no longer edit. Contact admin to unlock if a genuine correction is needed.</p>
+      </div>
+      <div class="feature-tile">
+        <h5>Direct Publish (if enabled)</h5>
+        <p>Some teacher accounts have "direct publish" permission. If yours does, the Submit button publishes results immediately — a confirmation dialog always appears first.</p>
+      </div>
+    </div>
+
+    <div class="infobox tip" style="margin-top:1rem;">
+      <div class="icon"><i class="ph ph-check-circle"></i></div>
+      <p><strong>Good practice:</strong> Save your scores after every few pupils using "Save All Results". Only submit when the entire class's scores for that subject are complete and checked.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- 5. ATTENDANCE -->
+<section class="section-card" id="s-attendance">
+  <div class="section-header">
+    <div class="section-icon amber"><i class="ph ph-calendar-check"></i></div>
+    <div class="section-header-text">
+      <h2>Attendance</h2>
+      <p>Daily register and term attendance totals — two modes in one place</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <p style="margin-bottom:1rem;">The Attendance section has two tabs. Use the <strong>Daily Register</strong> to mark pupils present or absent each school day. The <strong>Manual Totals</strong> tab lets you type in term totals if you are entering historical data or correcting a mistake.</p>
+
+    <div style="display:flex; gap:.5rem; margin-bottom:1.5rem;">
+      <div style="flex:1; text-align:center; padding:.625rem; background:white; border:1.5px solid var(--blue); border-radius:var(--r-md); font-size:.875rem; font-weight:700; color:var(--blue);">Daily Register</div>
+      <div style="flex:1; text-align:center; padding:.625rem; background:var(--surface); border:1.5px solid var(--border); border-radius:var(--r-md); font-size:.875rem; font-weight:600; color:var(--muted);">Manual Totals</div>
+    </div>
+
+    <h3 style="font-size:1rem; font-weight:800; color:var(--ink); margin-bottom:1.25rem;">Daily Register tab</h3>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>Navigate weeks with the week navigator</h4>
+          <p>The week bar at the top shows the current week (Monday to Friday). Use the <strong>Prev</strong> and <strong>Next</strong> arrows to move back or forward by one week. Press <strong>Today</strong> to jump back to the current week.</p>
+          <div style="display:flex; align-items:center; gap:.5rem; margin:.75rem 0; background:white; border:1px solid var(--border); border-radius:var(--r-md); padding:.75rem; box-shadow:var(--sh); flex-wrap:wrap;" class="week-nav">
+            <button class="mock-btn ghost" style="padding:.375rem .75rem; font-size:.8125rem;"><i class="ph ph-caret-left"></i></button>
+            <span style="flex:1; text-align:center; font-weight:700; font-size:.875rem; color:var(--navy); min-width:160px;" class="week-nav-label">Mon 02 Jun – Fri 06 Jun</span>
+            <button class="mock-btn ghost" style="padding:.375rem .75rem; font-size:.8125rem;"><i class="ph ph-caret-right"></i></button>
+            <button class="mock-btn ghost" style="padding:.375rem .75rem; font-size:.8125rem;">Today</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Mark today's attendance with the green button</h4>
+          <p>Press <strong>Mark Today's Attendance</strong>. A modal window (pop-up panel) opens showing all your pupils in a list, each with two radio buttons: Present and Absent.</p>
+          <div style="background:var(--green-bg); border:1px solid #86efac; border-radius:var(--r-md); padding:.875rem; margin:.75rem 0; font-weight:700; color:var(--green); text-align:center; font-size:.9375rem;">Mark Today's Attendance — Fri 06 Jun</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>Inside the attendance modal</h4>
+          <p>The date field at the top defaults to today. You can change it if you are entering a past date. Use <strong>All Present</strong> or <strong>All Absent</strong> buttons to mark everyone in one tap, then adjust individual pupils as needed.</p>
+
+          <div style="border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden; margin:.875rem 0; max-width:100%;">
+            <div style="background:var(--blue-pale); padding:.75rem 1rem; font-size:.875rem; font-weight:800; color:var(--navy); border-bottom:1px solid var(--border);">Mark Attendance — Fri 06 Jun</div>
+            <div style="padding:.75rem 1rem; display:flex; gap:.5rem; border-bottom:1px solid var(--border); flex-wrap:wrap;">
+              <button class="mock-btn success" style="flex:1; font-size:.8125rem; min-width:100px;">All Present</button>
+              <button class="mock-btn" style="flex:1; font-size:.8125rem; background:var(--red-bg); color:var(--red); border:1px solid #fca5a5; min-width:100px;">All Absent</button>
+            </div>
+            <div style="overflow-x:auto;">
+              <table style="width:100%; border-collapse:collapse; font-size:.8125rem; min-width:260px;">
+                <thead><tr style="background:var(--surface);">
+                  <th style="padding:7px 10px; text-align:left; font-size:.5625rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); border-bottom:1px solid var(--border);">Pupil Name</th>
+                  <th style="padding:7px 10px; text-align:center; color:var(--green); border-bottom:1px solid var(--border); font-size:.625rem;">Present</th>
+                  <th style="padding:7px 10px; text-align:center; color:var(--red); border-bottom:1px solid var(--border); font-size:.625rem;">Absent</th>
+                </tr></thead>
+                <tbody>
+                  <tr><td style="padding:8px 10px; font-weight:600;">Amina Yusuf</td><td style="text-align:center;"><input type="radio" checked></td><td style="text-align:center;"><input type="radio"></td></tr>
+                  <tr style="background:var(--surface);"><td style="padding:8px 10px; font-weight:600;">Chidi Okafor</td><td style="text-align:center;"><input type="radio"></td><td style="text-align:center;"><input type="radio" checked></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="padding:.75rem 1rem; background:var(--surface); display:flex; gap:.5rem; flex-wrap:wrap;">
+              <button class="mock-btn primary" style="flex:2; min-width:120px;"><i class="ph ph-floppy-disk"></i> Save Attendance</button>
+              <button class="mock-btn ghost" style="flex:1; min-width:80px;">Cancel</button>
+            </div>
+          </div>
+
+          <p>Press <strong>Save Attendance</strong> to save. The modal closes and the register grid updates immediately.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h4>Reading the weekly register grid</h4>
+          <p>After marking attendance for one or more days, the register grid fills in. Each row is a pupil, and each column is a school day for that week. Scroll the grid left or right on smaller screens to see all columns.</p>
+
+          <div class="table-scroll" style="margin:.875rem 0;">
+            <table class="att-mock">
+              <thead>
+                <tr>
+                  <th class="name-col">Name</th>
+                  <th>G</th>
+                  <th>Mon 2/6</th>
+                  <th>Tue 3/6</th>
+                  <th>Wed 4/6</th>
+                  <th>Thu 5/6</th>
+                  <th>Fri 6/6</th>
+                  <th>Pres</th>
+                  <th>Abs</th>
+                  <th>%</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="name-col">Amina Yusuf</td>
+                  <td>F</td>
+                  <td class="present">P</td><td class="present">P</td><td class="absent">A</td><td class="present">P</td><td class="present">P</td>
+                  <td class="total">4</td><td class="total">1</td><td class="total">80%</td>
+                </tr>
+                <tr>
+                  <td class="name-col">Chidi Okafor</td>
+                  <td>M</td>
+                  <td class="present">P</td><td class="absent">A</td><td class="absent">A</td><td class="present">P</td><td class="present">P</td>
+                  <td class="total">3</td><td class="total">2</td><td class="total">60%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p><strong>P green</strong> = present &nbsp;&nbsp; <strong>A red</strong> = absent &nbsp;&nbsp; <strong>—</strong> = not yet marked for that day.</p>
+          <p>You can click any P or A cell directly in the grid to toggle that pupil's status for that day without reopening the modal. A success message confirms the change.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <h4>Weekly Summary panel</h4>
+          <p>Below the register grid, small summary cards appear for each day that has been marked — showing how many pupils were present out of the total, and the percentage. Green = 75%+, amber = 50–74%, red = below 50%.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-content">
+          <h4>Print the register</h4>
+          <p>Press <strong>Print Register</strong> to open a printer-friendly version of the full term's attendance register. It includes weekly summaries, totals per pupil, class totals per day, and signature lines for the class teacher, head teacher, and school stamp.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="divider"></div>
+
+    <h3 style="font-size:1rem; font-weight:800; color:var(--ink); margin-bottom:.75rem;">Manual Totals tab</h3>
+
+    <p style="margin-bottom:1rem;">Switch to the <strong>Manual Totals</strong> tab when you need to enter attendance totals directly. Each pupil gets three number boxes:</p>
+
+    <div class="grid-3">
+      <div class="feature-tile">
+        <h5>Times School Opened</h5>
+        <p>Total number of days school was in session during this term.</p>
+      </div>
+      <div class="feature-tile">
+        <h5>Times Present</h5>
+        <p>How many of those days the pupil was physically in school.</p>
+      </div>
+      <div class="feature-tile">
+        <h5>Times Absent</h5>
+        <p>How many days the pupil was not present.</p>
+      </div>
+    </div>
+
+    <div class="infobox warn" style="margin-top:1rem;">
+      <div class="icon"><i class="ph ph-warning"></i></div>
+      <p><strong>Validation rules are enforced:</strong> Times Present cannot exceed Times School Opened. Times Absent cannot exceed Times School Opened. Present + Absent cannot exceed Times School Opened. The system will highlight any errors in red and prevent saving until they are fixed.</p>
+    </div>
+
+    <div class="infobox info" style="margin-top:.75rem;">
+      <div class="icon"><i class="ph ph-info"></i></div>
+      <p><strong>Daily Register overwrites Manual Totals.</strong> When you use the Daily Register tab, it automatically recalculates and overwrites the Manual Totals for each pupil. Use Manual Totals only for terms where you did not use the daily register.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- 6. TRAITS & SKILLS -->
+<section class="section-card" id="s-traits">
+  <div class="section-header">
+    <div class="section-icon amber"><i class="ph ph-star"></i></div>
+    <div class="section-header-text">
+      <h2>Traits &amp; Skills</h2>
+      <p>Rate each pupil's behavioural traits and psychomotor skills from 1 to 5</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <p style="margin-bottom:1rem;">This section lets you rate all pupils at once using a bulk-entry grid. There are two groups:</p>
+
+    <div class="grid-2" style="margin-bottom:1.25rem;">
+      <div class="feature-tile">
+        <h5>Behavioural Traits (10 traits)</h5>
+        <p>Punctuality, Neatness, Politeness, Honesty, Obedience, Cooperation, Attentiveness, Leadership, Self Control, Creativity</p>
+      </div>
+      <div class="feature-tile">
+        <h5>Psychomotor Skills (6 skills)</h5>
+        <p>Handwriting, Drawing, Sports, Craft, Verbal, Coordination</p>
+      </div>
+    </div>
+
+    <div class="infobox info">
+      <div class="icon"><i class="ph ph-info"></i></div>
+      <p><strong>Rating scale:</strong> 1 = Poor, 2 = Fair, 3 = Good, 4 = Very Good, 5 = Excellent. Leave a field blank if you do not want to assess that trait — blank entries are not saved and will not overwrite a previously saved rating.</p>
+    </div>
+
+    <div class="steps" style="margin-top:1.25rem;">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>Select the term</h4>
+          <p>Use the <strong>Term</strong> dropdown at the top of the section. The grid will load any ratings you have already entered for that term.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Fill in ratings using the table</h4>
+          <p>Each row is a pupil and each column is a trait. Use the small dropdown in each cell to select a rating from 1 to 5. The table is wide — scroll it left or right on smaller screens to reach all the trait columns.</p>
+
+          <div class="table-scroll" style="margin:.875rem 0;">
+            <table class="traits-mock">
+              <thead>
+                <tr>
+                  <th class="name-th">Pupil Name</th>
+                  <th>Puntl.</th>
+                  <th>Neat.</th>
+                  <th>Polite.</th>
+                  <th>Honest.</th>
+                  <th>Obedience</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="name-td">Amina Yusuf</td>
+                  <td><select><option>5</option></select></td>
+                  <td><select><option>4</option></select></td>
+                  <td><select><option>5</option></select></td>
+                  <td><select><option>4</option></select></td>
+                  <td><select><option>5</option></select></td>
+                </tr>
+                <tr>
+                  <td class="name-td">Chidi Okafor</td>
+                  <td><select><option>3</option></select></td>
+                  <td><select><option>3</option></select></td>
+                  <td><select><option>4</option></select></td>
+                  <td><select><option>5</option></select></td>
+                  <td><select><option>3</option></select></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>Mobile view — cards instead of tables</h4>
+          <p>On a phone, the wide table is replaced with individual pupil cards. Each card shows the pupil's name and a 2-column grid of trait labels with their rating dropdowns. All the same data, just easier to use on a small screen.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h4>Save when done</h4>
+          <p>Press <strong>Save All Traits &amp; Skills</strong> at the bottom of the page. A toast message confirms how many pupils' records were saved. Any cells you left blank are skipped.</p>
+          <button class="mock-btn primary" style="margin-top:.5rem;"><i class="ph ph-floppy-disk"></i> Save All Traits &amp; Skills</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- 7. REMARKS -->
+<section class="section-card" id="s-remarks">
+  <div class="section-header">
+    <div class="section-icon purple"><i class="ph ph-chat-text"></i></div>
+    <div class="section-header-text">
+      <h2>Remarks</h2>
+      <p>Write teacher and headteacher comments for each pupil's report card</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <p style="margin-bottom:1.25rem;">Remarks are short written comments that appear on the printed report card — one from the class teacher and one from the headteacher. You write both here. For each pupil, the portal analyses their average score and suggests ready-made remarks you can use or edit.</p>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>Select term and pupil</h4>
+          <p>Choose the <strong>Term</strong> and then select a pupil from the <strong>Pupil</strong> dropdown. The form for that pupil loads automatically.</p>
+          <div style="display:flex; flex-wrap:wrap; gap:.75rem; margin:.75rem 0;">
+            <div><label class="mock-label">Term</label><select class="mock-select"><option>First Term</option></select></div>
+            <div><label class="mock-label">Pupil</label><select class="mock-select"><option>Amina Yusuf</option><option>Chidi Okafor</option></select></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Review the AI suggestions panel</h4>
+          <p>Above the Teacher's Remark box, a suggestion panel appears. It shows the pupil's average score, their performance category, and several ready-made remark options as clickable chips.</p>
+
+          <div style="background:var(--blue-pale); border:1px solid #bfdbfe; border-radius:var(--r-md); padding:.875rem 1rem; margin:.875rem 0;">
+            <div style="display:flex; align-items:center; gap:.5rem; margin-bottom:.5rem; flex-wrap:wrap;">
+              <div style="background:rgba(14,165,233,.12); border-radius:var(--r-sm); padding:4px; display:inline-flex;"><i class="ph ph-sparkle" style="color:var(--blue);"></i></div>
+              <div>
+                <div style="font-size:.875rem; font-weight:700; color:#0c4a6e;">Suggested Remarks</div>
+                <div style="font-size:.75rem; color:#075985;">Average: <strong>78.4%</strong> · Category: <strong>Excellent</strong></div>
+              </div>
+              <button style="margin-left:auto; background:white; border:1px solid #bfdbfe; border-radius:4px; padding:4px 6px; color:var(--blue); cursor:pointer; font-size:.8125rem;"><i class="ph ph-arrows-clockwise"></i></button>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:.375rem;">
+              <div style="background:white; border:1px solid #bfdbfe; border-radius:var(--r-sm); padding:.375rem .75rem; font-size:.75rem; color:#0c4a6e; cursor:pointer; line-height:1.5;">Amina has shown an excellent performance this term. She should keep it up!</div>
+              <div style="background:white; border:1px solid #bfdbfe; border-radius:var(--r-sm); padding:.375rem .75rem; font-size:.75rem; color:#0c4a6e; cursor:pointer; line-height:1.5;">She has excelled across all subjects this term. Her dedication is truly commendable.</div>
+            </div>
+          </div>
+
+          <p>Click any suggestion chip to paste it into the Teacher's Remark textarea. You can then edit the text freely before saving.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>Write or edit the remarks</h4>
+          <p>Two text boxes appear side by side (stacked on mobile):</p>
+          <div class="grid-2" style="margin:.75rem 0;">
+            <div>
+              <label class="mock-label">Teacher's Remark</label>
+              <textarea class="mock-input" rows="4" style="resize:none;">Amina has shown an excellent performance this term. She should keep it up!</textarea>
+            </div>
+            <div>
+              <label class="mock-label">Headteacher's Remark</label>
+              <textarea class="mock-input" rows="4" style="resize:none;">Amina has delivered a truly outstanding performance this term. We are very proud of her achievement.</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h4>Save</h4>
+          <p>Press <strong>Save Remarks</strong>. A green toast confirms saving. You can come back to any pupil at any time to update their remarks — the saved text will be loaded back into the form.</p>
+          <button class="mock-btn primary" style="margin-top:.5rem;"><i class="ph ph-floppy-disk"></i> Save Remarks</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="infobox info" style="margin-top:.5rem;">
+      <div class="icon"><i class="ph ph-info"></i></div>
+      <p><strong>Suggestions use approved results only.</strong> If results for the selected term have not yet been approved by admin, the suggestion panel will say "No approved results found." Enter results, get them approved, then come back to write remarks.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- 8. CBT -->
+<section class="section-card" id="s-cbt">
+  <div class="section-header">
+    <div class="section-icon teal"><i class="ph ph-monitor"></i></div>
+    <div class="section-header-text">
+      <h2>CBT — Online Tests &amp; Exams</h2>
+      <p>Create and manage objective tests that pupils take digitally on the pupil portal</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <p style="margin-bottom:1.25rem;">CBT stands for Computer-Based Testing. You create a test here with multiple-choice questions. The test appears in the pupil portal where pupils answer it online. Their scores are recorded automatically — no marking required.</p>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>View your existing tests</h4>
+          <p>When you open the CBT section, you see a list of all tests you have created. Each card shows the test title, subject, class, number of questions, whether there is a timer, how many pupils have submitted, and the test's current status.</p>
+
+          <div style="margin:.875rem 0;">
+            <div class="cbt-card">
+              <div style="flex-shrink:0;">
+                <span class="mock-tag green">Open</span>
+              </div>
+              <div class="cbt-card-body">
+                <div class="cbt-card-title">First Term Mathematics Test</div>
+                <div class="cbt-card-meta">Mathematics · Basic 3 · 20 questions · 30 min timer · 18 submitted</div>
+                <div class="cbt-card-actions">
+                  <button class="mock-btn ghost" style="padding:.3rem .75rem; font-size:.75rem;"><i class="ph ph-pencil"></i> Edit</button>
+                  <button class="mock-btn ghost" style="padding:.3rem .75rem; font-size:.75rem;"><i class="ph ph-chart-bar"></i> Results</button>
+                  <button class="mock-btn" style="padding:.3rem .75rem; font-size:.75rem; background:var(--amber-bg); border:1px solid #fde68a; color:var(--amber);">Unpublish</button>
+                  <button class="mock-btn" style="padding:.3rem .75rem; font-size:.75rem; background:var(--red-bg); border:1px solid #fca5a5; color:var(--red);"><i class="ph ph-trash"></i> Delete</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="cbt-card">
+              <div style="flex-shrink:0;">
+                <span class="mock-tag" style="background:#f1f5f9; color:#475569;">Draft</span>
+              </div>
+              <div class="cbt-card-body">
+                <div class="cbt-card-title">Mid-Term English Quiz</div>
+                <div class="cbt-card-meta">English Language · Basic 3 · 15 questions · No timer · 0 submitted</div>
+                <div class="cbt-card-actions">
+                  <button class="mock-btn ghost" style="padding:.3rem .75rem; font-size:.75rem;"><i class="ph ph-pencil"></i> Edit</button>
+                  <button class="mock-btn success" style="padding:.3rem .75rem; font-size:.75rem;"><i class="ph ph-globe"></i> Publish</button>
+                  <button class="mock-btn" style="padding:.3rem .75rem; font-size:.75rem; background:var(--red-bg); border:1px solid #fca5a5; color:var(--red);"><i class="ph ph-trash"></i> Delete</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-top:.5rem;">
+            <div class="feature-tile"><h5>Open</h5><p>Published and within the scheduled window. Pupils can access it now.</p></div>
+            <div class="feature-tile"><h5>Draft</h5><p>Saved but not published. Only you can see it. Pupils cannot access it yet.</p></div>
+            <div class="feature-tile"><h5>Scheduled</h5><p>Published but the open date is in the future. Pupils will see it once the time arrives.</p></div>
+            <div class="feature-tile"><h5>Expired</h5><p>The closing date has passed. Pupils can no longer submit, but you can still view results.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Create a new test</h4>
+          <p>Press <strong>+ Create New Test</strong>. A form opens with two sections: Test Details and Questions.</p>
+
+          <p style="margin-top:.75rem;"><strong>Test Details fields:</strong></p>
+          <div class="grid-2" style="margin:.5rem 0;">
+            <div class="feature-tile"><h5>Title</h5><p>The name pupils will see, e.g. "First Term Mathematics Test".</p></div>
+            <div class="feature-tile"><h5>Subject</h5><p>Type the subject name. Free text.</p></div>
+            <div class="feature-tile"><h5>Type</h5><p>Test, Exam, Quiz, or Practice.</p></div>
+            <div class="feature-tile"><h5>Class</h5><p>Only pupils in this class will see the test.</p></div>
+            <div class="feature-tile"><h5>Term</h5><p>Which term this test belongs to.</p></div>
+            <div class="feature-tile"><h5>Timer (minutes)</h5><p>Set a countdown (e.g. 30). Set to 0 for no time limit.</p></div>
+            <div class="feature-tile"><h5>Scheduled Open Date</h5><p>Optional. The test is not accessible until this date.</p></div>
+            <div class="feature-tile"><h5>Expiry Date</h5><p>Optional. After this date, pupils can no longer submit.</p></div>
+          </div>
+          <div style="margin:.5rem 0;">
+            <label class="mock-label">Additional Instructions (optional)</label>
+            <textarea class="mock-input" rows="2" placeholder="Any extra instructions pupils should see before starting…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>Add questions</h4>
+          <p>Press <strong>+ Add Question</strong>. A question block appears with a text area for the question, four option fields: A, B, C, D (C and D are optional), and a <strong>Correct</strong> radio button next to each option — click the one that is correct.</p>
+          <p>Press <strong>+ Add Question</strong> again to add more. You can remove any question with the X button in its top-right corner. There is no limit on the number of questions.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h4>Save as draft or publish immediately</h4>
+          <div style="display:flex; gap:.5rem; flex-wrap:wrap; margin:.75rem 0;">
+            <button class="mock-btn ghost"><i class="ph ph-floppy-disk"></i> Save as Draft</button>
+            <button class="mock-btn primary"><i class="ph ph-paper-plane-tilt"></i> Save &amp; Publish</button>
+            <button class="mock-btn" style="background:var(--surface); color:var(--muted); border:1px solid var(--border);">Cancel</button>
+          </div>
+          <p><strong>Save as Draft</strong> stores the test but keeps it hidden from pupils. <strong>Save &amp; Publish</strong> makes it immediately visible to pupils in the selected class.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <h4>View results</h4>
+          <p>From the test list, press <strong>Results</strong> on any test. You see a table of every pupil who submitted, their score, percentage, grade, number of tab-switches (anti-cheat), and submission time.</p>
+          <p><strong>Tab switches</strong> are flagged in red if a pupil switched away from the test window more than 3 times — this may indicate they were looking at another source during the test.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-content">
+          <h4>Delete a test</h4>
+          <p>Press Delete. A full-screen confirmation dialog appears warning that all questions, all pupil scores, and all submission records will be permanently deleted. You must confirm to proceed. This cannot be undone.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="infobox warn" style="margin-top:.5rem;">
+      <div class="icon"><i class="ph ph-warning"></i></div>
+      <p><strong>CBT scores are separate from CA/Exam scores.</strong> A CBT test result does not automatically feed into the Enter Results section. CBT is for online practice and assessment — if you want CBT scores to appear on report cards, you must manually enter them in Enter Results.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- 9. CLASS PROMOTION -->
+<section class="section-card" id="s-promotions">
+  <div class="section-header">
+    <div class="section-icon green"><i class="ph ph-trend-up"></i></div>
+    <div class="section-header-text">
+      <h2>Class Promotion</h2>
+      <p>Recommend which pupils move to the next class at end of session</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <div class="infobox locked">
+      <div class="icon"><i class="ph ph-lock"></i></div>
+      <p><strong>This section is only available when the promotion period is open.</strong> The school admin must activate the promotion window. If you see a "Promotion Period Not Active" banner, contact admin. Once active, a green banner confirms you can submit.</p>
+    </div>
+
+    <div style="margin:1.25rem 0;">
+      <p class="mock-label">What you see when the promotion period is active</p>
+      <div class="grid-2" style="margin:.5rem 0;">
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md); padding:1rem;">
+          <div style="font-size:.625rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:.5rem;">Current Class</div>
+          <div style="font-size:1.25rem; font-weight:800; color:var(--ink);">Basic 3</div>
+        </div>
+        <div style="background:var(--blue-pale); border:1px solid #bfdbfe; border-radius:var(--r-md); padding:1rem;">
+          <div style="font-size:.625rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:.5rem;">Promoted To</div>
+          <div style="font-size:1.25rem; font-weight:800; color:var(--navy);">Basic 4</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>Review the pupil table</h4>
+          <p>A table lists every pupil with their calculated average score (from approved results for the current term), their grade, and a status badge. Pupils with an average of 40% or above are pre-ticked for promotion. Pupils below 40% are unchecked and shown as "Review".</p>
+          <p>These pre-selections are suggestions — you can change any checkbox as you see fit.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Adjust selections</h4>
+          <div style="display:flex; gap:.5rem; flex-wrap:wrap; margin:.75rem 0;">
+            <button class="mock-btn ghost">Select All</button>
+            <button class="mock-btn ghost">Deselect All</button>
+          </div>
+          <p>Use <strong>Select All</strong> or <strong>Deselect All</strong> to quickly mark everyone, or tick/untick individual pupils.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>Submit the promotion list</h4>
+          <p>Press <strong>Submit Promotion List</strong>. A confirmation dialog summarises how many pupils will be promoted and how many will be held back. After confirming, the request goes to admin for approval.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="divider"></div>
+
+    <p style="font-size:.875rem; font-weight:700; color:var(--ink); margin-bottom:.5rem;">Special case: Terminal (Final) class</p>
+    <p style="font-size:.875rem; color:var(--text); margin-bottom:.75rem;">If your class is the last class in the school (e.g. Primary 6), the "Promoted To" card will say <strong>Graduation (Alumni)</strong>. Pupils you tick will be marked as Graduated and moved to alumni records.</p>
+
+    <div class="infobox tip">
+      <div class="icon"><i class="ph ph-check-circle"></i></div>
+      <p>You can edit and resubmit the promotion list as many times as you need <strong>while the promotion period is still open</strong>. Submitting again updates the previous request — it does not create a duplicate.</p>
+    </div>
+
+  </div>
+</section>
+
+<!-- 10. LESSON NOTES -->
+<section class="section-card" id="s-lessonnotes">
+  <div class="section-header">
+    <div class="section-icon pink"><i class="ph ph-book-open"></i></div>
+    <div class="section-header-text">
+      <h2>Lesson Notes</h2>
+      <p>Create, submit, and track your weekly lesson notes for admin approval</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <p style="margin-bottom:1.25rem;">The Lesson Notes section lets you write your weekly lesson plan in a structured form, submit it to admin, and track whether it has been approved or returned with feedback.</p>
+
+    <div class="flow">
+      <div class="flow-step warn"><i class="ph ph-pencil"></i>Draft</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step active"><i class="ph ph-paper-plane-tilt"></i>Submitted</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step done"><i class="ph ph-check-circle"></i>Approved</div>
+    </div>
+    <div class="flow" style="margin-top:.25rem;">
+      <div class="flow-step active"><i class="ph ph-paper-plane-tilt"></i>Submitted</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step warn"><i class="ph ph-warning"></i>Rejected</div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="background:white;"><i class="ph ph-pencil"></i>Edit &amp; Resubmit</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>Creating a new lesson note</h4>
+          <p>Press <strong>+ New Lesson Note</strong>. A form opens. Fill in the identity fields at the top:</p>
+          <div class="grid-2" style="margin:.5rem 0;">
+            <div class="feature-tile"><h5>Class</h5><p>Your assigned class. Auto-selected if you teach only one class.</p></div>
+            <div class="feature-tile"><h5>Subject</h5><p>Loaded from the subjects assigned to your class by admin.</p></div>
+            <div class="feature-tile"><h5>Term</h5><p>Which school term this note is for.</p></div>
+            <div class="feature-tile"><h5>Week Number</h5><p>The week of term (Week 1 to Week 13).</p></div>
+          </div>
+          <div class="infobox warn" style="margin:.5rem 0;">
+            <div class="icon"><i class="ph ph-warning"></i></div>
+            <p>Class, Term, and Week cannot be changed after the note is saved for the first time. Choose carefully before saving.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Fill in the lesson content</h4>
+          <p>The form has nine content sections. Required ones are marked with a red *:</p>
+          <div class="grid-2" style="margin:.5rem 0;">
+            <div class="feature-tile"><h5>Topic / Title *</h5><p>The main topic for the week.</p></div>
+            <div class="feature-tile"><h5>Sub-topic</h5><p>Optional sub-topic or unit.</p></div>
+            <div class="feature-tile"><h5>Learning Objectives *</h5><p>What pupils will be able to do by the end of the week.</p></div>
+            <div class="feature-tile"><h5>Resources / Materials</h5><p>Textbooks, charts, flashcards, etc.</p></div>
+            <div class="feature-tile"><h5>Introduction / Starter *</h5><p>How you will introduce the lesson.</p></div>
+            <div class="feature-tile"><h5>Lesson Development *</h5><p>Step-by-step teaching activities.</p></div>
+            <div class="feature-tile"><h5>Conclusion / Summary *</h5><p>How you will close and recap.</p></div>
+            <div class="feature-tile"><h5>Assessment / Evaluation</h5><p>Classwork, oral questions, observation.</p></div>
+            <div class="feature-tile"><h5>Assignment / Homework</h5><p>Take-home task, if any.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>Save as draft</h4>
+          <p>Press <strong>Save Draft</strong>. The note is saved and appears in your list with a <strong>Draft</strong> badge. You can return to edit it as many times as needed before submitting.</p>
+          <button class="mock-btn primary" style="margin-top:.5rem;"><i class="ph ph-floppy-disk"></i> Save Draft</button>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h4>Submit for approval</h4>
+          <p>When the note is complete and ready, press <strong>Submit</strong> from the list card. A confirmation dialog appears. After confirming, the note changes to <strong>Pending Approval</strong> status and you can no longer edit it until admin reviews it.</p>
+          <div class="infobox warn" style="margin:.75rem 0;">
+            <div class="icon"><i class="ph ph-warning"></i></div>
+            <p>All required fields (marked *) must be filled before you can submit. If any are empty, the portal will tell you exactly which ones are missing.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <h4>If the note is rejected</h4>
+          <p>Admin will write a reason for rejection, which appears in a <strong>red banner</strong> on the note card and inside the edit form. The note reverts to <strong>Draft</strong> status so you can edit and resubmit.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-content">
+          <h4>Printing a lesson note</h4>
+          <p>From the note list, press <strong>Print</strong> on any note. A formatted print window opens with the school header, all content fields neatly laid out in a two-column table, the note's status, and version number.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="divider"></div>
+
+    <h3 style="font-size:1rem; font-weight:700; color:var(--ink); margin-bottom:.75rem;">Filtering your notes</h3>
+    <p style="font-size:.875rem; margin-bottom:.75rem;">Two filter dropdowns above the notes list let you narrow what you see:</p>
+    <div class="grid-2">
+      <div class="feature-tile"><h5>Filter by Term</h5><p>Show only notes from a specific term.</p></div>
+      <div class="feature-tile"><h5>Filter by Status</h5><p>Show only Draft, Pending, Approved, or Rejected notes.</p></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- QUICK REFERENCE -->
+<section class="section-card" id="s-ref">
+  <div class="section-header">
+    <div class="section-icon slate"><i class="ph ph-push-pin"></i></div>
+    <div class="section-header-text">
+      <h2>Quick Reference — Common Questions</h2>
+      <p>Fast answers to the most frequent questions</p>
+    </div>
+  </div>
+  <div class="section-body">
+
+    <div class="grid-2">
+      <div class="feature-tile">
+        <h5>Why can't I see certain subjects in Enter Results?</h5>
+        <p>Subjects are assigned to your class by admin. If a subject is missing from the dropdown, contact admin to add it to your class.</p>
+      </div>
+      <div class="feature-tile">
+        <h5>I saved results but they disappeared — what happened?</h5>
+        <p>Results are saved as drafts under your account and should persist. Make sure you selected the correct term, class, and subject combination.</p>
+      </div>
+      <div class="feature-tile">
+        <h5>Why are the result inputs greyed out?</h5>
+        <p>Results are locked — either you have submitted and admin is reviewing, or admin has approved and locked them. Check the banner at the bottom of the results section for details.</p>
+      </div>
+      <div class="feature-tile">
+        <h5>Why don't remarks suggestions appear?</h5>
+        <p>Suggestions are generated from approved results. If admin has not yet approved results for the selected term, suggestions cannot be generated.</p>
+      </div>
+      <div class="feature-tile">
+        <h5>Can I edit an already-submitted lesson note?</h5>
+        <p>No. Once submitted, a note is locked until admin acts. If admin approves it, it stays locked. If admin rejects it, it reverts to Draft and you can edit.</p>
+      </div>
+      <div class="feature-tile">
+        <h5>How does the daily attendance affect the report card?</h5>
+        <p>When you use the daily register, the system automatically calculates "Times School Opened", "Times Present", and "Times Absent" for each pupil — these appear on the report card.</p>
+      </div>
+      <div class="feature-tile">
+        <h5>The portal says "No classes assigned" — what do I do?</h5>
+        <p>Contact admin. They need to assign you to a class before you can enter any data. Once assigned, refresh the portal page and the class will appear.</p>
+      </div>
+      <div class="feature-tile">
+        <h5>How do I correct a mistake after results are approved?</h5>
+        <p>You cannot edit locked results yourself. Contact admin and explain the error. Admin can unlock the results, allowing you to edit and resubmit.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+</div>
+</main>
+
+<footer>
+  <p>Fahmid Nursery &amp; Primary School — Teacher Portal Guide &nbsp;·&nbsp; For internal staff use only</p>
+  <p style="margin-top:.25rem; font-size:.75rem; color:#94a3b8;">This guide reflects the current version of the teacher portal.</p>
+</footer>
+
+</body>
+</html>
