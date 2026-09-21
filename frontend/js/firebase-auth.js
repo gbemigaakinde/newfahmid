@@ -13,6 +13,7 @@ import {
   setPersistence,
   browserLocalPersistence,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut,
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 
@@ -76,6 +77,23 @@ export async function signIn(
     );
 
   return credential.user;
+}
+
+/**
+ * Send a password-reset email.
+ *
+ * The caller is expected to have already confirmed (via the
+ * Worker's /api/auth/check-email) that this address belongs to a
+ * real account, so we don't leak that information here.
+ */
+export async function sendPasswordReset(email) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+
+  if (!normalizedEmail) {
+    throw new Error("Email address is required.");
+  }
+
+  await sendPasswordResetEmail(auth, normalizedEmail);
 }
 
 /**
