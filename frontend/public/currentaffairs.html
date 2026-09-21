@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nigeria Learning Journey</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --green: #2D7A3E;
+            --white: #FFFFFF;
+            --soft-blue: #5B9BD5;
+            --soft-yellow: #F4C542;
+            --soft-red: #E06C75;
+            --soft-orange: #E8955D;
+            --soft-purple: #9B7EBD;
+            --light-gray: #F5F5F5;
+            --medium-gray: #CCCCCC;
+            --dark-gray: #4A4A4A;
+            --text-dark: #2C2C2C;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--light-gray);
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        .screen {
+            display: none;
+            min-height: 100vh;
+            padding: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Home Screen */
+        .home-header {
+            text-align: center;
+            padding: 40px 20px;
+            background: var(--green);
+            color: var(--white);
+            border-radius: 20px;
+            margin-bottom: 40px;
+        }
+
+        .home-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .home-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .age-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .category-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 3px solid transparent;
+        }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .category-card.nursery1 { border-color: var(--soft-blue); }
+        .category-card.nursery2 { border-color: var(--soft-yellow); }
+        .category-card.kindergarten { border-color: var(--soft-purple); }
+
+        .category-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+        }
+
+        .category-card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .category-card p {
+            font-size: 1.1rem;
+            color: var(--dark-gray);
+            margin-bottom: 15px;
+        }
+
+        .lesson-count {
+            display: inline-block;
+            background: var(--light-gray);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: var(--dark-gray);
+        }
+
+        /* Learning Screen */
+        .learning-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .learning-header {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: var(--white);
+        }
+
+        .category-badge.nursery1 { background: var(--soft-blue); }
+        .category-badge.nursery2 { background: var(--soft-yellow); color: var(--text-dark); }
+        .category-badge.kindergarten { background: var(--soft-purple); }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .icon-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 10px;
+            background: var(--light-gray);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+        }
+
+        .icon-btn:hover {
+            background: var(--medium-gray);
+        }
+
+        .icon-btn.active {
+            background: var(--green);
+        }
+
+        .icon-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Lesson Display */
+        .lesson-display {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 60px 40px;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .lesson-title {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            color: var(--green);
+            animation: slideDown 0.6s ease;
+        }
+
+        .lesson-visual {
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+            margin-bottom: 30px;
+            animation: scaleUp 0.8s ease;
+        }
+
+        .lesson-text {
+            font-size: 1.5rem;
+            line-height: 1.8;
+            max-width: 700px;
+            animation: fadeIn 1s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleUp {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Controls */
+        .playback-controls {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-btn.primary {
+            background: var(--green);
+            color: var(--white);
+        }
+
+        .control-btn.secondary {
+            background: var(--light-gray);
+            color: var(--text-dark);
+        }
+
+        .control-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .control-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background: var(--white);
+            padding: 15px 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: var(--dark-gray);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: var(--light-gray);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--green);
+            transition: width 0.5s ease;
+        }
+
+        /* Settings Panel */
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 100%;
+            max-width: 400px;
+            height: 100vh;
+            background: var(--white);
+            box-shadow: -5px 0 20px rgba(0,0,0,0.2);
+            padding: 30px;
+            transition: right 0.4s ease;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .settings-panel.active {
+            right: 0;
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .settings-header h2 {
+            font-size: 1.8rem;
+        }
+
+        .setting-group {
+            margin-bottom: 30px;
+        }
+
+        .setting-group h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--dark-gray);
+        }
+
+        .setting-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .toggle-switch {
+            width: 50px;
+            height: 26px;
+            background: var(--medium-gray);
+            border-radius: 13px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: var(--green);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--white);
+            top: 3px;
+            left: 3px;
+            transition: left 0.3s ease;
+        }
+
+        .toggle-switch.active::after {
+            left: 27px;
+        }
+
+        .speed-options {
+            display: flex;
+            gap: 10px;
+        }
+
+        .speed-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--medium-gray);
+            border-radius: 8px;
+            background: var(--white);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .speed-btn.active {
+            border-color: var(--green);
+            background: var(--green);
+            color: var(--white);
+        }
+
+        /* Teacher Mode */
+        .teacher-panel {
+            position: fixed;
+            bottom: -100%;
+            left: 0;
+            width: 100%;
+            height: 60vh;
+            background: var(--white);
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+            padding: 30px;
+            transition: bottom 0.4s ease;
+            z-index: 999;
+            overflow-y: auto;
+        }
+
+        .teacher-panel.active {
+            bottom: 0;
+        }
+
+        .lesson-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .lesson-item {
+            padding: 20px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .lesson-item:hover {
+            background: var(--medium-gray);
+        }
+
+        .lesson-item.active {
+            border-color: var(--green);
+            background: rgba(45, 122, 62, 0.1);
+        }
+
+        .lesson-number {
+            font-weight: bold;
+            color: var(--green);
+            margin-bottom: 5px;
+        }
+
+        /* SVG Visuals */
+        .visual-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .home-header h1 {
+                font-size: 2rem;
+            }
+
+            .lesson-title {
+                font-size: 1.5rem;
+            }
+
+            .lesson-text {
+                font-size: 1.2rem;
+            }
+
+            .lesson-display {
+                padding: 40px 20px;
+            }
+
+            .settings-panel {
+                max-width: 100%;
+            }
+        }
+
+        /* Loading Animation */
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--light-gray);
+            border-top-color: var(--green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Celebration Animation */
+        @keyframes celebrate {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .celebrate {
+            animation: celebrate 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- Home Screen -->
+    <div id="homeScreen" class="screen active">
+        <div class="home-header">
+            <h1>🇳🇬 Nigeria Learning Journey</h1>
+            <p>Discover Nigeria through stories and fun</p>
+        </div>
+
+        <div class="age-categories">
+            <div class="category-card nursery1" onclick="selectCategory('nursery1')">
+                <div class="category-icon">
+                    <svg viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="35" r="20" fill="#5B9BD5"/>
+                        <path d="M30 60 Q50 50 70 60 L70 90 L30 90 Z" fill="#5B9BD5"/>
+                    </svg>
+                </div>
+                <h2>Nursery 1</h2>
+                <p>Ages 3-4</p>
+                <span class="lesson-count">25 Lessons</span>
+            </div>
+
+            <div class="category-card nursery2" onclick="selectCategory('nursery2')">
+                <div class="category-icon">
+                    <svg viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="35" r="20" fill="#F4C542"/>
+                        <path d="M30 60 Q50 50 70 60 L70 90 L30 90 Z" fill="#F4C542"/>
+                        <rect x="45" y="20" width="10" height="10" fill="#2C2C2C"/>
+                    </svg>
+                </div>
+                <h2>Nursery 2</h2>
+                <p>Ages 4-5</p>
+                <span class="lesson-count">25 Lessons</span>
+            </div>
+
+            <div class="category-card kindergarten" onclick="selectCategory('kindergarten')">
+                <div class="category-icon">
+                    <svg viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="35" r="20" fill="#9B7EBD"/>
+                        <path d="M30 60 Q50 50 70 60 L70 90 L30 90 Z" fill="#9B7EBD"/>
+                        <polygon points="50,10 55,25 45,25" fill="#2C2C2C"/>
+                    </svg>
+                </div>
+                <h2>Kindergarten</h2>
+                <p>Ages 5-6</p>
+                <span class="lesson-count">25 Lessons</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Learning Screen -->
+    <div id="learningScreen" class="screen">
+        <div class="learning-container">
+            <div class="learning-header">
+                <div>
+                    <span id="categoryBadge" class="category-badge">Nursery 1</span>
+                </div>
+                <div class="header-controls">
+                    <button class="icon-btn" onclick="toggleTeacherMode()" id="teacherBtn" title="Teacher Mode">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                    </button>
+                    <button class="icon-btn" onclick="toggleSettings()" title="Settings">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M12 1v6m0 6v6m7.071-15.071l-4.243 4.243m-5.656 5.656l-4.243 4.243m15.142 0l-4.243-4.243m-5.656-5.656l-4.243-4.243"></path>
+                        </svg>
+                    </button>
+                    <button class="icon-btn" onclick="goHome()" title="Home">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="progress-container">
+                <div class="progress-info">
+                    <span id="lessonCounter">Lesson 1 of 25</span>
+                    <span id="progressPercent">4%</span>
+                </div>
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill" style="width: 4%"></div>
+                </div>
+            </div>
+
+            <div class="lesson-display" id="lessonDisplay">
+                <h2 class="lesson-title" id="lessonTitle">Loading...</h2>
+                <div class="lesson-visual" id="lessonVisual"></div>
+                <p class="lesson-text" id="lessonText">Please wait...</p>
+            </div>
+
+            <div class="playback-controls">
+                <button class="control-btn secondary" onclick="previousLesson()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="19 20 9 12 19 4 19 20"></polygon>
+                        <line x1="5" y1="19" x2="5" y2="5"></line>
+                    </svg>
+                    Previous
+                </button>
+                <button class="control-btn primary" onclick="togglePlayPause()" id="playPauseBtn">
+                    <svg id="playIcon" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    <svg id="pauseIcon" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
+                        <rect x="6" y="4" width="4" height="16"></rect>
+                        <rect x="14" y="4" width="4" height="16"></rect>
+                    </svg>
+                    <span id="playPauseText">Play</span>
+                </button>
+                <button class="control-btn secondary" onclick="nextLesson()">
+                    Next
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                        <line x1="19" y1="5" x2="19" y2="19"></line>
+                    </svg>
+                </button>
+                <button class="control-btn secondary" onclick="restartLesson()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                    Restart
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div id="settingsPanel" class="settings-panel">
+        <div class="settings-header">
+            <h2>Settings</h2>
+            <button class="icon-btn" onclick="toggleSettings()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+
+        <div class="setting-group">
+            <h3>Playback</h3>
+            <div class="setting-option">
+                <span>Auto Play</span>
+                <div class="toggle-switch active" id="autoPlayToggle" onclick="toggleAutoPlay()"></div>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <h3>Lesson Speed</h3>
+            <div class="speed-options">
+                <button class="speed-btn" onclick="setSpeed('slow')">Slow</button>
+                <button class="speed-btn active" onclick="setSpeed('normal')">Normal</button>
+                <button class="speed-btn" onclick="setSpeed('fast')">Fast</button>
+            </div>
+        </div>
+
+        <div class="setting-group">
+            <h3>Sound Effects</h3>
+            <div class="setting-option">
+                <span>Enable Sounds</span>
+                <div class="toggle-switch active" id="soundToggle" onclick="toggleSound()"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Teacher Panel -->
+    <div id="teacherPanel" class="teacher-panel">
+        <div class="settings-header">
+            <h2>Lesson Overview</h2>
+            <button class="icon-btn" onclick="toggleTeacherMode()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="lesson-grid" id="lessonGrid"></div>
+    </div>
+<script>
+    // State Management
+    const state = {
+        currentCategory: 'nursery1',
+        currentLessonIndex: 0,
+        isPlaying: false,
+        autoPlay: true,
+        lessonSpeed: 'normal',
+        soundEnabled: true,
+        teacherMode: false,
+        playbackTimer: null
+    };
+
+    // Speed settings in milliseconds
+    const speedSettings = {
+        slow: 8000,
+        normal: 5000,
+        fast: 3000
+    };
+
+    // Lesson Data
+    const lessonData = {
+        nursery1: [
+            {
+                title: "The Nigerian Flag",
+                text: "Our flag has green and white. Green is for our farms and trees. White is for peace and unity.",
+                image: "/images/nursery1/nigerian-flag.jpg"
+            },
+            {
+                title: "Our Country Nigeria",
+                text: "We live in Nigeria. Nigeria is in Africa. We have many people who love our country.",
+                image: "/images/nursery1/nigeria-map.jpg"
+            },
+            {
+                title: "The President",
+                text: "The President helps lead Nigeria. The President works in Abuja, our capital city.",
+                image: "/images/nursery1/president.jpg"
+            },
+            {
+                title: "Aso Rock",
+                text: "Aso Rock is a big rock in Abuja. It is where the President's office is located.",
+                image: "/images/nursery1/aso-rock.jpg"
+            },
+            {
+                title: "Our National Colors",
+                text: "Green and white are Nigeria's colors. We see them on our flag and in celebrations.",
+                image: "/images/nursery1/national-colors.jpg"
+            },
+            {
+                title: "Independence Day",
+                text: "October 1st is Nigeria's birthday. We celebrate being free and independent.",
+                image: "/images/nursery1/independence-day.jpg"
+            },
+            {
+                title: "Schools in Nigeria",
+                text: "Children go to school to learn. Schools help us become smart and kind.",
+                image: "/images/nursery1/school.jpg"
+            },
+            {
+                title: "Doctors Help Us",
+                text: "Doctors make us feel better when we are sick. They work in hospitals and clinics.",
+                image: "/images/nursery1/doctor.jpg"
+            },
+            {
+                title: "Teachers Teach Us",
+                text: "Teachers help us learn new things every day. They are very important helpers.",
+                image: "/images/nursery1/teacher.jpg"
+            },
+            {
+                title: "Police Keep Us Safe",
+                text: "Police officers protect us and keep our communities safe every day.",
+                image: "/images/nursery1/police.jpg"
+            },
+            {
+                title: "The Market",
+                text: "Markets are places where people buy and sell food and things we need.",
+                image: "/images/nursery1/market.jpg"
+            },
+            {
+                title: "Our Families",
+                text: "Families love and care for each other. We live together and help one another.",
+                image: "/images/nursery1/family.jpg"
+            },
+            {
+                title: "Being Honest",
+                text: "We should always tell the truth. Honesty makes people trust and respect us.",
+                image: "/images/nursery1/honesty.jpg"
+            },
+            {
+                title: "Sharing with Friends",
+                text: "When we share, everyone is happy. Sharing shows we care about others.",
+                image: "/images/nursery1/sharing.jpg"
+            },
+            {
+                title: "Nigerian Food",
+                text: "We eat rice, yam, beans, and many delicious foods. Food gives us energy to play.",
+                image: "/images/nursery1/food.jpg"
+            },
+            {
+                title: "Our Houses",
+                text: "We live in houses with our families. Houses keep us safe and comfortable.",
+                image: "/images/nursery1/house.jpg"
+            },
+            {
+                title: "Going to Church or Mosque",
+                text: "Many people pray at churches or mosques. We learn to be good and kind there.",
+                image: "/images/nursery1/worship.jpg"
+            },
+            {
+                title: "Being Kind",
+                text: "When we are kind to others, we make them smile. Kindness makes the world better.",
+                image: "/images/nursery1/kindness.jpg"
+            },
+            {
+                title: "Helping at Home",
+                text: "We can help our parents by cleaning up and being good. Helping makes everyone happy.",
+                image: "/images/nursery1/helping.jpg"
+            },
+            {
+                title: "Nigerian Music",
+                text: "We love to sing and dance in Nigeria. Music makes us happy and brings us together.",
+                image: "/images/nursery1/music.jpg"
+            },
+            {
+                title: "Water is Important",
+                text: "We need clean water to drink and stay healthy. We should not waste water.",
+                image: "/images/nursery1/water.jpg"
+            },
+            {
+                title: "Trees and Nature",
+                text: "Trees give us fresh air and shade. We should protect our trees and plants.",
+                image: "/images/nursery1/trees.jpg"
+            },
+            {
+                title: "Being Clean",
+                text: "We wash our hands and take baths to stay clean and healthy every day.",
+                image: "/images/nursery1/clean.jpg"
+            },
+            {
+                title: "Nigerian Animals",
+                text: "Nigeria has many animals like goats, chickens, and birds. We take care of animals.",
+                image: "/images/nursery1/animals.jpg"
+            },
+            {
+                title: "Saying Thank You",
+                text: "We say thank you when someone helps us. Being grateful is very important.",
+                image: "/images/nursery1/thank-you.jpg"
+            }
+        ],
+        nursery2: [
+            {
+                title: "The Coat of Arms",
+                text: "Our Coat of Arms has an eagle, two horses, and our motto. It represents Nigeria's strength.",
+                image: "/images/nursery2/coat-of-arms.jpg"
+            },
+            {
+                title: "Nigeria Has 36 States",
+                text: "Nigeria is divided into 36 states and Abuja. Each state has its own governor.",
+                image: "/images/nursery2/36-states.jpg"
+            },
+            {
+                title: "The Governor",
+                text: "Each state has a governor who helps make the state better for everyone.",
+                image: "/images/nursery2/governor.jpg"
+            },
+            {
+                title: "The National Anthem",
+                text: "We sing our national anthem with pride. It talks about Nigeria being great and united.",
+                image: "/images/nursery2/national-anthem.jpg"
+            },
+            {
+                title: "Lagos: Big City",
+                text: "Lagos is one of Nigeria's biggest cities. Many people live and work there.",
+                image: "/images/nursery2/lagos.jpg"
+            },
+            {
+                title: "Rivers in Nigeria",
+                text: "The River Niger and River Benue are our biggest rivers. They provide water and fish.",
+                image: "/images/nursery2/rivers.jpg"
+            },
+            {
+                title: "Farmers Grow Our Food",
+                text: "Farmers plant crops like rice, yam, and cassava. They work hard to feed everyone.",
+                image: "/images/nursery2/farmer.jpg"
+            },
+            {
+                title: "Soldiers Protect Nigeria",
+                text: "Soldiers keep our country safe. They are brave and strong defenders of Nigeria.",
+                image: "/images/nursery2/soldier.jpg"
+            },
+            {
+                title: "Fire Fighters Help",
+                text: "Fire fighters put out fires and rescue people. They are very brave helpers.",
+                image: "/images/nursery2/firefighter.jpg"
+            },
+            {
+                title: "Nigerian Languages",
+                text: "We speak English, Hausa, Yoruba, Igbo, and many other languages in Nigeria.",
+                image: "/images/nursery2/languages.jpg"
+            },
+            {
+                title: "Unity in Diversity",
+                text: "Nigeria has many tribes and cultures. We are stronger when we work together in peace.",
+                image: "/images/nursery2/unity.jpg"
+            },
+            {
+                title: "Traditional Clothing",
+                text: "We wear beautiful clothes like agbada, buba, and ankara. They show our culture.",
+                image: "/images/nursery2/clothing.jpg"
+            },
+            {
+                title: "Festivals and Celebrations",
+                text: "We celebrate festivals like Eid and Christmas together. Festivals bring joy to everyone.",
+                image: "/images/nursery2/festival.jpg"
+            },
+            {
+                title: "Nigerian Sports",
+                text: "We love football and other sports. Nigerian athletes compete around the world.",
+                image: "/images/nursery2/sports.jpg"
+            },
+            {
+                title: "Being Respectful",
+                text: "We greet our elders and show respect. Respect is an important Nigerian value.",
+                image: "/images/nursery2/respect.jpg"
+            },
+            {
+                title: "Keeping Our Environment Clean",
+                text: "We put trash in bins and keep our surroundings clean. A clean environment is healthy.",
+                image: "/images/nursery2/environment.jpg"
+            },
+            {
+                title: "Nigerian Currency: Naira",
+                text: "We use naira and kobo to buy things. Money helps us get what we need.",
+                image: "/images/nursery2/currency.jpg"
+            },
+            {
+                title: "Going to the Library",
+                text: "Libraries have many books to read. Reading helps us learn and imagine new things.",
+                image: "/images/nursery2/library.jpg"
+            },
+            {
+                title: "Traffic Lights Keep Us Safe",
+                text: "Red means stop, yellow means wait, green means go. Traffic lights help everyone stay safe.",
+                image: "/images/nursery2/traffic-lights.jpg"
+            },
+            {
+                title: "Nigerian Art and Craft",
+                text: "We make beautiful art with clay, beads, and paint. Art shows our creativity.",
+                image: "/images/nursery2/art.jpg"
+            },
+            {
+                title: "Working Together",
+                text: "When we cooperate and work as a team, we can do great things together.",
+                image: "/images/nursery2/teamwork.jpg"
+            },
+            {
+                title: "Nigerian Leaders",
+                text: "Leaders help guide our country and communities. Good leaders serve the people.",
+                image: "/images/nursery2/leaders.jpg"
+            },
+            {
+                title: "Staying Healthy",
+                text: "We eat good food, exercise, and rest. Staying healthy helps us grow strong.",
+                image: "/images/nursery2/health.jpg"
+            },
+            {
+                title: "The National Pledge",
+                text: "We pledge to serve Nigeria with love and strength. The pledge reminds us to be good citizens.",
+                image: "/images/nursery2/pledge.jpg"
+            },
+            {
+                title: "Being Responsible",
+                text: "We take care of our belongings and do our duties. Being responsible builds trust.",
+                image: "/images/nursery2/responsibility.jpg"
+            }
+        ],
+        kindergarten: [
+            {
+                title: "Nigeria's Geography",
+                text: "Nigeria is in West Africa by the Atlantic Ocean. We have forests, grasslands, and rivers.",
+                image: "/images/kindergarten/geography.jpg"
+            },
+            {
+                title: "The Three Arms of Government",
+                text: "Nigeria has Executive, Legislative, and Judiciary. They work together to govern our country.",
+                image: "/images/kindergarten/government.jpg"
+            },
+            {
+                title: "The National Assembly",
+                text: "The National Assembly makes laws for Nigeria. It has the Senate and House of Representatives.",
+                image: "/images/kindergarten/assembly.jpg"
+            },
+            {
+                title: "Democracy in Nigeria",
+                text: "In democracy, people choose their leaders by voting. Everyone's voice matters in Nigeria.",
+                image: "/images/kindergarten/democracy.jpg"
+            },
+            {
+                title: "Elections",
+                text: "Elections are when we vote to choose leaders. People vote for who they think will help Nigeria.",
+                image: "/images/kindergarten/election.jpg"
+            },
+            {
+                title: "Nigerian History",
+                text: "Nigeria became independent on October 1, 1960. Before that, we were under colonial rule.",
+                image: "/images/kindergarten/history.jpg"
+            },
+            {
+                title: "The Nigerian Eagle",
+                text: "The eagle on our coat of arms represents strength and dignity. Eagles fly high and strong.",
+                image: "/images/kindergarten/eagle.jpg"
+            },
+            {
+                title: "Local Government",
+                text: "Local governments help communities with roads, water, and services. They are close to the people.",
+                image: "/images/kindergarten/local-government.jpg"
+            },
+            {
+                title: "Nigerian Heroes",
+                text: "Heroes fought for Nigeria's freedom and progress. We remember and honor them.",
+                image: "/images/kindergarten/heroes.jpg"
+            },
+            {
+                title: "Rights and Responsibilities",
+                text: "We have rights to education and safety. We have responsibilities to obey laws and help others.",
+                image: "/images/kindergarten/rights.jpg"
+            },
+            {
+                title: "Nigerian Economy",
+                text: "Nigeria has oil, agriculture, and trade. Our economy helps people work and earn money.",
+                image: "/images/kindergarten/economy.jpg"
+            },
+            {
+                title: "Education in Nigeria",
+                text: "Education helps us learn and grow. Every child has the right to go to school.",
+                image: "/images/kindergarten/education.jpg"
+            },
+            {
+                title: "Nigerian Technology",
+                text: "Nigeria is growing in technology and innovation. We can become inventors and engineers.",
+                image: "/images/kindergarten/technology.jpg"
+            },
+            {
+                title: "National Symbols",
+                text: "Our flag, anthem, and coat of arms are national symbols. They represent who we are as Nigerians.",
+                image: "/images/kindergarten/symbols.jpg"
+            },
+            {
+                title: "Justice and Fairness",
+                text: "Courts and judges help solve problems fairly. Justice means treating everyone equally.",
+                image: "/images/kindergarten/justice.jpg"
+            },
+            {
+                title: "Nigerian Culture",
+                text: "Our culture includes music, dance, food, and traditions. Culture makes Nigeria special and unique.",
+                image: "/images/kindergarten/culture.jpg"
+            },
+            {
+                title: "Citizenship",
+                text: "Being a citizen means belonging to Nigeria. Good citizens contribute to making Nigeria better.",
+                image: "/images/kindergarten/citizenship.jpg"
+            },
+            {
+                title: "Protecting Our Resources",
+                text: "Nigeria has oil, minerals, and natural resources. We must use them wisely for the future.",
+                image: "/images/kindergarten/resources.jpg"
+            },
+            {
+                title: "Nigerian Industries",
+                text: "We have industries that make products and create jobs. Industries help Nigeria grow economically.",
+                image: "/images/kindergarten/industry.jpg"
+            },
+            {
+                title: "Peace and Conflict Resolution",
+                text: "We solve disagreements by talking peacefully. Peace keeps our communities safe and happy.",
+                image: "/images/kindergarten/peace.jpg"
+            },
+            {
+                title: "Nigerian Infrastructure",
+                text: "Roads, bridges, and buildings help us move and live comfortably. Infrastructure connects Nigeria.",
+                image: "/images/kindergarten/infrastructure.jpg"
+            },
+            {
+                title: "Community Service",
+                text: "Helping our community makes it better for everyone. Service means giving back to society.",
+                image: "/images/kindergarten/service.jpg"
+            },
+            {
+                title: "Nigerian Future",
+                text: "We are the future of Nigeria. By learning and working hard, we make Nigeria greater.",
+                image: "/images/kindergarten/future.jpg"
+            },
+            {
+                title: "National Unity",
+                text: "Though we are different, we are one Nigeria. Unity makes us stronger together.",
+                image: "/images/kindergarten/national-unity.jpg"
+            },
+            {
+                title: "Being a Good Citizen",
+                text: "Good citizens obey laws, pay taxes, vote, and help others. We all can make Nigeria proud.",
+                image: "/images/kindergarten/good-citizen.jpg"
+            }
+        ]
+    };
+
+    // Core Functions
+    function selectCategory(category) {
+        state.currentCategory = category;
+        state.currentLessonIndex = 0;
+        document.getElementById('homeScreen').classList.remove('active');
+        document.getElementById('learningScreen').classList.add('active');
+        updateCategoryBadge();
+        populateTeacherPanel();
+        displayLesson();
+        playSound('select');
+    }
+
+    function updateCategoryBadge() {
+        const badge = document.getElementById('categoryBadge');
+        badge.className = `category-badge ${state.currentCategory}`;
+        const names = {
+            nursery1: 'Nursery 1',
+            nursery2: 'Nursery 2',
+            kindergarten: 'Kindergarten'
+        };
+        badge.textContent = names[state.currentCategory];
+    }
+
+    function displayLesson() {
+        const lessons = lessonData[state.currentCategory];
+        const lesson = lessons[state.currentLessonIndex];
+        
+        document.getElementById('lessonTitle').textContent = lesson.title;
+        document.getElementById('lessonText').textContent = lesson.text;
+        
+        // Display image instead of SVG
+        const visualContainer = document.getElementById('lessonVisual');
+        visualContainer.innerHTML = `<img src="${lesson.image}" alt="${lesson.title}" class="visual-svg" style="object-fit: contain;">`;
+        
+        updateProgress();
+        updateTeacherPanel();
+        
+        // Trigger animations
+        const display = document.getElementById('lessonDisplay');
+        display.style.animation = 'none';
+        setTimeout(() => {
+            display.style.animation = 'fadeIn 0.5s ease';
+        }, 10);
+    }
+
+    function updateProgress() {
+        const lessons = lessonData[state.currentCategory];
+        const current = state.currentLessonIndex + 1;
+        const total = lessons.length;
+        const percent = Math.round((current / total) * 100);
+        
+        document.getElementById('lessonCounter').textContent = `Lesson ${current} of ${total}`;
+        document.getElementById('progressPercent').textContent = `${percent}%`;
+        document.getElementById('progressFill').style.width = `${percent}%`;
+    }
+
+    function togglePlayPause() {
+        state.isPlaying = !state.isPlaying;
+        const playIcon = document.getElementById('playIcon');
+        const pauseIcon = document.getElementById('pauseIcon');
+        const text = document.getElementById('playPauseText');
+        
+        if (state.isPlaying) {
+            playIcon.style.display = 'none';
+            pauseIcon.style.display = 'block';
+            text.textContent = 'Pause';
+            startAutoPlay();
+            playSound('play');
+        } else {
+            playIcon.style.display = 'block';
+            pauseIcon.style.display = 'none';
+            text.textContent = 'Play';
+            stopAutoPlay();
+        }
+    }
+
+    function startAutoPlay() {
+        if (!state.autoPlay) return;
+        
+        stopAutoPlay();
+        const speed = speedSettings[state.lessonSpeed];
+        
+        state.playbackTimer = setTimeout(() => {
+            nextLesson();
+            if (state.isPlaying) {
+                startAutoPlay();
+            }
+        }, speed);
+    }
+
+    function stopAutoPlay() {
+        if (state.playbackTimer) {
+            clearTimeout(state.playbackTimer);
+            state.playbackTimer = null;
+        }
+    }
+
+    function nextLesson() {
+        const lessons = lessonData[state.currentCategory];
+        state.currentLessonIndex++;
+        
+        if (state.currentLessonIndex >= lessons.length) {
+            state.currentLessonIndex = 0;
+            playSound('complete');
+            document.getElementById('lessonDisplay').classList.add('celebrate');
+            setTimeout(() => {
+                document.getElementById('lessonDisplay').classList.remove('celebrate');
+            }, 500);
+        }
+        
+        displayLesson();
+        playSound('next');
+    }
+
+    function previousLesson() {
+        state.currentLessonIndex--;
+        
+        if (state.currentLessonIndex < 0) {
+            const lessons = lessonData[state.currentCategory];
+            state.currentLessonIndex = lessons.length - 1;
+        }
+        
+        displayLesson();
+        playSound('previous');
+    }
+
+    function restartLesson() {
+        displayLesson();
+        playSound('restart');
+    }
+
+    function goHome() {
+        state.isPlaying = false;
+        stopAutoPlay();
+        document.getElementById('learningScreen').classList.remove('active');
+        document.getElementById('homeScreen').classList.add('active');
+        document.getElementById('playIcon').style.display = 'block';
+        document.getElementById('pauseIcon').style.display = 'none';
+        document.getElementById('playPauseText').textContent = 'Play';
+        playSound('home');
+    }
+
+    // Settings Functions
+    function toggleSettings() {
+        const panel = document.getElementById('settingsPanel');
+        panel.classList.toggle('active');
+    }
+
+    function toggleAutoPlay() {
+        state.autoPlay = !state.autoPlay;
+        const toggle = document.getElementById('autoPlayToggle');
+        toggle.classList.toggle('active');
+        
+        if (!state.autoPlay && state.isPlaying) {
+            stopAutoPlay();
+        } else if (state.autoPlay && state.isPlaying) {
+            startAutoPlay();
+        }
+    }
+
+    function setSpeed(speed) {
+        state.lessonSpeed = speed;
+        const buttons = document.querySelectorAll('.speed-btn');
+        buttons.forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        if (state.isPlaying && state.autoPlay) {
+            startAutoPlay();
+        }
+    }
+
+    function toggleSound() {
+        state.soundEnabled = !state.soundEnabled;
+        const toggle = document.getElementById('soundToggle');
+        toggle.classList.toggle('active');
+    }
+
+    // Teacher Mode
+    function toggleTeacherMode() {
+        state.teacherMode = !state.teacherMode;
+        const panel = document.getElementById('teacherPanel');
+        const btn = document.getElementById('teacherBtn');
+        
+        panel.classList.toggle('active');
+        btn.classList.toggle('active');
+    }
+
+    function populateTeacherPanel() {
+        const grid = document.getElementById('lessonGrid');
+        const lessons = lessonData[state.currentCategory];
+        
+        grid.innerHTML = lessons.map((lesson, index) => `
+            <div class="lesson-item ${index === state.currentLessonIndex ? 'active' : ''}" 
+                 onclick="jumpToLesson(${index})">
+                <div class="lesson-number">Lesson ${index + 1}</div>
+                <div>${lesson.title}</div>
+            </div>
+        `).join('');
+    }
+
+    function updateTeacherPanel() {
+        const items = document.querySelectorAll('.lesson-item');
+        items.forEach((item, index) => {
+            item.classList.toggle('active', index === state.currentLessonIndex);
+        });
+    }
+
+    function jumpToLesson(index) {
+        state.currentLessonIndex = index;
+        displayLesson();
+        playSound('select');
+    }
+
+    // Audio Feedback
+    function playSound(type) {
+        if (!state.soundEnabled) return;
+        
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        const sounds = {
+            select: { freq: 523.25, duration: 0.1 },
+            play: { freq: 659.25, duration: 0.15 },
+            next: { freq: 392.00, duration: 0.1 },
+            previous: { freq: 329.63, duration: 0.1 },
+            restart: { freq: 440.00, duration: 0.15 },
+            home: { freq: 293.66, duration: 0.2 },
+            complete: { freq: 783.99, duration: 0.3 }
+        };
+        
+        const sound = sounds[type] || sounds.select;
+        
+        oscillator.frequency.value = sound.freq;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + sound.duration);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + sound.duration);
+    }
+
+    // Initialize on load
+    window.addEventListener('load', () => {
+        console.log('Nigeria Learning Journey - Ready');
+    });
+</script>
+</body>
+</html>
