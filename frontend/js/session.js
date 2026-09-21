@@ -33,7 +33,7 @@ export function clearLoginTimestamp() {
   localStorage.removeItem(SESSION_TIMESTAMP_KEY);
 }
 
-function isSessionWithinTimeframe() {
+export function isSessionWithinTimeframe() {
   const stored = localStorage.getItem(SESSION_TIMESTAMP_KEY);
   if (!stored) return false;
   const elapsed = Date.now() - parseInt(stored, 10);
