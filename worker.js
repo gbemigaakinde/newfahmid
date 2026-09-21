@@ -59,6 +59,10 @@ import {
   handlePublicAuthRoute,
 } from "./backend/api/auth-routes.js";
 
+import {
+  handleFinanceRoute,
+} from "./backend/api/finance-routes.js";
+
 function json(
   data,
   status = 200,
@@ -299,6 +303,27 @@ async function handleRequest(
   ) {
     const result =
       await handleAdminRoute(
+        request,
+        env,
+        path
+      );
+
+    if (result) {
+      return json(
+        result.body,
+        result.status
+      );
+    }
+  }
+
+  /*
+   * PUPIL FINANCE API
+   */
+  if (
+    path.startsWith("/api/pupil/")
+  ) {
+    const result =
+      await handleFinanceRoute(
         request,
         env,
         path
