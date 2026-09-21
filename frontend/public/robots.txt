@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /portal.html
+Disallow: /admin.html
+Disallow: /teacher.html
+Disallow: /pupil.html
+Disallow: /action.html
+Disallow: /teach-explain.html
+Disallow: /admin-guide.html
+
+Sitemap: https://fahmidschool.com.ng/sitemap.xml
