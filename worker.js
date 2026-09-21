@@ -55,6 +55,10 @@ import {
   handleResultRoute,
 } from "./backend/api/result-routes.js";
 
+import {
+  handlePublicAuthRoute,
+} from "./backend/api/auth-routes.js";
+
 function json(
   data,
   status = 200,
@@ -228,6 +232,29 @@ async function handleRequest(
           user.userRecord,
       },
     });
+  }
+
+  /*
+   * Public, unauthenticated auth-support routes
+   * (admission-number lookup, forgot-password email check).
+   */
+  if (
+    path.startsWith("/api/auth/") &&
+    path !== "/api/auth/me"
+  ) {
+    const result =
+      await handlePublicAuthRoute(
+        request,
+        env,
+        path
+      );
+
+    if (result) {
+      return json(
+        result.body,
+        result.status
+      );
+    }
   }
 
   /*
