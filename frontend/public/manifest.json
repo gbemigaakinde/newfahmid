@@ -1,0 +1,88 @@
+{
+  "name": "Fahmid Nursery & Primary School",
+  "short_name": "Fahmid School",
+  "description": "Quality nursery and primary education in a safe, caring environment",
+  "start_url": "/login",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1B3A7A",
+  "orientation": "portrait-primary",
+  "dir": "ltr",
+  "lang": "en-GB",
+  "categories": ["education", "lifestyle"],
+  "icons": [
+    {
+      "src": "/IMG_4628.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/IMG_4628.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/IMG_4628.jpeg",
+      "sizes": "144x144",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/IMG_4628.jpeg",
+      "sizes": "96x96",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/IMG_4628.jpeg",
+      "sizes": "72x72",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/IMG_4628.jpeg",
+      "sizes": "48x48",
+      "type": "image/jpeg",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Login",
+      "short_name": "Login",
+      "description": "Login to portal",
+      "url": "/login",
+      "icons": [
+        {
+          "src": "/IMG_4628.jpeg",
+          "sizes": "96x96",
+          "type": "image/jpeg"
+        }
+      ]
+    },
+    {
+      "name": "Contact",
+      "short_name": "Contact",
+      "description": "Contact school",
+      "url": "/contact.html",
+      "icons": [
+        {
+          "src": "/IMG_4628.jpeg",
+          "sizes": "96x96",
+          "type": "image/jpeg"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/IMG_4628.jpeg",
+      "sizes": "540x720",
+      "type": "image/jpeg",
+      "form_factor": "narrow"
+    }
+  ]
+}
