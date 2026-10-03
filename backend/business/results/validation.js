@@ -430,3 +430,15 @@ export function validateGradeBands(
 
   return normalized;
 }
+
+/**
+ * `drafts.js` and `approval.js` both import and call a
+ * `validateResultDraft` that was never defined anywhere in this
+ * file — a naming mismatch that would throw "validateResultDraft
+ * is not a function" on every single result save or approval.
+ * `validateDraftInput` above already does exactly what those call
+ * sites need (identity + raw-score validation, used only for its
+ * validation side effect there), so it's aliased under the name
+ * they actually import rather than changing either call site.
+ */
+export { validateDraftInput as validateResultDraft };
