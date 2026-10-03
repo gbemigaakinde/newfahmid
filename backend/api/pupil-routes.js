@@ -10,6 +10,7 @@ import {
   getApprovedResultsForSession,
   isAlumniPupil,
 } from "../business/results/pupil-results.js";
+import { getAvailableTestsForPupil } from "../business/results/cbt-pupil.js";
 import { getCurrentSettings } from "./school.js";
 
 /**
@@ -94,6 +95,17 @@ export async function handlePupilRoute(request, env, path) {
         displaySessionName,
         results,
       },
+    };
+  }
+
+  if (path === "/api/pupil/cbt/tests") {
+    const user = await requireUser(request, env);
+    const pupilId = await resolvePupilId(request, user);
+    const { tests, reason } = await getAvailableTestsForPupil(env, pupilId);
+
+    return {
+      status: 200,
+      body: { ok: true, tests, reason: reason || null },
     };
   }
 
