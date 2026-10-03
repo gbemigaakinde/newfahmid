@@ -13,6 +13,7 @@ import {
   listDrafts,
   saveDraft,
   deleteDraft,
+  makeResultId,
 } from "../business/results/drafts.js";
 
 import {
@@ -203,8 +204,9 @@ export async function handleResultRoute(
 
       const draft =
         await getDraft(
+          request,
           env,
-          {
+          makeResultId({
             pupilId:
               decodeURIComponent(
                 teacherDraftMatch[1],
@@ -217,7 +219,7 @@ export async function handleResultRoute(
               decodeURIComponent(
                 teacherDraftMatch[3],
               ),
-          },
+          }),
         );
 
       if (!draft) {
@@ -241,7 +243,7 @@ export async function handleResultRoute(
         await deleteDraft(
           request,
           env,
-          {
+          makeResultId({
             pupilId:
               decodeURIComponent(
                 teacherDraftMatch[1],
@@ -254,7 +256,7 @@ export async function handleResultRoute(
               decodeURIComponent(
                 teacherDraftMatch[3],
               ),
-          },
+          }),
         );
 
       return result(200, {
