@@ -67,6 +67,10 @@ import {
   handlePupilRoute,
 } from "./backend/api/pupil-routes.js";
 
+import {
+  handleTeacherRoute,
+} from "./backend/api/teacher-routes.js";
+
 function json(
   data,
   status = 200,
@@ -353,6 +357,27 @@ async function handleRequest(
       return json(
         financeResult.body,
         financeResult.status
+      );
+    }
+  }
+
+  /*
+   * TEACHER-FACING API
+   */
+  if (
+    path.startsWith("/api/teacher/")
+  ) {
+    const teacherResult =
+      await handleTeacherRoute(
+        request,
+        env,
+        path
+      );
+
+    if (teacherResult) {
+      return json(
+        teacherResult.body,
+        teacherResult.status
       );
     }
   }
