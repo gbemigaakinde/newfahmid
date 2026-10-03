@@ -88,7 +88,7 @@ async function request(
       response.status;
 
     error.code =
-      data?.error ||
+      data?.error?.code ||
       "REQUEST_FAILED";
 
     throw error;
