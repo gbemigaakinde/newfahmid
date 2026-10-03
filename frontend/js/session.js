@@ -164,9 +164,13 @@ export async function getCurrentSettings() {
 export function handleApiError(error, fallbackMessage = "An error occurred") {
   const code = error?.code || "UNKNOWN";
 
+  // These match the codes worker.js's global error handler actually
+  // sends: UNAUTHORIZED (not logged in / bad token), FORBIDDEN (logged
+  // in but not allowed), VALIDATION_ERROR (bad request body/params).
   const MESSAGES = {
-    UNAUTHENTICATED: "You must be logged in to perform this action.",
-    UNAUTHORIZED: "You don't have permission to do that.",
+    UNAUTHORIZED: "You must be logged in to perform this action.",
+    FORBIDDEN: "You don't have permission to do that.",
+    VALIDATION_ERROR: fallbackMessage,
     NOT_FOUND: "The requested resource was not found.",
     REQUEST_FAILED: fallbackMessage,
   };
@@ -174,7 +178,7 @@ export function handleApiError(error, fallbackMessage = "An error occurred") {
   const userMessage = MESSAGES[code] || `${fallbackMessage}: ${error?.message || "Unknown error"}`;
 
   if (error?.status === 401) {
-    notify("🔒 " + MESSAGES.UNAUTHENTICATED, "danger", 3000);
+    notify("🔒 " + MESSAGES.UNAUTHORIZED, "danger", 3000);
     redirectToLogin();
     return userMessage;
   }
