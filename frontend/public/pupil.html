@@ -1,0 +1,1941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pupil Portal — Fahmid Nursery &amp; Primary School</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/jpeg" href="IMG_4628.jpeg">
+<link rel="stylesheet" href="css/portal-base.css">
+<link rel="stylesheet" href="css/pupil-portal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/regular/style.css">
+<link rel="stylesheet" href="css/cbt-portal.css">
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore-compat.js"></script>
+
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a56db">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Fahmid School">
+<link rel="apple-touch-icon" href="/IMG_4628.jpeg">
+
+<style>
+/* ============================================================
+   PUPIL PORTAL — COMPLETE UI PATCH  v3
+   Includes: all previous bug fixes + full results redesign
+   ============================================================ */
+
+/* ── A: prefers-reduced-motion ──────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .pp-card { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .pp-skeleton, .pp-skeleton * { animation: none !important; }
+  .spinner { animation: none !important; }
+  .pp-action-btn--solid:hover, .pp-btn--primary:hover { transform: none !important; }
+}
+
+/* ── B: Bottom-nav active state ─────────────────────────────── */
+.pp-bottom-nav__link--active { color: #1a56db; }
+.pp-bottom-nav__link--active i[data-lucide] { transform: translateY(-1px); }
+.pp-bottom-nav__link:focus-visible { outline: 2.5px solid #1a56db; outline-offset: 2px; border-radius: 8px; }
+
+/* ── C: Footer overlap fix ──────────────────────────────────── */
+@media (max-width: 1024px) {
+  .pp-footer {
+    margin-bottom: 0 !important;
+    margin-top: 0 !important;
+    padding-bottom: calc(72px + max(16px, env(safe-area-inset-bottom))) !important;
+  }
+}
+
+/* ── D: Suppress floating session-info text ─────────────────── */
+#session-info { display: none !important; }
+.pp-session-pill { display: none !important; }
+
+/* ── E: Session bar ─────────────────────────────────────────── */
+.pp-session-bar { display: block; padding: 0 32px 24px; }
+.pp-session-bar__field { max-width: 440px; }
+.pp-session-bar__label { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: #52525b; letter-spacing: 0.03em; text-transform: uppercase; margin-bottom: 4px; }
+.pp-session-bar__hint { font-size: 12px; color: #a1a1aa; margin: 0 0 8px; font-style: italic; }
+@media (max-width: 768px) { .pp-session-bar { padding: 0 16px 16px; } .pp-session-bar__field { max-width: 100%; } }
+
+/* ── F: Focus rings ─────────────────────────────────────────── */
+.pp-body :focus-visible { outline: 2.5px solid #1a56db; outline-offset: 2px; border-radius: 2px; }
+.pp-body :focus:not(:focus-visible) { outline: none; }
+.pp-select:focus-visible { outline: 2.5px solid #1a56db; outline-offset: 0; border-color: #1a56db; box-shadow: 0 0 0 4px rgba(26,86,219,.12); }
+.pp-nav-link:focus-visible, .pp-bottom-nav__link:focus-visible { outline: 2.5px solid #1a56db; outline-offset: 2px; border-radius: 9999px; }
+.pp-btn:focus-visible, .pp-action-btn:focus-visible, .pp-btn-logout:focus-visible { outline: 2.5px solid #1a56db; outline-offset: 2px; }
+
+/* ── G: Academic column mobile break ────────────────────────── */
+@media (max-width: 768px) {
+  .pp-profile-col--academic { margin-top: 6px; }
+  .pp-profile-col--academic::before { content: ''; display: block; width: 40px; height: 3px; background: #1a56db; border-radius: 9999px; margin-bottom: 16px; }
+}
+
+/* ── H: Hero tag overflow ───────────────────────────────────── */
+.pp-tag { max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 480px) { .pp-hero__tags { flex-direction: column; align-items: flex-start; gap: 6px; } .pp-tag { max-width: 100%; white-space: normal; } }
+
+/* ── I: Footer nav wrapper ──────────────────────────────────── */
+.pp-footer-nav { display: flex; justify-content: center; padding: 16px 0 32px; }
+
+/* ── J: Results container min-height ────────────────────────── */
+#results-container { min-height: 200px; }
+
+/* ── K: Visually-hidden utility ─────────────────────────────── */
+.visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* ── L: pp-card--profile no-op ──────────────────────────────── */
+.pp-card--profile { /* reserved */ }
+
+/* ── Results body padding ────────────────────────────────────── */
+.pp-results-body {
+  padding: 0 32px 8px;
+}
+@media (max-width: 768px) {
+  .pp-results-body { padding: 0 16px 8px; }
+}
+
+/* ── Term section wrapper ────────────────────────────────────── */
+.results-term-section {
+  margin-bottom: 36px !important; /* override inline style */
+}
+
+/* ── Term heading ────────────────────────────────────────────── */
+/*
+  pupil.js sets heading.style.color = '#0f172a' as inline style.
+  We need !important to override only the colour, then add our 
+  decorative treatment on top.
+*/
+.results-term-section h3 {
+  /* Visual design */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: #1a56db !important;     /* override inline #0f172a */
+  margin-bottom: 12px !important;
+  padding: 0;
+}
+
+/* Decorative line after the term label */
+.results-term-section h3::after {
+  content: '';
+  flex: 1;
+  height: 1.5px;
+  background: linear-gradient(to right, #dbeafe, transparent);
+  border-radius: 9999px;
+}
+
+/* ── Table base — reset conflicting global rules from styles.css ── */
+/*
+  styles.css sets: table { border-collapse: collapse; background: white }
+  th, td { padding: var(--space-4) var(--space-6); border-bottom: 1px solid... }
+  We override with tighter, purpose-built rules scoped to .results-table.
+*/
+.results-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: transparent;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ── DESKTOP TABLE ───────────────────────────────────────────── */
+/* thead */
+.results-table thead tr {
+  background: #f8faff;
+}
+
+/* ── DESKTOP TABLE ───────────────────────────────────────────── */
+/* thead */
+.results-table thead tr {
+  background: #f8faff;
+}
+
+.results-table thead th {
+  padding: 10px 14px !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.07em !important;
+  text-transform: uppercase !important;
+  color: #6b7280 !important;
+  border-bottom: 2px solid #e0e7ff !important;
+  background: #f8faff !important;
+  white-space: nowrap;
+  /* Default: left-aligned to match subject column */
+  text-align: left !important;
+}
+
+/* Score column headers: center-aligned to match score cells */
+.results-table thead th:nth-child(2),
+.results-table thead th:nth-child(3),
+.results-table thead th:nth-child(4),
+.results-table thead th:nth-child(5) {
+  text-align: center !important;
+}
+
+.results-table thead th:first-child {
+  border-radius: 10px 0 0 0;
+  padding-left: 18px !important;
+}
+.results-table thead th:last-child {
+  border-radius: 0 10px 0 0;
+}
+
+/* Data rows */
+.results-table tbody tr:not(.summary-row) {
+  transition: background 120ms ease;
+}
+
+.results-table tbody tr:not(.summary-row):nth-child(odd) {
+  background: #ffffff;
+}
+.results-table tbody tr:not(.summary-row):nth-child(even) {
+  background: #fafbff;
+}
+.results-table tbody tr:not(.summary-row):hover {
+  background: #eff6ff;
+}
+
+/* Data cells */
+.results-table tbody tr:not(.summary-row) td {
+  padding: 11px 14px !important;  /* override styles.css */
+  font-size: 13.5px !important;
+  color: #374151 !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  vertical-align: middle !important;
+  text-align: left;
+}
+
+/* Subject cell */
+.results-table tbody tr:not(.summary-row) td:first-child {
+  padding-left: 18px !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+}
+
+/* Score cells */
+.results-table tbody tr:not(.summary-row) td:nth-child(2),
+.results-table tbody tr:not(.summary-row) td:nth-child(3) {
+  text-align: center !important;
+  color: #64748b !important;
+  font-variant-numeric: tabular-nums;
+}
+.results-table tbody tr:not(.summary-row) td:nth-child(4) {
+  text-align: center !important;
+  font-weight: 700 !important;
+  color: #1e293b !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Grade cell — pill badge */
+.results-table tbody tr:not(.summary-row) td:nth-child(5) {
+  text-align: center !important;
+  padding: 8px 10px !important;
+}
+
+/* Grade badge styles — override styles.css .grade-* (text only) with chip */
+.results-table td.grade-A1 { background: #dcfce7 !important; color: #14532d !important; font-weight: 800 !important; font-size: 12px !important; border-radius: 6px !important; }
+.results-table td.grade-B2,
+.results-table td.grade-B3 { background: #dbeafe !important; color: #1e3a8a !important; font-weight: 800 !important; font-size: 12px !important; border-radius: 6px !important; }
+.results-table td.grade-C4,
+.results-table td.grade-C5,
+.results-table td.grade-C6 { background: #fef9c3 !important; color: #713f12 !important; font-weight: 800 !important; font-size: 12px !important; border-radius: 6px !important; }
+.results-table td.grade-D7,
+.results-table td.grade-D8 { background: #ffedd5 !important; color: #7c2d12 !important; font-weight: 800 !important; font-size: 12px !important; border-radius: 6px !important; }
+.results-table td.grade-F9 { background: #fee2e2 !important; color: #7f1d1d !important; font-weight: 800 !important; font-size: 12px !important; border-radius: 6px !important; }
+
+/* Summary rows */
+.results-table tbody tr.summary-row td {
+  padding: 10px 18px !important;
+  font-size: 13px !important;
+  border-bottom: none !important;
+  border-top: 2px solid #e0e7ff !important;
+  background: #f0f5ff !important;
+  color: #1e40af !important;
+}
+
+.results-table tbody tr.summary-row:first-of-type td {
+  border-top: 2px solid #e0e7ff !important;
+}
+.results-table tbody tr.summary-row:last-child td {
+  border-bottom: none !important;
+}
+
+/* Make summary label left and value right */
+.results-table tbody tr.summary-row td:first-child {
+  color: #4b5563 !important;
+  font-weight: 600 !important;
+  padding-left: 18px !important;
+}
+.results-table tbody tr.summary-row td:last-child {
+  text-align: right !important;
+  padding-right: 18px !important;
+  font-weight: 800 !important;
+  color: #1a56db !important;
+}
+
+/* Rounded bottom corners on the whole table block */
+.results-table tbody tr:last-child td:first-child { border-radius: 0 0 0 10px; }
+.results-table tbody tr:last-child td:last-child { border-radius: 0 0 10px 0; }
+
+/* Table outer border/shadow */
+.results-table {
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 0 0 1px #e0e7ff;
+}
+
+
+/* ── MOBILE TABLE — condensed list-row style ─────────────────── */
+@media (max-width: 640px) {
+
+  /* Override any min-width from styles.css */
+  .results-table,
+  table.results-table {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  /* Reset all table elements to block */
+  .results-table,
+  .results-table thead,
+  .results-table tbody,
+  .results-table tr,
+  .results-table th,
+  .results-table td {
+    display: block !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    white-space: normal !important;
+  }
+
+  /* Hide desktop header */
+  .results-table thead { display: none !important; }
+
+  /* Term table = single rounded container */
+  .results-table {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06) !important;
+    overflow: hidden !important;
+  }
+
+  .results-table tbody {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+    width: 100% !important;
+  }
+
+  /* ── EACH SUBJECT ROW: single horizontal line ── */
+  .results-table tbody tr:not(.summary-row) {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding: 0 12px !important;
+    min-height: 44px !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    gap: 0 !important;
+    transition: background 120ms ease !important;
+  }
+
+  .results-table tbody tr:not(.summary-row):last-of-type {
+    border-bottom: none !important;
+  }
+
+  .results-table tbody tr:not(.summary-row):hover {
+    background: #f8faff !important;
+    box-shadow: none !important;
+    border-color: #f1f5f9 !important;
+  }
+
+  /* Subject name — left, takes remaining space */
+  .results-table tbody tr:not(.summary-row) td:nth-child(1) {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    padding: 0 8px 0 0 !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    border: none !important;
+    background: transparent !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    display: block !important;
+  }
+
+  /* Score cells — inline flex, fixed small width */
+  .results-table tbody tr:not(.summary-row) td:nth-child(2),
+  .results-table tbody tr:not(.summary-row) td:nth-child(3),
+  .results-table tbody tr:not(.summary-row) td:nth-child(4) {
+    flex: 0 0 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 36px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    min-height: unset !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: #374151 !important;
+    border-right: none !important;
+  }
+
+  /* Score label above number */
+  .results-table tbody tr:not(.summary-row) td:nth-child(2)::before,
+  .results-table tbody tr:not(.summary-row) td:nth-child(3)::before,
+  .results-table tbody tr:not(.summary-row) td:nth-child(4)::before {
+    display: block !important;
+    font-size: 7px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    color: #94a3b8 !important;
+    margin-bottom: 1px !important;
+    font-family: 'DM Sans', sans-serif !important;
+    line-height: 1 !important;
+  }
+
+  .results-table tbody tr:not(.summary-row) td:nth-child(2)::before { content: 'CA' !important; }
+  .results-table tbody tr:not(.summary-row) td:nth-child(3)::before { content: 'Exam' !important; }
+  .results-table tbody tr:not(.summary-row) td:nth-child(4)::before { content: 'Sum' !important; }
+
+  /* Total score — slightly bolder to stand out */
+  .results-table tbody tr:not(.summary-row) td:nth-child(4) {
+    font-size: 13px !important;
+    color: #1e293b !important;
+  }
+
+  /* Grade badge — right, compact pill */
+  .results-table tbody tr:not(.summary-row) td:nth-child(5) {
+    flex: 0 0 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 34px !important;
+    height: 24px !important;
+    margin-left: 6px !important;
+    padding: 0 !important;
+    font-size: 10.5px !important;
+    font-weight: 800 !important;
+    border-radius: 6px !important;
+    border: none !important;
+    border-left: none !important;
+    min-height: unset !important;
+  }
+
+  /* ── SUMMARY ROWS ── */
+  .results-table tbody tr.summary-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 8px 12px !important;
+    background: #eef2ff !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-top: 1px solid #c7d2fe !important;
+    box-shadow: none !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .results-table tbody tr.summary-row:last-child {
+    border-radius: 0 0 12px 12px !important;
+  }
+
+  .results-table tbody tr.summary-row td {
+    display: block !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    font-size: 11.5px !important;
+    color: #4338ca !important;
+    text-align: left !important;
+    white-space: normal !important;
+  }
+
+  .results-table tbody tr.summary-row td:first-child {
+    font-weight: 600 !important;
+    color: #64748b !important;
+  }
+
+  .results-table tbody tr.summary-row td:last-child {
+    font-weight: 800 !important;
+    color: #1a56db !important;
+    text-align: right !important;
+    white-space: nowrap !important;
+  }
+
+  /* Suppress ::before on summary rows */
+  .results-table tbody tr.summary-row td::before,
+  .results-table tbody tr.summary-row td:nth-child(2)::before,
+  .results-table tbody tr.summary-row td:nth-child(3)::before,
+  .results-table tbody tr.summary-row td:nth-child(4)::before {
+    content: none !important;
+    display: none !important;
+  }
+
+  /* Grade colours preserved */
+  .results-table td.grade-A1 { background: #dcfce7 !important; color: #14532d !important; }
+  .results-table td.grade-B2,
+  .results-table td.grade-B3 { background: #dbeafe !important; color: #1e3a8a !important; }
+  .results-table td.grade-C4,
+  .results-table td.grade-C5,
+  .results-table td.grade-C6 { background: #fef9c3 !important; color: #713f12 !important; }
+  .results-table td.grade-D7,
+  .results-table td.grade-D8 { background: #ffedd5 !important; color: #7c2d12 !important; }
+  .results-table td.grade-F9 { background: #fee2e2 !important; color: #7f1d1d !important; }
+
+  /* Term section spacing */
+  .results-term-section {
+    margin-bottom: 24px !important;
+  }
+
+  /* Bottom nav clearance */
+  .pp-main { padding-bottom: calc(var(--pp-gap-2xl, 48px) + 72px) !important; }
+}
+
+/* ── Term heading — mobile ───────────────────────────────────── */
+@media (max-width: 640px) {
+  .results-term-section h3 {
+    font-size: 11px !important;
+    margin-bottom: 10px !important;
+  }
+}
+
+/* ============================================================
+   CBT TEST CARDS — MOBILE LAYOUT FIX
+   ============================================================ */
+.cbt-test-card {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  flex-wrap: nowrap !important;
+  text-align: left !important;
+}
+
+.cbt-test-card__body {
+  min-width: 0;
+  flex: 1;
+  text-align: left !important;
+}
+
+.cbt-test-card__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start !important;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+  text-align: left !important;
+}
+
+.cbt-test-card__title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+  text-align: left !important;
+}
+
+.cbt-test-card__meta {
+  display: flex;
+  justify-content: flex-start !important;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 4px;
+  text-align: left !important;
+}
+
+.cbt-test-card__meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+/* Target the rendered <svg> directly, not the original <i> tag,
+   since Lucide replaces <i data-lucide="..."> with an <svg>. */
+.cbt-test-card__meta svg {
+  width: 12px !important;
+  height: 12px !important;
+  flex-shrink: 0;
+}
+
+.cbt-test-card__score {
+  margin-top: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #16a34a;
+  display: flex;
+  justify-content: flex-start !important;
+  align-items: center;
+  gap: 5px;
+  text-align: left !important;
+}
+
+.cbt-test-card__score svg {
+  width: 13px !important;
+  height: 13px !important;
+  flex-shrink: 0;
+}
+
+.cbt-test-card__dates {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+  line-height: 1.5;
+  text-align: left !important;
+}
+
+.cbt-test-card__dates:empty {
+  display: none;
+}
+
+/* ── Action button (Start Test) — always pinned to the right ── */
+.cbt-test-card__action {
+  flex-shrink: 0;
+  margin-left: auto !important;
+  align-self: center !important;
+  text-align: right !important;
+}
+
+.cbt-test-card__action .pp-action-btn,
+.cbt-test-card__action span.pp-action-btn {
+  white-space: nowrap;
+  display: inline-flex !important;
+}
+
+/* ── Mobile: stack card, full-width action button ─────────── */
+@media (max-width: 640px) {
+  .cbt-test-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 16px !important;
+  }
+
+  .cbt-test-card__title {
+    font-size: 14.5px;
+  }
+
+  .cbt-test-card__meta {
+    gap: 5px 10px;
+    font-size: 11.5px;
+  }
+
+  .cbt-test-card__action {
+    width: 100%;
+    margin-left: 0 !important;
+  }
+
+  .cbt-test-card__action .pp-action-btn,
+  .cbt-test-card__action span.pp-action-btn {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+/* ── Legible "Done" badge for completed tests on white cards ── */
+.cbt-done-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.cbt-done-badge svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* ── Load More button for tests list ─────────────────────── */
+.cbt-load-more-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px 16px;
+  margin-top: 4px;
+  background: #f1f5f9;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cbt-load-more-btn:hover {
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+  color: #3730a3;
+}
+
+.cbt-load-more-btn i[data-lucide] {
+  width: 14px;
+  height: 14px;
+}
+
+/* Loading state — no spinner, just a dimmed button + pulsing text */
+.cbt-load-more-btn:disabled,
+button.btn-small.btn-secondary:disabled {
+  cursor: not-allowed;
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  border-style: solid;
+  color: #4338ca;
+}
+
+.cbt-btn-loading-text {
+  animation: cbt-text-pulse 1.1s ease-in-out infinite;
+}
+
+@keyframes cbt-text-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* ============================================================
+   FEE BALANCE & PAYMENT HISTORY — UI REFINEMENT
+   Scope: #pp-fees (proxied from #fee-balance-section)
+   ============================================================ */
+
+/* ── 1. Section outer padding & typography reset ─────────────── */
+#pp-fees {
+  display: block;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Section header (has .section-header class) */
+#pp-fees .section-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 28px 32px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 0;
+}
+
+#pp-fees .section-header .section-icon {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* background set by inline style from JS — preserved */
+}
+
+#pp-fees .section-header .section-icon i[data-lucide] {
+  width: 22px;
+  height: 22px;
+  color: #fff;
+  stroke-width: 2.5;
+}
+
+#pp-fees .section-header .section-title h2 {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 1.125rem !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  margin: 0 0 2px !important;
+  letter-spacing: -0.02em !important;
+  text-align: left !important;
+}
+
+/* Remove the decorative ::after underline on h2 inside fee section */
+#pp-fees .section-header .section-title h2::after {
+  display: none !important;
+}
+
+#pp-fees .section-header .section-title p {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+  letter-spacing: 0.01em !important;
+  /* colour set by inline style — preserved */
+}
+
+/* ── 2. Special case banners (FREE EDUCATION / SCHOLARSHIP) ──── */
+/* These are inline-styled divs immediately after .section-header */
+#pp-fees .section-header + div[style*="background: linear-gradient"] {
+  margin: 16px 32px 0;
+  border-radius: 12px;
+  font-size: 13.5px;
+}
+
+/* ── 3. Arrears warning banner ───────────────────────────────── */
+/* Red gradient banner — already well-styled inline, refine spacing */
+#pp-fees > div[style*="background: linear-gradient(135deg, #dc3545"],
+#pp-fees > div[style*="background: linear-gradient(135deg, rgb(220"] {
+  margin: 16px 32px 0;
+  border-radius: 16px !important;
+  padding: 20px 24px !important;
+}
+
+/* ── 4. Stat cards grid ──────────────────────────────────────── */
+/* Target the inline-style grid wrapper */
+#pp-fees > div[style*="display: grid"][style*="grid-template-columns"] {
+  padding: 20px 32px 0 !important;
+  margin-bottom: 0 !important;
+  gap: 12px !important;
+}
+
+/* Individual stat cards (no class — inline background set by JS) */
+#pp-fees > div[style*="display: grid"] > div {
+  border-radius: 14px !important;
+  padding: 18px 16px !important;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#pp-fees > div[style*="display: grid"] > div:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Label text inside stat cards */
+#pp-fees > div[style*="display: grid"] > div > div:first-child {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  opacity: 0.85;
+  margin-bottom: 6px !important;
+}
+
+/* Amount number inside stat cards */
+#pp-fees > div[style*="display: grid"] > div > div:nth-child(2) {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.75rem !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.03em !important;
+}
+
+/* Sub-label (e.g. "87% paid") */
+#pp-fees > div[style*="display: grid"] > div > div:nth-child(3) {
+  font-size: 11px !important;
+  margin-top: 4px !important;
+  opacity: 0.8;
+}
+
+/* Base fee note on Current Term card */
+#pp-fees > div[style*="display: grid"] > div > div:last-child:not(:nth-child(2)):not(:nth-child(3)) {
+  font-size: 10.5px !important;
+  opacity: 0.75;
+  margin-top: 3px !important;
+}
+
+/* ── 5. Payment History container ────────────────────────────── */
+/* The white wrapper div holding the history list */
+#pp-fees > div[style*="background: white"],
+#pp-fees > div[style*="background: rgb(255"] {
+  margin: 20px 32px 0 !important;
+  border-radius: 16px !important;
+  padding: 20px 20px 8px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: none !important;
+}
+
+/* History section heading */
+#pp-fees > div[style*="background: white"] h3,
+#pp-fees > div[style*="background: rgb(255"] h3 {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  letter-spacing: -0.01em !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  margin: 0 0 16px !important;
+  padding-bottom: 12px !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+}
+
+/* Lucide icon inside history heading */
+#pp-fees > div[style*="background: white"] h3 i[data-lucide] {
+  width: 16px !important;
+  height: 16px !important;
+  color: #64748b;
+}
+
+/* ── 6. #payment-history-list ────────────────────────────────── */
+#payment-history-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
+}
+
+/* ── 7. Session group headers ────────────────────────────────── */
+/* Divs inside #payment-history-list that do NOT contain a button */
+#payment-history-list > div:not(:has(button)):not(:has(.spinner)):not(:has(p)) {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: #64748b !important;
+  margin: 16px 0 6px !important;
+  padding: 0 4px !important;
+  border-bottom: none !important;
+}
+
+/* ── 8. Transaction item cards ───────────────────────────────── */
+#payment-history-list > div:has(button) {
+  background: #ffffff !important;
+  border: 1px solid #e8ecf0 !important;
+  border-radius: 12px !important;
+  padding: 14px 16px !important;
+  margin-bottom: 6px !important;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: none !important;
+  position: relative;
+}
+
+/* Left accent line — payment confirmed = green, otherwise blue */
+#payment-history-list > div:has(button)::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  background: #1a56db;
+  border-radius: 0 3px 3px 0;
+  opacity: 0.6;
+}
+
+#payment-history-list > div:has(button):hover {
+  background: #f8faff !important;
+  border-color: #c7d7f0 !important;
+  box-shadow: 0 2px 12px rgba(26, 86, 219, 0.08) !important;
+}
+
+/* Amount (first div inside flex:1 wrapper) */
+#payment-history-list > div:has(button) > div[style*="flex: 1"] > div:first-child {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 1.05rem !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  letter-spacing: -0.02em !important;
+  margin-bottom: 5px !important;
+}
+
+/* Meta row (date, term, method, receipt) */
+#payment-history-list > div:has(button) > div[style*="flex: 1"] > div:last-child > div:first-child {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 10px !important;
+  align-items: center !important;
+}
+
+/* Each meta span */
+#payment-history-list > div:has(button) span {
+  font-size: 11.5px !important;
+  color: #64748b !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  font-weight: 500 !important;
+}
+
+/* Meta icons */
+#payment-history-list > div:has(button) span i[data-lucide] {
+  width: 12px !important;
+  height: 12px !important;
+  stroke-width: 2 !important;
+  color: #94a3b8 !important;
+}
+
+/* Balance-after badge — already has inline background/color/border from JS, refine shape */
+#payment-history-list > div:has(button) > div[style*="flex: 1"] > div:last-child > div:last-child[style*="inline-flex"] {
+  border-radius: 20px !important;
+  padding: 2px 8px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  margin-top: 5px !important;
+}
+
+/* Balance-after badge icons */
+#payment-history-list div[style*="inline-flex"] i[data-lucide] {
+  width: 11px !important;
+  height: 11px !important;
+}
+
+/* ── 9. View Receipt button ───────────────────────────────────── */
+#payment-history-list .btn-small.btn-secondary {
+  padding: 7px 14px !important;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  border: 1.5px solid #e2e8f0 !important;
+  background: #ffffff !important;
+  color: #475569 !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  transition: all 0.15s ease !important;
+  box-shadow: none !important;
+}
+
+#payment-history-list .btn-small.btn-secondary:hover {
+  background: #1a56db !important;
+  color: #ffffff !important;
+  border-color: #1a56db !important;
+  box-shadow: 0 2px 8px rgba(26, 86, 219, 0.25) !important;
+}
+
+#payment-history-list .btn-small.btn-secondary i[data-lucide] {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+/* ── 10. Status footer notice ────────────────────────────────── */
+/* The red/green callout at the very bottom */
+#pp-fees > div[style*="border: 2px solid"]:last-child {
+  margin: 16px 32px 24px !important;
+  border-radius: 12px !important;
+  padding: 14px 18px !important;
+}
+
+#pp-fees > div[style*="border: 2px solid"]:last-child h4 {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  margin: 0 0 5px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+#pp-fees > div[style*="border: 2px solid"]:last-child h4 i[data-lucide] {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+#pp-fees > div[style*="border: 2px solid"]:last-child p {
+  font-size: 12.5px !important;
+  margin: 0 !important;
+  line-height: 1.5 !important;
+}
+
+/* ── 11. Empty / loading state in payment list ───────────────── */
+#payment-history-list > div:has(.spinner),
+#payment-history-list > div:has(p):not(:has(button)) {
+  padding: 28px 16px !important;
+  text-align: center !important;
+  color: #94a3b8 !important;
+  font-size: 13px !important;
+  background: #fafbff !important;
+  border-radius: 10px !important;
+  border: 1px dashed #e2e8f0 !important;
+  margin: 4px 0 !important;
+}
+
+/* ── 12. Alumni-specific overrides ───────────────────────────── */
+/* Alumni green banner card */
+#pp-fees > div[style*="background: linear-gradient(135deg, #4CAF50"] {
+  margin: 16px 32px 0;
+  border-radius: 16px !important;
+  padding: 20px 24px !important;
+}
+
+#pp-fees > div[style*="background: linear-gradient(135deg, #4CAF50"] h3 {
+  color: white !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  margin: 0 0 4px !important;
+}
+
+/* ── 13. Mobile responsive ───────────────────────────────────── */
+@media (max-width: 768px) {
+  #pp-fees .section-header {
+    padding: 20px 16px 16px !important;
+  }
+
+  #pp-fees > div[style*="display: grid"][style*="grid-template-columns"] {
+    padding: 14px 16px 0 !important;
+    /* Force 2-column on mobile for stat cards */
+    display: grid !important;
+  }
+
+  /* Override inline grid to 2 cols on mobile for 3-4 stat cards */
+  #pp-fees > div[style*="display: grid"] {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Full width for single stat card */
+  #pp-fees > div[style*="display: grid"] > div:only-child {
+    grid-column: 1 / -1;
+  }
+
+  #pp-fees > div[style*="background: white"],
+  #pp-fees > div[style*="background: rgb(255"] {
+    margin: 14px 16px 0 !important;
+    padding: 16px 14px 8px !important;
+  }
+
+  #pp-fees > div[style*="border: 2px solid"]:last-child {
+    margin: 12px 16px 20px !important;
+  }
+
+  #pp-fees > div[style*="background: linear-gradient(135deg, #dc3545"],
+  #pp-fees > div[style*="background: linear-gradient(135deg, #4CAF50"] {
+    margin: 12px 16px 0 !important;
+    padding: 16px !important;
+  }
+
+  /* Transaction cards on mobile */
+  #payment-history-list > div:has(button) {
+    padding: 12px 14px !important;
+  }
+
+  #payment-history-list > div:has(button) > div[style*="flex: 1"] > div:first-child {
+    font-size: 0.95rem !important;
+  }
+
+  /* Stack amount + button on small screens */
+  #payment-history-list > div:has(button) {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  #payment-history-list .btn-small.btn-secondary {
+    padding: 6px 12px !important;
+    font-size: 11px !important;
+  }
+
+  /* Meta spans wrap cleanly */
+  #payment-history-list > div:has(button) span {
+    font-size: 11px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Single column stat cards on very small screens */
+  #pp-fees > div[style*="display: grid"] {
+    grid-template-columns: 1fr 1fr !important; /* Keep 2-col even on 375px */
+  }
+
+  #pp-fees > div[style*="display: grid"] > div > div:nth-child(2) {
+    font-size: 1.4rem !important; /* Slightly smaller numbers */
+  }
+
+  #pp-fees .section-header .section-icon {
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+  }
+}
+
+.payment-amount {
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.3;
+    flex-shrink: 0;
+}
+</style>
+</head>
+
+<body class="pp-body">
+
+<!-- ═══════════════════════════════════════
+     TOP NAVIGATION STRIP
+═══════════════════════════════════════ -->
+<header class="pp-topbar">
+  <div class="pp-topbar__inner">
+
+    <div class="pp-topbar__brand">
+      <div class="pp-brand-logo">
+        <img src="IMG_4629.png" alt="Fahmid School logo">
+      </div>
+      <div class="pp-brand-text">
+        <span class="pp-brand-name">Fahmid Nursery &amp; Primary School</span>
+        <span class="pp-brand-tag">
+          <i data-lucide="layout-dashboard" aria-hidden="true"></i>
+          Pupil Portal
+        </span>
+      </div>
+    </div>
+
+    <nav class="pp-topbar__nav" aria-label="Portal sections">
+  <a href="#pp-profile" class="pp-nav-link" data-section="profile">
+    <i data-lucide="user" aria-hidden="true"></i>
+    <span>Profile</span>
+  </a>
+  <a href="#pp-tests" class="pp-nav-link" data-section="tests">
+    <i data-lucide="monitor" aria-hidden="true"></i>
+    <span>Online Tests/Exams</span>
+  </a>
+  <a href="#pp-results" class="pp-nav-link" data-section="results">
+    <i data-lucide="bar-chart-2" aria-hidden="true"></i>
+    <span>Results</span>
+  </a>
+  <a href="#pp-fees" class="pp-nav-link" data-section="fees">
+    <i data-lucide="credit-card" aria-hidden="true"></i>
+    <span>Fees</span>
+  </a>
+</nav>
+
+    <button class="pp-btn-logout" onclick="logout()" aria-label="Log out of pupil portal">
+      <i data-lucide="log-out" aria-hidden="true"></i>
+      <span>Logout</span>
+    </button>
+
+  </div>
+</header>
+
+
+<!-- ═══════════════════════════════════════
+     HERO / IDENTITY BANNER
+═══════════════════════════════════════ -->
+<section class="pp-hero" aria-label="Pupil identity">
+  <div class="pp-hero__inner">
+
+    <div class="pp-hero__identity">
+      <div class="pp-avatar" id="pp-avatar-initials" aria-hidden="true">
+        <i data-lucide="user" class="pp-avatar__fallback" aria-hidden="true"></i>
+      </div>
+      <div class="pp-hero__meta">
+        <h1 class="pp-hero__greeting" id="pupil-welcome">Welcome back</h1>
+        <div class="pp-hero__tags" aria-label="Current class and session">
+          <span class="pp-tag pp-tag--class">
+            <i data-lucide="book-open" aria-hidden="true"></i>
+            <span id="student-class">Loading…</span>
+          </span>
+          <span class="pp-tag pp-tag--session">
+            <i data-lucide="calendar" aria-hidden="true"></i>
+            <span id="student-session">Loading…</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pp-hero__actions">
+     <button class="pp-action-btn pp-action-btn--outline" onclick="openPrintReport()">
+     <i data-lucide="printer" aria-hidden="true"></i>
+        Print Report
+     </button>
+      <button class="pp-action-btn pp-action-btn--solid" onclick="scrollToSection('pp-fees')">
+        <i data-lucide="credit-card" aria-hidden="true"></i>
+        Fee Balance
+      </button>
+    </div>
+
+  </div>
+  <div class="pp-hero__mesh" aria-hidden="true"></div>
+</section>
+
+
+<!-- ═══════════════════════════════════════
+     MAIN CONTENT
+═══════════════════════════════════════ -->
+<main class="pp-main" id="main-content">
+
+  <!-- ─── PROFILE SECTION ─────────────────── -->
+  <section class="pp-card pp-card--profile" id="pp-profile" aria-labelledby="profile-heading">
+
+    <!-- Targeted announcements from admin — populated by js/announcements.js -->
+    <div id="announcements-banner-container"
+         style="display:none; padding:20px 32px 0;"></div>
+
+    <div class="pp-card__header">
+      <div class="pp-card__header-icon pp-icon-chip pp-icon-chip--blue" aria-hidden="true">
+        <i data-lucide="user-circle-2"></i>
+      </div>
+      <div>
+        <h2 class="pp-card__title" id="profile-heading">Pupil Profile</h2>
+        <p class="pp-card__subtitle">Registered details and academic information</p>
+      </div>
+    </div>
+
+    <div class="pp-profile-grid">
+
+      <div class="pp-profile-col pp-profile-col--identity">
+
+        <div class="pp-field">
+          <span class="pp-field__label" id="label-name">
+            <i data-lucide="user" aria-hidden="true"></i> Full Name
+          </span>
+          <span class="pp-field__value pp-field__value--name" id="pupil-name-display" aria-labelledby="label-name">Loading…</span>
+        </div>
+
+        <div class="pp-field-row">
+          <div class="pp-field">
+            <span class="pp-field__label" id="label-admission">
+              <i data-lucide="hash" aria-hidden="true"></i> Admission No.
+            </span>
+            <span class="pp-field__value" id="pupil-admission-display" aria-labelledby="label-admission">Loading…</span>
+          </div>
+          <div class="pp-field">
+            <span class="pp-field__label" id="label-gender">
+              <i data-lucide="users" aria-hidden="true"></i> Gender
+            </span>
+            <span class="pp-field__value" id="pupil-gender-display" aria-labelledby="label-gender">Loading…</span>
+          </div>
+        </div>
+
+        <div class="pp-field">
+          <span class="pp-field__label" id="label-dob">
+            <i data-lucide="calendar" aria-hidden="true"></i> Date of Birth
+          </span>
+          <span class="pp-field__value" id="pupil-dob-display" aria-labelledby="label-dob">Loading…</span>
+        </div>
+
+        <div class="pp-field">
+          <span class="pp-field__label" id="label-contact">
+            <i data-lucide="phone" aria-hidden="true"></i> Contact Number
+          </span>
+          <span class="pp-field__value" id="pupil-contact-display" aria-labelledby="label-contact">Loading…</span>
+        </div>
+
+        <div class="pp-field">
+          <span class="pp-field__label" id="label-address">
+            <i data-lucide="map-pin" aria-hidden="true"></i> Address
+          </span>
+          <span class="pp-field__value" id="pupil-address-display" aria-labelledby="label-address">Loading…</span>
+        </div>
+
+      </div>
+
+      <div class="pp-profile-col pp-profile-col--academic">
+
+        <div class="pp-academic-banner" aria-hidden="true">
+          <i data-lucide="graduation-cap" class="pp-academic-banner__icon"></i>
+          <span class="pp-academic-banner__label">Academic Details</span>
+        </div>
+
+        <div class="pp-field">
+          <span class="pp-field__label" id="label-class">
+            <i data-lucide="book-open" aria-hidden="true"></i> Class
+          </span>
+          <span class="pp-field__value pp-field__value--highlight" id="pupil-class-display" aria-labelledby="label-class">Loading…</span>
+        </div>
+
+        <div class="pp-field">
+          <span class="pp-field__label" id="label-teacher">
+            <i data-lucide="user-check" aria-hidden="true"></i> Assigned Teacher
+          </span>
+          <span class="pp-field__value" id="pupil-teacher-display" aria-labelledby="label-teacher">Loading…</span>
+        </div>
+
+        <div class="pp-field">
+          <span class="pp-field__label" id="label-subjects">
+            <i data-lucide="library" aria-hidden="true"></i> Subjects
+          </span>
+          <span class="pp-field__value pp-field__value--subjects" id="pupil-subjects-display" aria-labelledby="label-subjects">Loading…</span>
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+<!-- ─── TESTS SECTION ─────────────────────── -->
+  <section class="pp-card" id="pp-tests" aria-labelledby="tests-heading">
+
+    <div class="pp-card__header">
+      <div class="pp-card__header-icon pp-icon-chip pp-icon-chip--indigo" aria-hidden="true">
+        <i data-lucide="monitor"></i>
+      </div>
+      <div>
+        <h2 class="pp-card__title" id="tests-heading">Online Tests and Examinations</h2>
+        <p class="pp-card__subtitle">Tests or examinations assigned to your class</p>
+      </div>
+    </div>
+
+    <div style="padding:0 32px 24px;" id="pp-tests-content">
+      <div style="text-align:center;padding:32px;color:#94a3b8;">
+        <div class="spinner" style="margin:0 auto 12px;"></div>
+        <p style="font-size:13px;">Loading tests…</p>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ─── RESULTS SECTION ─────────────────── -->
+  <section class="pp-card" id="pp-results" aria-labelledby="results-heading">
+
+    <div class="pp-card__header">
+      <div class="pp-card__header-icon pp-icon-chip pp-icon-chip--indigo" aria-hidden="true">
+        <i data-lucide="bar-chart-2"></i>
+      </div>
+      <div>
+        <h2 class="pp-card__title" id="results-heading">Academic Results</h2>
+        <p class="pp-card__subtitle">Your performance record by session and term</p>
+      </div>
+    </div>
+
+    <div class="pp-session-bar">
+      <div class="pp-session-bar__field">
+        <label for="pupil-session-select" class="pp-session-bar__label">
+          <i data-lucide="calendar-range" aria-hidden="true"></i>
+          Academic Session
+        </label>
+        <p class="pp-session-bar__hint" id="session-hint">
+          Results update automatically when you select a session
+        </p>
+        <div class="pp-select-wrap">
+          <select id="pupil-session-select" class="pp-select" aria-describedby="session-hint">
+            <option value="current">Current Session (Loading…)</option>
+          </select>
+          <i data-lucide="chevron-down" class="pp-select-chevron" aria-hidden="true"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kept in DOM so pupil.js doesn't throw null errors; CSS hides it permanently -->
+    <div id="session-info" aria-hidden="true"><span id="selected-session-name"></span></div>
+
+    <div id="results-container" class="pp-results-body" aria-live="polite" aria-atomic="false">
+      <!-- pupil.js populates this -->
+    </div>
+
+    <div class="pp-card__footer">
+<button class="pp-btn pp-btn--primary" onclick="openPrintReport()">
+  <i data-lucide="printer" aria-hidden="true"></i>
+  View &amp; Print Report Card
+</button>
+    </div>
+
+  </section>
+
+  <!-- ─── FEE BALANCE SECTION ──────────────── -->
+  <section class="pp-card" id="pp-fees" style="display:none;" aria-labelledby="fees-heading">
+    <!-- pupil.js populates this -->
+  </section>
+  <div id="fee-balance-section" style="display:none;" aria-hidden="true"></div>
+
+  <div class="pp-footer-nav">
+    <a href="index.html" class="pp-btn pp-btn--ghost">
+      <i data-lucide="home" aria-hidden="true"></i>
+      Back to Website
+    </a>
+  </div>
+
+</main>
+
+
+<!-- ── BOTTOM NAVIGATION ─────────────────────────────────────── -->
+<nav class="pp-bottom-nav" aria-label="Portal sections">
+  <div class="pp-bottom-nav__inner">
+    <a href="#pp-profile" class="pp-bottom-nav__link" data-section="profile">
+      <i data-lucide="user" aria-hidden="true"></i>
+      <span>Profile</span>
+    </a>
+    <a href="#pp-tests" class="pp-bottom-nav__link" data-section="tests">
+      <i data-lucide="monitor" aria-hidden="true"></i>
+      <span>Tests/Exams</span>
+    </a>
+    <a href="#pp-results" class="pp-bottom-nav__link" data-section="results">
+      <i data-lucide="bar-chart-2" aria-hidden="true"></i>
+      <span>Results</span>
+    </a>
+    <a href="#pp-fees" class="pp-bottom-nav__link" data-section="fees">
+      <i data-lucide="credit-card" aria-hidden="true"></i>
+      <span>Fees</span>
+    </a>
+  </div>
+</nav>
+
+
+<footer class="pp-footer">
+  <p>&copy; <span id="copyright-year"></span> Fahmid Nursery and Primary School. All rights reserved.</p>
+</footer>
+
+
+<!-- ═══════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════ -->
+<!--
+  firebase-init.js and the Firebase compat SDK (in <head>) are kept
+  here deliberately — the CBT section further down this page still
+  uses them directly (firebase.auth(), db.collection('cbt_tests'),
+  etc.) and hasn't been migrated to the Worker API yet. js/pupil.js
+  below no longer uses either; it's a standalone ES module talking
+  to the Worker API, running side-by-side with the legacy code until
+  CBT is migrated in a later phase.
+-->
+<script src="firebase-init.js"></script>
+<script src="script.js"></script>
+<script type="module" src="js/pupil.js"></script>
+<script src="js/announcements.js"></script>
+
+<script>
+/* ──────────────────────────────────────────────────────────────
+   PAGE INITIALISATION — UI/structural only, no business logic
+────────────────────────────────────────────────────────────── */
+document.getElementById('copyright-year').textContent = new Date().getFullYear();
+
+document.addEventListener('DOMContentLoaded', () => {
+  lucide.createIcons();
+
+  // Avatar initials
+  const nameEl   = document.getElementById('pupil-name-display');
+  const avatarEl = document.getElementById('pp-avatar-initials');
+  const avatarObs = new MutationObserver(() => {
+    const name = nameEl?.textContent?.trim();
+    if (name && name !== 'Loading…' && name !== '-') {
+      const initials = name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+      avatarEl.innerHTML = `<span>${initials}</span>`;
+      avatarEl.classList.add('pp-avatar--loaded');
+      avatarObs.disconnect();
+    }
+  });
+  if (nameEl) avatarObs.observe(nameEl, { childList: true, characterData: true, subtree: true });
+
+  // Active nav syncing
+  const topLinks = document.querySelectorAll('.pp-nav-link');
+  const btmLinks = document.querySelectorAll('.pp-bottom-nav__link');
+
+  function setActive(id) {
+    topLinks.forEach(l => l.classList.remove('pp-nav-link--active'));
+    const t = document.querySelector(`.pp-nav-link[href="#${id}"]`);
+    if (t) t.classList.add('pp-nav-link--active');
+    btmLinks.forEach(l => l.classList.remove('pp-bottom-nav__link--active'));
+    const b = document.querySelector(`.pp-bottom-nav__link[href="#${id}"]`);
+    if (b) b.classList.add('pp-bottom-nav__link--active');
+  }
+
+  // Track which section is currently most visible
+  const visibilityMap = {};
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      visibilityMap[e.target.id] = e.intersectionRatio;
+    });
+
+    // Pick the section with the highest intersection ratio
+    let bestId = null;
+    let bestRatio = 0;
+    for (const [id, ratio] of Object.entries(visibilityMap)) {
+      if (ratio > bestRatio) {
+        bestRatio = ratio;
+        bestId = id;
+      }
+    }
+
+    if (bestId && bestRatio > 0) {
+      setActive(bestId);
+    }
+  }, {
+    threshold: [0, 0.1, 0.25, 0.5, 0.75, 1.0]
+  });
+
+  // Register the three always-present sections
+  ['pp-profile', 'pp-tests', 'pp-results'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      visibilityMap[id] = 0;
+      observer.observe(el);
+    }
+  });
+
+  setActive('pp-profile');
+
+  // Watch for fees section becoming visible (pupil.js sets display:block on it)
+  const feesEl = document.getElementById('pp-fees');
+  if (feesEl) {
+    const feesDisplayObs = new MutationObserver(() => {
+      if (feesEl.style.display !== 'none' && feesEl.style.display !== '') {
+        if (!visibilityMap.hasOwnProperty('pp-fees')) {
+          visibilityMap['pp-fees'] = 0;
+          observer.observe(feesEl);
+        }
+        feesDisplayObs.disconnect();
+      }
+    });
+    feesDisplayObs.observe(feesEl, { attributes: true, attributeFilter: ['style'] });
+  }
+
+  // Expose for scrollToSection to register fees section once shown
+  window.__ppRegisterFeesObserver = el => {
+    if (!visibilityMap.hasOwnProperty(el.id)) {
+      visibilityMap[el.id] = 0;
+      observer.observe(el);
+    }
+  };
+});
+
+
+/* ── Scroll helper ───────────────────────────────────────────── */
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = 'block';
+  if (window.__ppRegisterFeesObserver) window.__ppRegisterFeesObserver(el);
+  requestAnimationFrame(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  window.showToast?.('📊 Viewing fee balance', 'info', 2000);
+}
+window.scrollToFees    = () => scrollToSection('fee-balance-section');
+window.scrollToSection = scrollToSection;
+
+/* ── Session-aware print navigation ─────────────────────────── */
+function openPrintReport() {
+  const select = document.getElementById('pupil-session-select');
+  const selected = select ? select.value : 'current';
+  const url = selected && selected !== 'current'
+    ? `print-results.html?session=${encodeURIComponent(selected)}`
+    : 'print-results.html';
+  window.location.href = url;
+}
+window.openPrintReport = openPrintReport;
+
+/* ── getElementById proxy ────────────────────────────────────── */
+(function () {
+  var _native = document.getElementById.bind(document);
+  document.getElementById = function (id) {
+    if (id === 'fee-balance-section') return _native('pp-fees') || _native(id);
+    return _native(id);
+  };
+}());
+</script>
+
+<script src="session-cache.js"></script>
+<script src="js/button-loader.js"></script>
+<script src="js/pupil-ui-patch.js"></script>
+
+<script>
+/* ── Pupil Tests Loader (with Load More) ─────────────────────── */
+const CBT_TESTS_PAGE_SIZE = 3;
+let cbtAllTests = [];
+let cbtCompletedTestIds = new Set();
+let cbtVisibleCount = CBT_TESTS_PAGE_SIZE;
+
+async function loadPupilTests() {
+  const container = document.getElementById('pp-tests-content');
+  if (!container) return;
+
+  try {
+    const user = firebase.auth().currentUser;
+    if (!user) {
+      container.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:24px;font-size:13px;">Please log in to view your tests.</p>';
+      return;
+    }
+
+    const pupilId = user.uid;
+
+    const pupilDoc = await db.collection('pupils').doc(pupilId).get();
+    if (!pupilDoc.exists) {
+      container.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:24px;font-size:13px;">Pupil profile not found. Contact admin.</p>';
+      return;
+    }
+
+    const pData = pupilDoc.data();
+    const classId = typeof pData.class === 'object' && pData.class !== null
+      ? pData.class.id
+      : null;
+
+    // Pupil's religion, used to filter out mismatched Religious Studies tests
+    const pupilReligion = pData.religion || '';
+
+    if (!classId) {
+      container.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:24px;font-size:13px;">Class information missing. Contact admin to update your profile.</p>';
+      return;
+    }
+
+    // Get the current session/term so we only show tests relevant to right now.
+    const settings = await window.getCurrentSettings();
+    const currentSession = settings.session;
+    const currentTerm = settings.term;
+
+    // Load published tests for this class, THIS session and term only.
+    const testsSnap = await db.collection('cbt_tests')
+      .where('classId', '==', classId)
+      .where('published', '==', true)
+      .where('session', '==', currentSession)
+      .where('term', '==', currentTerm)
+      .get();
+
+    if (testsSnap.empty) {
+      container.innerHTML = `
+        <div class="cbt-empty">
+          <i data-lucide="monitor" style="width:40px;height:40px;margin-bottom:10px;opacity:0.3;display:block;margin-left:auto;margin-right:auto;"></i>
+          <div class="cbt-empty-title">No tests yet</div>
+          <div class="cbt-empty-desc">Your teacher has not published any tests for ${currentTerm} yet. Check back soon.</div>
+        </div>`;
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+      return;
+    }
+
+    // Check which tests this pupil has already completed
+    const completedSnap = await db.collection('cbt_attempts')
+      .where('pupilId', '==', pupilId)
+      .where('status', '==', 'completed')
+      .get();
+    cbtCompletedTestIds = new Set(completedSnap.docs.map(d => d.data().testId));
+
+    // Helper — mirrors the same logic used in admin.js/teacher.js
+    function isTestSubjectApplicable(subject, religion) {
+      const s = (subject || '').toLowerCase();
+      const r = (religion || '').trim().toLowerCase();
+
+      const isChristianRS = s.includes('christian religious') || s === 'crs' || s === 'crk' || s.includes('bible knowledge');
+      const isIslamicRS   = s.includes('islamic religious')   || s === 'irs' || s === 'irk' || s.includes('islamic studies');
+
+      if (!isChristianRS && !isIslamicRS) return true;
+
+      if (r === 'muslim' || r === 'islam') return !isChristianRS;
+      if (r === 'christian' || r === 'christianity') return !isIslamicRS;
+
+      return true; // religion unset — don't hide either
+    }
+
+    // Filter out tests whose subject doesn't apply to this pupil's religion
+    let tests = testsSnap.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(t => isTestSubjectApplicable(t.subject, pupilReligion));
+
+    if (tests.length === 0) {
+      container.innerHTML = `
+        <div class="cbt-empty">
+          <i data-lucide="monitor" style="width:40px;height:40px;margin-bottom:10px;opacity:0.3;display:block;margin-left:auto;margin-right:auto;"></i>
+          <div class="cbt-empty-title">No tests yet</div>
+          <div class="cbt-empty-desc">Your teacher has not published any tests for ${currentTerm} yet. Check back soon.</div>
+        </div>`;
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+      return;
+    }
+
+    const now = new Date();
+
+    function getTestTimestamp(t) {
+      if (t.scheduledDate && typeof t.scheduledDate.toDate === 'function') {
+        return t.scheduledDate.toDate().getTime();
+      }
+      if (t.expiryDate && typeof t.expiryDate.toDate === 'function') {
+        return t.expiryDate.toDate().getTime();
+      }
+      return 0;
+    }
+
+    tests.sort((a, b) => {
+      const getPriority = t => {
+        const done = cbtCompletedTestIds.has(t.id);
+        if (done) return 3;
+        if (t.expiryDate && t.expiryDate.toDate() < now) return 2;
+        if (t.scheduledDate && t.scheduledDate.toDate() > now) return 1;
+        return 0;
+      };
+
+      const pa = getPriority(a);
+      const pb = getPriority(b);
+      if (pa !== pb) return pa - pb;
+
+      // Same group — newest first
+      return getTestTimestamp(b) - getTestTimestamp(a);
+    });
+
+    cbtAllTests = tests;
+    cbtVisibleCount = CBT_TESTS_PAGE_SIZE;
+
+    await renderPupilTestsPage();
+
+  } catch (err) {
+    console.error('Error loading pupil tests:', err);
+
+    let msg = 'Failed to load tests. Please refresh the page.';
+    if (err.code === 'permission-denied') {
+      msg = 'Permission denied. This may be a Firestore rules issue — contact admin.';
+    } else if (err.code === 'failed-precondition') {
+      msg = 'A database index is still building. Please wait 2 minutes and refresh.';
+    }
+
+    const container2 = document.getElementById('pp-tests-content');
+    if (container2) {
+      container2.innerHTML = `<p style="text-align:center;color:#dc2626;padding:24px;font-size:13px;">${msg}</p>`;
+    }
+  }
+}
+
+// Renders however many tests are currently "visible" (cbtVisibleCount),
+// plus a Load More button if there are more tests beyond that.
+async function renderPupilTestsPage() {
+  const container = document.getElementById('pp-tests-content');
+  if (!container) return;
+
+  const user = firebase.auth().currentUser;
+  const pupilId = user ? user.uid : null;
+
+  const visibleTests = cbtAllTests.slice(0, cbtVisibleCount);
+  const remaining = cbtAllTests.length - visibleTests.length;
+
+  let cardsHTML = '<div style="display:flex;flex-direction:column;gap:12px;">';
+
+  for (const t of visibleTests) {
+    const done = cbtCompletedTestIds.has(t.id);
+    const now = new Date();
+
+    let windowStatus = 'open';
+    if (t.scheduledDate && t.scheduledDate.toDate() > now) windowStatus = 'upcoming';
+    if (t.expiryDate    && t.expiryDate.toDate()    < now) windowStatus = 'expired';
+
+    let scoreDisplay = '';
+    if (done && pupilId) {
+      try {
+        const resultSnap = await db.collection('cbt_results')
+          .where('testId', '==', t.id)
+          .where('pupilId', '==', pupilId)
+          .limit(1)
+          .get();
+        if (!resultSnap.empty) {
+          const r = resultSnap.docs[0].data();
+          scoreDisplay = `
+            <div class="cbt-test-card__score">
+              <i data-lucide="check-circle"></i>
+              Your score: ${r.score}/${r.total} · ${r.percentage}% · Grade ${r.grade}
+            </div>`;
+        }
+      } catch(e) { /* score display is non-critical */ }
+    }
+
+    const statusPill = done
+      ? '<span class="cbt-status-pill cbt-status-pill--done">✓ Completed</span>'
+      : windowStatus === 'upcoming'
+        ? '<span class="cbt-status-pill cbt-status-pill--upcoming">⏳ Scheduled</span>'
+        : windowStatus === 'expired'
+          ? '<span class="cbt-status-pill cbt-status-pill--expired">Expired</span>'
+          : '<span class="cbt-status-pill cbt-status-pill--open">● Open</span>';
+
+    const canTake = !done && windowStatus === 'open';
+
+    let actionHTML = '';
+    if (canTake) {
+      actionHTML = `
+        <div class="cbt-test-card__action">
+          <a href="cbt.html?testId=${t.id}"
+             class="pp-action-btn pp-action-btn--solid"
+             style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:10px 20px;">
+            <i data-lucide="play" style="width:14px;height:14px;"></i>
+            Start Test
+          </a>
+        </div>`;
+    } else if (!done) {
+      actionHTML = `
+        <div class="cbt-test-card__action">
+          <span class="pp-action-btn" style="opacity:0.6;cursor:not-allowed;display:inline-flex;align-items:center;justify-content:center;padding:10px 20px;background:#f1f5f9;color:#64748b;border:1.5px solid #e2e8f0;">
+            ${windowStatus === 'upcoming' ? '⏳ Not yet open' : '✗ Expired'}
+          </span>
+        </div>`;
+    }
+
+    const scheduleInfo = t.scheduledDate
+      ? `<div>Opens: ${t.scheduledDate.toDate().toLocaleString('en-GB')}</div>`
+      : '';
+    const expiryInfo = t.expiryDate
+      ? `<div>Closes: ${t.expiryDate.toDate().toLocaleString('en-GB')}</div>`
+      : '';
+    const datesBlock = (!done && (scheduleInfo || expiryInfo))
+      ? `<div class="cbt-test-card__dates">${scheduleInfo}${expiryInfo}</div>`
+      : '';
+
+    cardsHTML += `
+      <div class="cbt-test-card cbt-test-card--${done ? 'completed' : windowStatus}">
+        <div class="cbt-test-card__body">
+          <div class="cbt-test-card__title-row">
+            <div class="cbt-test-card__title">${t.title}</div>
+            ${statusPill}
+          </div>
+          <div class="cbt-test-card__meta">
+            <span><i data-lucide="book-open"></i>${t.subject || '—'}</span>
+            <span><i data-lucide="tag"></i>${t.type || 'Test'}</span>
+            <span><i data-lucide="clock"></i>${t.timerMinutes ? t.timerMinutes + ' min' : 'No timer'}</span>
+            <span><i data-lucide="calendar"></i>${t.term || '—'}</span>
+          </div>
+          ${scoreDisplay}
+          ${datesBlock}
+        </div>
+        ${actionHTML}
+      </div>`;
+  }
+
+  cardsHTML += '</div>';
+
+  if (remaining > 0) {
+    cardsHTML += `
+      <button type="button" class="cbt-load-more-btn" onclick="loadMorePupilTests(this)">
+        <i data-lucide="chevron-down"></i>
+        Load ${Math.min(remaining, CBT_TESTS_PAGE_SIZE)} more test${Math.min(remaining, CBT_TESTS_PAGE_SIZE) > 1 ? 's' : ''} (${remaining} remaining)
+      </button>`;
+  }
+
+  container.innerHTML = cardsHTML;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+window.renderPupilTestsPage = renderPupilTestsPage;
+
+async function loadMorePupilTests(btnEl) {
+  const btn = btnEl || document.querySelector('.cbt-load-more-btn');
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="cbt-btn-loading-text">Loading more tests…</span>`;
+  }
+
+  cbtVisibleCount += CBT_TESTS_PAGE_SIZE;
+  await renderPupilTestsPage();
+}
+window.loadMorePupilTests = loadMorePupilTests;
+
+// Wait for Firebase Auth to be ready, then load tests
+firebase.auth().onAuthStateChanged(user => {
+  if (user) {
+    // Small delay to let pupil.js finish its own setup first
+    setTimeout(loadPupilTests, 800);
+  }
+});
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
+</script>
+
+</body>
+</html>
