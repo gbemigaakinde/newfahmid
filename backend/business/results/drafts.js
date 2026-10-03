@@ -269,13 +269,13 @@ async function validateRosterForDraft(
  * ---------------------------------------------------------------------------
  */
 export async function getDraft(
-  env,
   request,
+  env,
   draftId,
 ) {
   const user = await requireTeacher(
-    env,
     request,
+    env,
   );
   if (!draftId) {
     throw new ResultValidationError(
@@ -452,13 +452,13 @@ export async function listDrafts(
  *   - locks/submission state are checked server-side
  */
 export async function saveDraft(
-  env,
   request,
+  env,
   input,
 ) {
   const user = await requireTeacher(
-    env,
     request,
+    env,
   );
   if (!input || typeof input !== "object") {
     throw new ResultValidationError(
@@ -682,13 +682,13 @@ export async function saveDraft(
  * ---------------------------------------------------------------------------
  */
 export async function deleteDraft(
-  env,
   request,
+  env,
   draftId,
 ) {
   const user = await requireTeacher(
-    env,
     request,
+    env,
   );
   if (!draftId) {
     throw new ResultValidationError(
