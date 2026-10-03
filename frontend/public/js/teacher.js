@@ -53,10 +53,28 @@ async function teacherApiGet(path) {
   const response = await fetch(`${TEACHER_API_BASE_URL}${path}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
+  return teacherApiHandleResponse(response);
+}
+
+async function teacherApiPost(path, body) {
+  const token = await window.auth.currentUser.getIdToken();
+  const response = await fetch(`${TEACHER_API_BASE_URL}${path}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  return teacherApiHandleResponse(response);
+}
+
+async function teacherApiHandleResponse(response) {
   const data = await response.json().catch(() => null);
   if (!response.ok) {
     const error = new Error(data?.error?.message || 'Request failed');
     error.code = data?.error?.code || 'REQUEST_FAILED';
+    error.status = response.status;
     throw error;
   }
   return data;
@@ -928,24 +946,28 @@ async function loadResultsTable() {
     const currentSession = settings.session;
     
     const resultsMap = {};
-    
-    for (const pupil of classFilteredPupils) {
-      const docId = `${pupil.id}_${term}_${subject}`;
-      const draftDoc = await db.collection('results_draft').doc(docId).get();
-      
-      if (draftDoc.exists) {
-        const data = draftDoc.data();
-        if (data.session === currentSession) {
-          resultsMap[pupil.id] = {
-            ca:         data.caScore   || 0,
-            exam:       data.examScore || 0,
-            assignment: data.assignment !== undefined ? data.assignment : '',
-            midterm:    data.midterm    !== undefined ? data.midterm    : '',
-            project:    data.project    !== undefined ? data.project    : '',
-          };
-        }
-      }
-    }
+
+    // Previously: one Firestore .get() per pupil in this class — N
+    // reads from the browser. Now: a single call to the Worker's
+    // listDrafts(), which already filters by class/session/term/
+    // subject server-side.
+    const draftsQuery = new URLSearchParams({
+      classId: selectedClassId,
+      session: currentSession,
+      term,
+      subject,
+    });
+    const { drafts } = await teacherApiGet(`/api/teacher/results/drafts?${draftsQuery}`);
+
+    drafts.forEach(data => {
+      resultsMap[data.pupilId] = {
+        ca:         data.caScore   || 0,
+        exam:       data.examScore || 0,
+        assignment: data.assignment !== undefined ? data.assignment : '',
+        midterm:    data.midterm    !== undefined ? data.midterm    : '',
+        project:    data.project    !== undefined ? data.project    : '',
+      };
+    });
 
     // Rebuild the working copy for this class/term/subject. Anything the
     // teacher typed but never saved (recovered from local storage) takes
@@ -978,9 +1000,10 @@ async function loadResultsTable() {
     const submissionId = `${selectedClassId}_${encodedSession}_${term}_${subject}`;
       
     try {
-      const submissionDoc = await db.collection('result_submissions').doc(submissionId).get();
-      if (submissionDoc.exists) {
-        const submissionData = submissionDoc.data();
+      const { submission: submissionData } = await teacherApiGet(
+        `/api/teacher/results/submissions/${encodeURIComponent(submissionId)}`
+      );
+      {
         if (submissionData.status === 'rejected' && submissionData.rejectionReason) {
           rejectionBanner = `
             <div class="tp-rejection-banner" style="margin-bottom: var(--tp-space-5);">
@@ -1234,34 +1257,30 @@ async function checkResultLockStatus() {
             return;
         }
         
-        // ✅ FIX 2: Check submission status with clarified permission handling
+        // Check submission status via the Worker API instead of reading
+        // result_submissions directly. The submission ID scheme
+        // (classId_encodedSession_term_subject) is unchanged, so this
+        // still hits the exact same document server-side.
         let submissionExists = false;
         let submissionData = null;
-        
+
         try {
             const submissionId = `${classId}_${encodedSession}_${term}_${subject}`;
-            const submissionDoc = await db.collection('result_submissions').doc(submissionId).get();
-            
-            if (submissionDoc.exists) {
-                submissionExists = true;
-                submissionData = submissionDoc.data();
-            } else {
-                console.log('✓ No submission found for these results');
-            }
+            const { submission } = await teacherApiGet(
+                `/api/teacher/results/submissions/${encodeURIComponent(submissionId)}`
+            );
+            submissionExists = true;
+            submissionData = submission;
         } catch (submissionError) {
-            // ✅ CRITICAL CLARIFICATION: Permission denied usually means document doesn't exist
-            if (submissionError.code === 'permission-denied') {
-                console.log('✓ No submission document found (permission denied to non-existent doc)');
-                // Safe to assume no submission exists
-            } else if (submissionError.code === 'unavailable') {
-                console.warn('⚠️ Firestore temporarily unavailable, proceeding with caution');
+            if (submissionError.code === 'SUBMISSION_NOT_FOUND') {
+                console.log('✓ No submission found for these results');
+            } else {
+                console.error('❌ Unexpected error checking submission status:', submissionError);
                 window.showToast?.(
                     'Connection issue detected. Changes may not save properly.',
                     'warning',
                     4000
                 );
-            } else {
-                console.error('❌ Unexpected error checking submission status:', submissionError);
             }
             // Continue execution - assume no submission
         }
@@ -1338,8 +1357,11 @@ function showApprovedBanner(submissionData) {
     
     if (!banner || !detailsDiv) return;
     
+    // submissionData now comes from the Worker API, where timestamps
+    // are plain ISO strings — not Firestore Timestamps — so this is
+    // new Date(...), not .toDate().
     const approvedDate = submissionData.approvedAt 
-        ? submissionData.approvedAt.toDate().toLocaleDateString('en-GB', {
+        ? new Date(submissionData.approvedAt).toLocaleDateString('en-GB', {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
@@ -1398,8 +1420,10 @@ function showSubmissionStatusBanner(submissionData) {
     
     if (!banner || !dateEl) return;
     
+    // Same note as showApprovedBanner: ISO string from the API now,
+    // not a Firestore Timestamp.
     const submittedDate = submissionData.submittedAt 
-        ? submissionData.submittedAt.toDate().toLocaleDateString('en-GB', {
+        ? new Date(submissionData.submittedAt).toLocaleDateString('en-GB', {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
@@ -1534,212 +1558,63 @@ async function submitResultsForApproval() {
     try {
         if (submitBtn) {
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking permissions...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
         }
 
-        // ── Check if this teacher has direct-publish permission ──────────────
-        const teacherDoc = await db.collection('teachers').doc(firebase.auth().currentUser.uid).get();
-        const canDirectPublish = teacherDoc.exists && teacherDoc.data().canDirectPublish === true;
+        // ──────────────────────────────────────────────────────────────────
+        // NOTE: the old "canDirectPublish" bypass (trusted teachers writing
+        // straight to the results collection, skipping admin approval) is
+        // intentionally NOT included here. The Worker's submitResults()
+        // only implements the normal approval path — direct-publish is a
+        // separate, approval-bypassing feature that deserves its own
+        // deliberate design on the backend rather than being ported
+        // silently. Every submission now goes through admin review.
+        // ──────────────────────────────────────────────────────────────────
 
         const settings = await window.getCurrentSettings();
         const session = settings.session;
-        const encodedSession = session.replace(/\//g, '-');
 
-        const currentUser = firebase.auth().currentUser;
-        if (!currentUser) throw new Error('Not authenticated');
+        const confirmed = confirm(
+            `Submit results for approval?\n\n` +
+            `Class: ${className}\n` +
+            `Subject: ${subject}\n` +
+            `Term: ${term}\n\n` +
+            `Once submitted, you cannot edit until admin reviews.`
+        );
 
-        const teacherName = teacherDoc.exists
-          ? teacherDoc.data().fullName || teacherDoc.data().name
-          : currentUser.displayName || 'Unknown Teacher';
-
-        if (canDirectPublish) {
-            // ════════════════════════════════════════════════════════════════
-            // DIRECT PUBLISH PATH — bypass approval, write straight to results
-            // ════════════════════════════════════════════════════════════════
-
-            const confirmed = confirm(
-                `Publish results directly to pupils?\n\n` +
-                `Class: ${className}\n` +
-                `Subject: ${subject}\n` +
-                `Term: ${term}\n\n` +
-                `Results will be IMMEDIATELY visible to pupils.\n` +
-                `(Direct publishing is enabled on your account)`
-            );
-
-            if (!confirmed) {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnText;
-                }
-                return;
-            }
-
+        if (!confirmed) {
             if (submitBtn) {
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
             }
-
-            // Get draft results for this class/term/subject/session
-            const draftsSnap = await db.collection('results_draft')
-                .where('classId', '==', classId)
-                .where('term', '==', term)
-                .where('subject', '==', subject)
-                .get();
-
-            const validDrafts = [];
-            draftsSnap.forEach(doc => {
-                if (doc.data().session === session) {
-                    validDrafts.push(doc);
-                }
-            });
-
-            if (validDrafts.length === 0) {
-                window.showToast?.(
-                    '⚠️ No saved results found. Please save your scores first before publishing.',
-                    'warning',
-                    6000
-                );
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnText;
-                }
-                return;
-            }
-
-            // Write directly to the results collection (approved immediately)
-            const batch = db.batch();
-            let publishedCount = 0;
-
-            validDrafts.forEach(draftDoc => {
-                const draftData = draftDoc.data();
-                const pupilId = draftData.pupilId;
-                const finalDocId = `${pupilId}_${encodedSession}_${term}_${subject}`;
-                const finalRef = db.collection('results').doc(finalDocId);
-
-                batch.set(finalRef, {
-                    ...draftData,
-                    status: 'approved',
-                    approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    approvedBy: currentUser.uid,
-                    approvedByName: teacherName,
-                    publishedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    directPublish: true   // flag so admin can identify direct-published results
-                });
-                publishedCount++;
-            });
-
-            // Also create a result_submissions record marked as approved
-            // so the admin can see it in the Approved Results tab
-            const submissionId = `${classId}_${encodedSession}_${term}_${subject}`;
-            const submissionRef = db.collection('result_submissions').doc(submissionId);
-            batch.set(submissionRef, {
-                classId,
-                className,
-                term,
-                subject,
-                session,
-                encodedSession,
-                teacherUid: currentUser.uid,
-                teacherName,
-                status: 'approved',
-                directPublish: true,
-                submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                approvedBy: currentUser.uid,
-                resultsPublished: publishedCount,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
-
-            await batch.commit();
-
-            console.log(`✅ Direct publish: ${publishedCount} results published for ${className} - ${term} - ${subject}`);
-
-            window.showToast?.(
-                `✅ Results published directly!\n\n` +
-                `${publishedCount} pupil result(s) are now VISIBLE to pupils immediately.`,
-                'success',
-                6000
-            );
-
-            await checkResultLockStatus();
-            await loadResultsTable();
-
-        } else {
-            // ════════════════════════════════════════════════════════════════
-            // NORMAL APPROVAL PATH — same as before
-            // ════════════════════════════════════════════════════════════════
-
-            const confirmed = confirm(
-                `Submit results for approval?\n\n` +
-                `Class: ${className}\n` +
-                `Subject: ${subject}\n` +
-                `Term: ${term}\n\n` +
-                `Once submitted, you cannot edit until admin reviews.`
-            );
-
-            if (!confirmed) {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnText;
-                }
-                return;
-            }
-
-            if (submitBtn) {
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
-            }
-
-            const submissionId = `${classId}_${encodedSession}_${term}_${subject}`;
-
-            const submissionData = {
-                classId,
-                className,
-                term,
-                subject,
-                session,
-                encodedSession,
-                teacherUid: currentUser.uid,
-                teacherName,
-                status: 'pending',
-                submittedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            // Count pupils with draft results
-            const draftsSnap = await db.collection('results_draft')
-                .where('classId', '==', classId)
-                .where('term', '==', term)
-                .where('subject', '==', subject)
-                .where('session', '==', session)
-                .get();
-
-            const uniquePupils = new Set();
-            draftsSnap.forEach(doc => {
-                const pupilId = doc.data().pupilId;
-                if (pupilId) uniquePupils.add(pupilId);
-            });
-
-            submissionData.pupilCount = uniquePupils.size;
-
-            await db.collection('result_submissions')
-                .doc(submissionId)
-                .set(submissionData, { merge: true });
-
-            console.log('✅ Results submitted for approval:', submissionId);
-
-            window.showToast?.(
-                'Results submitted for admin approval successfully!',
-                'success',
-                5000
-            );
-
-            await checkResultLockStatus();
-            await loadResultsTable();
+            return;
         }
+
+        // The Worker looks up the saved drafts itself to build the
+        // submission (pupil count, roster ownership, lock checks) —
+        // the browser no longer queries results_draft directly.
+        await teacherApiPost('/api/teacher/results/submissions', {
+            classId,
+            session,
+            term,
+            subject,
+        });
+
+        console.log('✅ Results submitted for approval:', `${classId}_${term}_${subject}`);
+
+        window.showToast?.(
+            'Results submitted for admin approval successfully!',
+            'success',
+            5000
+        );
+
+        await checkResultLockStatus();
+        await loadResultsTable();
 
     } catch (error) {
         console.error('Error in submitResultsForApproval:', error);
 
-        const errorMessage = error.code === 'permission-denied'
+        const errorMessage = (error.code === 'FORBIDDEN' || error.code === 'UNAUTHORIZED')
             ? 'Permission denied. Please contact your administrator.'
             : error.message || 'Failed to submit results. Please try again.';
 
@@ -1844,51 +1719,32 @@ async function saveAllResults() {
   }
 
   try {
-    const settings         = await window.getCurrentSettings();
-    const currentSession   = settings.session || 'Unknown';
-    const sessionStartYear = settings.currentSession?.startYear;
-    const sessionEndYear   = settings.currentSession?.endYear;
+    const settings       = await window.getCurrentSettings();
+    const currentSession = settings.session || 'Unknown';
 
-    const batch = db.batch();
+    // Previously: a Firestore batch.set() straight to results_draft,
+    // written from the browser with the teacher able to set any
+    // field — including teacherId — on the document. Now: one POST
+    // to the Worker, which recalculates caScore/examScore itself,
+    // stamps teacherId from the verified ID token (never trusting
+    // whatever the browser sends), and checks the roster + lock
+    // state server-side before writing anything.
+    const draftsPayload = Object.entries(pupilResults).map(([pupilId, scores]) => ({
+      pupilId,
+      classId: selectedClass.id,
+      session: currentSession,
+      term,
+      subject,
+      assignment: scores.assignment || 0,
+      midterm:    scores.midterm    || 0,
+      project:    scores.project    || 0,
+      caScore:    (scores.assignment || 0) + (scores.midterm || 0) + (scores.project || 0),
+      examScore:  scores.exam || 0,
+    }));
 
-    for (const [pupilId, scores] of Object.entries(pupilResults)) {
-      const pupil     = allPupils.find(p => p.id === pupilId);
-      const pupilName = pupil?.name || 'Unknown';
-      const classId   = selectedClass.id;
-      const className = selectedClass.name;
+    await teacherApiPost('/api/teacher/results/drafts', { results: draftsPayload });
 
-      const caScore   = (scores.assignment || 0) + (scores.midterm || 0) + (scores.project || 0);
-      const examScore = scores.exam || 0;
-
-      const docId = `${pupilId}_${term}_${subject}`;
-      const ref   = db.collection('results_draft').doc(docId);
-
-      batch.set(ref, {
-        pupilId,
-        pupilName,
-        classId,
-        className,
-        term,
-        subject,
-        session:     currentSession,
-        sessionStartYear,
-        sessionEndYear,
-        sessionTerm: `${currentSession}_${term}`,
-        assignment:  scores.assignment || 0,
-        midterm:     scores.midterm    || 0,
-        project:     scores.project    || 0,
-        caScore,
-        examScore,
-        teacherId:   currentUser.uid,
-        status:      'draft',
-        updatedAt:   firebase.firestore.FieldValue.serverTimestamp(),
-        updatedBy:   currentUser.uid
-      }, { merge: true });
-    }
-
-    await batch.commit();
-
-    // Everything is now safely in Firestore, so the local autosave is no
+    // Everything is now safely saved, so the local autosave is no
     // longer needed for this class/term/subject
     clearResultsBufferStorage();
 
