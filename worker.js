@@ -63,6 +63,10 @@ import {
   handleFinanceRoute,
 } from "./backend/api/finance-routes.js";
 
+import {
+  handlePupilRoute,
+} from "./backend/api/pupil-routes.js";
+
 function json(
   data,
   status = 200,
@@ -317,22 +321,38 @@ async function handleRequest(
   }
 
   /*
-   * PUPIL FINANCE API
+   * PUPIL-FACING API
+   * (profile, results, fees, payments — tried in order, first
+   * handler to recognise the path wins)
    */
   if (
     path.startsWith("/api/pupil/")
   ) {
-    const result =
+    const pupilResult =
+      await handlePupilRoute(
+        request,
+        env,
+        path
+      );
+
+    if (pupilResult) {
+      return json(
+        pupilResult.body,
+        pupilResult.status
+      );
+    }
+
+    const financeResult =
       await handleFinanceRoute(
         request,
         env,
         path
       );
 
-    if (result) {
+    if (financeResult) {
       return json(
-        result.body,
-        result.status
+        financeResult.body,
+        financeResult.status
       );
     }
   }
