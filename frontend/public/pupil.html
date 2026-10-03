@@ -15,9 +15,6 @@
 <link rel="stylesheet" href="css/cbt-portal.css">
 
 <script src="https://unpkg.com/lucide@latest"></script>
-<script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore-compat.js"></script>
 
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#1a56db">
@@ -1492,18 +1489,9 @@ button.btn-small.btn-secondary:disabled {
 <!-- ═══════════════════════════════════════
      SCRIPTS
 ═══════════════════════════════════════ -->
-<!--
-  firebase-init.js and the Firebase compat SDK (in <head>) are kept
-  here deliberately — the CBT section further down this page still
-  uses them directly (firebase.auth(), db.collection('cbt_tests'),
-  etc.) and hasn't been migrated to the Worker API yet. js/pupil.js
-  below no longer uses either; it's a standalone ES module talking
-  to the Worker API, running side-by-side with the legacy code until
-  CBT is migrated in a later phase.
--->
-<script src="firebase-init.js"></script>
 <script src="script.js"></script>
 <script type="module" src="js/pupil.js"></script>
+<script type="module" src="js/pupil-cbt.js"></script>
 <script src="js/announcements.js"></script>
 
 <script>
@@ -1636,300 +1624,16 @@ window.openPrintReport = openPrintReport;
 }());
 </script>
 
-<script src="session-cache.js"></script>
+<!--
+  session-cache.js is intentionally NOT included here any more: it
+  was a browser-side cache wrapped around direct Firestore reads
+  (window.db.collection('settings')...). Nothing on this page calls
+  it any longer — js/pupil.js and js/pupil-cbt.js both get settings
+  from the Worker API instead. button-loader.js and pupil-ui-patch.js
+  are kept — they're pure DOM/UI helpers with no Firestore calls.
+-->
 <script src="js/button-loader.js"></script>
 <script src="js/pupil-ui-patch.js"></script>
-
-<script>
-/* ── Pupil Tests Loader (with Load More) ─────────────────────── */
-const CBT_TESTS_PAGE_SIZE = 3;
-let cbtAllTests = [];
-let cbtCompletedTestIds = new Set();
-let cbtVisibleCount = CBT_TESTS_PAGE_SIZE;
-
-async function loadPupilTests() {
-  const container = document.getElementById('pp-tests-content');
-  if (!container) return;
-
-  try {
-    const user = firebase.auth().currentUser;
-    if (!user) {
-      container.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:24px;font-size:13px;">Please log in to view your tests.</p>';
-      return;
-    }
-
-    const pupilId = user.uid;
-
-    const pupilDoc = await db.collection('pupils').doc(pupilId).get();
-    if (!pupilDoc.exists) {
-      container.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:24px;font-size:13px;">Pupil profile not found. Contact admin.</p>';
-      return;
-    }
-
-    const pData = pupilDoc.data();
-    const classId = typeof pData.class === 'object' && pData.class !== null
-      ? pData.class.id
-      : null;
-
-    // Pupil's religion, used to filter out mismatched Religious Studies tests
-    const pupilReligion = pData.religion || '';
-
-    if (!classId) {
-      container.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:24px;font-size:13px;">Class information missing. Contact admin to update your profile.</p>';
-      return;
-    }
-
-    // Get the current session/term so we only show tests relevant to right now.
-    const settings = await window.getCurrentSettings();
-    const currentSession = settings.session;
-    const currentTerm = settings.term;
-
-    // Load published tests for this class, THIS session and term only.
-    const testsSnap = await db.collection('cbt_tests')
-      .where('classId', '==', classId)
-      .where('published', '==', true)
-      .where('session', '==', currentSession)
-      .where('term', '==', currentTerm)
-      .get();
-
-    if (testsSnap.empty) {
-      container.innerHTML = `
-        <div class="cbt-empty">
-          <i data-lucide="monitor" style="width:40px;height:40px;margin-bottom:10px;opacity:0.3;display:block;margin-left:auto;margin-right:auto;"></i>
-          <div class="cbt-empty-title">No tests yet</div>
-          <div class="cbt-empty-desc">Your teacher has not published any tests for ${currentTerm} yet. Check back soon.</div>
-        </div>`;
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-      return;
-    }
-
-    // Check which tests this pupil has already completed
-    const completedSnap = await db.collection('cbt_attempts')
-      .where('pupilId', '==', pupilId)
-      .where('status', '==', 'completed')
-      .get();
-    cbtCompletedTestIds = new Set(completedSnap.docs.map(d => d.data().testId));
-
-    // Helper — mirrors the same logic used in admin.js/teacher.js
-    function isTestSubjectApplicable(subject, religion) {
-      const s = (subject || '').toLowerCase();
-      const r = (religion || '').trim().toLowerCase();
-
-      const isChristianRS = s.includes('christian religious') || s === 'crs' || s === 'crk' || s.includes('bible knowledge');
-      const isIslamicRS   = s.includes('islamic religious')   || s === 'irs' || s === 'irk' || s.includes('islamic studies');
-
-      if (!isChristianRS && !isIslamicRS) return true;
-
-      if (r === 'muslim' || r === 'islam') return !isChristianRS;
-      if (r === 'christian' || r === 'christianity') return !isIslamicRS;
-
-      return true; // religion unset — don't hide either
-    }
-
-    // Filter out tests whose subject doesn't apply to this pupil's religion
-    let tests = testsSnap.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(t => isTestSubjectApplicable(t.subject, pupilReligion));
-
-    if (tests.length === 0) {
-      container.innerHTML = `
-        <div class="cbt-empty">
-          <i data-lucide="monitor" style="width:40px;height:40px;margin-bottom:10px;opacity:0.3;display:block;margin-left:auto;margin-right:auto;"></i>
-          <div class="cbt-empty-title">No tests yet</div>
-          <div class="cbt-empty-desc">Your teacher has not published any tests for ${currentTerm} yet. Check back soon.</div>
-        </div>`;
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-      return;
-    }
-
-    const now = new Date();
-
-    function getTestTimestamp(t) {
-      if (t.scheduledDate && typeof t.scheduledDate.toDate === 'function') {
-        return t.scheduledDate.toDate().getTime();
-      }
-      if (t.expiryDate && typeof t.expiryDate.toDate === 'function') {
-        return t.expiryDate.toDate().getTime();
-      }
-      return 0;
-    }
-
-    tests.sort((a, b) => {
-      const getPriority = t => {
-        const done = cbtCompletedTestIds.has(t.id);
-        if (done) return 3;
-        if (t.expiryDate && t.expiryDate.toDate() < now) return 2;
-        if (t.scheduledDate && t.scheduledDate.toDate() > now) return 1;
-        return 0;
-      };
-
-      const pa = getPriority(a);
-      const pb = getPriority(b);
-      if (pa !== pb) return pa - pb;
-
-      // Same group — newest first
-      return getTestTimestamp(b) - getTestTimestamp(a);
-    });
-
-    cbtAllTests = tests;
-    cbtVisibleCount = CBT_TESTS_PAGE_SIZE;
-
-    await renderPupilTestsPage();
-
-  } catch (err) {
-    console.error('Error loading pupil tests:', err);
-
-    let msg = 'Failed to load tests. Please refresh the page.';
-    if (err.code === 'permission-denied') {
-      msg = 'Permission denied. This may be a Firestore rules issue — contact admin.';
-    } else if (err.code === 'failed-precondition') {
-      msg = 'A database index is still building. Please wait 2 minutes and refresh.';
-    }
-
-    const container2 = document.getElementById('pp-tests-content');
-    if (container2) {
-      container2.innerHTML = `<p style="text-align:center;color:#dc2626;padding:24px;font-size:13px;">${msg}</p>`;
-    }
-  }
-}
-
-// Renders however many tests are currently "visible" (cbtVisibleCount),
-// plus a Load More button if there are more tests beyond that.
-async function renderPupilTestsPage() {
-  const container = document.getElementById('pp-tests-content');
-  if (!container) return;
-
-  const user = firebase.auth().currentUser;
-  const pupilId = user ? user.uid : null;
-
-  const visibleTests = cbtAllTests.slice(0, cbtVisibleCount);
-  const remaining = cbtAllTests.length - visibleTests.length;
-
-  let cardsHTML = '<div style="display:flex;flex-direction:column;gap:12px;">';
-
-  for (const t of visibleTests) {
-    const done = cbtCompletedTestIds.has(t.id);
-    const now = new Date();
-
-    let windowStatus = 'open';
-    if (t.scheduledDate && t.scheduledDate.toDate() > now) windowStatus = 'upcoming';
-    if (t.expiryDate    && t.expiryDate.toDate()    < now) windowStatus = 'expired';
-
-    let scoreDisplay = '';
-    if (done && pupilId) {
-      try {
-        const resultSnap = await db.collection('cbt_results')
-          .where('testId', '==', t.id)
-          .where('pupilId', '==', pupilId)
-          .limit(1)
-          .get();
-        if (!resultSnap.empty) {
-          const r = resultSnap.docs[0].data();
-          scoreDisplay = `
-            <div class="cbt-test-card__score">
-              <i data-lucide="check-circle"></i>
-              Your score: ${r.score}/${r.total} · ${r.percentage}% · Grade ${r.grade}
-            </div>`;
-        }
-      } catch(e) { /* score display is non-critical */ }
-    }
-
-    const statusPill = done
-      ? '<span class="cbt-status-pill cbt-status-pill--done">✓ Completed</span>'
-      : windowStatus === 'upcoming'
-        ? '<span class="cbt-status-pill cbt-status-pill--upcoming">⏳ Scheduled</span>'
-        : windowStatus === 'expired'
-          ? '<span class="cbt-status-pill cbt-status-pill--expired">Expired</span>'
-          : '<span class="cbt-status-pill cbt-status-pill--open">● Open</span>';
-
-    const canTake = !done && windowStatus === 'open';
-
-    let actionHTML = '';
-    if (canTake) {
-      actionHTML = `
-        <div class="cbt-test-card__action">
-          <a href="cbt.html?testId=${t.id}"
-             class="pp-action-btn pp-action-btn--solid"
-             style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:10px 20px;">
-            <i data-lucide="play" style="width:14px;height:14px;"></i>
-            Start Test
-          </a>
-        </div>`;
-    } else if (!done) {
-      actionHTML = `
-        <div class="cbt-test-card__action">
-          <span class="pp-action-btn" style="opacity:0.6;cursor:not-allowed;display:inline-flex;align-items:center;justify-content:center;padding:10px 20px;background:#f1f5f9;color:#64748b;border:1.5px solid #e2e8f0;">
-            ${windowStatus === 'upcoming' ? '⏳ Not yet open' : '✗ Expired'}
-          </span>
-        </div>`;
-    }
-
-    const scheduleInfo = t.scheduledDate
-      ? `<div>Opens: ${t.scheduledDate.toDate().toLocaleString('en-GB')}</div>`
-      : '';
-    const expiryInfo = t.expiryDate
-      ? `<div>Closes: ${t.expiryDate.toDate().toLocaleString('en-GB')}</div>`
-      : '';
-    const datesBlock = (!done && (scheduleInfo || expiryInfo))
-      ? `<div class="cbt-test-card__dates">${scheduleInfo}${expiryInfo}</div>`
-      : '';
-
-    cardsHTML += `
-      <div class="cbt-test-card cbt-test-card--${done ? 'completed' : windowStatus}">
-        <div class="cbt-test-card__body">
-          <div class="cbt-test-card__title-row">
-            <div class="cbt-test-card__title">${t.title}</div>
-            ${statusPill}
-          </div>
-          <div class="cbt-test-card__meta">
-            <span><i data-lucide="book-open"></i>${t.subject || '—'}</span>
-            <span><i data-lucide="tag"></i>${t.type || 'Test'}</span>
-            <span><i data-lucide="clock"></i>${t.timerMinutes ? t.timerMinutes + ' min' : 'No timer'}</span>
-            <span><i data-lucide="calendar"></i>${t.term || '—'}</span>
-          </div>
-          ${scoreDisplay}
-          ${datesBlock}
-        </div>
-        ${actionHTML}
-      </div>`;
-  }
-
-  cardsHTML += '</div>';
-
-  if (remaining > 0) {
-    cardsHTML += `
-      <button type="button" class="cbt-load-more-btn" onclick="loadMorePupilTests(this)">
-        <i data-lucide="chevron-down"></i>
-        Load ${Math.min(remaining, CBT_TESTS_PAGE_SIZE)} more test${Math.min(remaining, CBT_TESTS_PAGE_SIZE) > 1 ? 's' : ''} (${remaining} remaining)
-      </button>`;
-  }
-
-  container.innerHTML = cardsHTML;
-  if (typeof lucide !== 'undefined') lucide.createIcons();
-}
-window.renderPupilTestsPage = renderPupilTestsPage;
-
-async function loadMorePupilTests(btnEl) {
-  const btn = btnEl || document.querySelector('.cbt-load-more-btn');
-
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = `<span class="cbt-btn-loading-text">Loading more tests…</span>`;
-  }
-
-  cbtVisibleCount += CBT_TESTS_PAGE_SIZE;
-  await renderPupilTestsPage();
-}
-window.loadMorePupilTests = loadMorePupilTests;
-
-// Wait for Firebase Auth to be ready, then load tests
-firebase.auth().onAuthStateChanged(user => {
-  if (user) {
-    // Small delay to let pupil.js finish its own setup first
-    setTimeout(loadPupilTests, 800);
-  }
-});
-</script>
 
 <script>
 if ('serviceWorker' in navigator) {
