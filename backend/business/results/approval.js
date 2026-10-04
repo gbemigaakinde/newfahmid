@@ -19,6 +19,7 @@ import {
   getDocumentSnapshot,
   runQuery,
   commitWrites,
+  deleteDocument,
 } from "../../firebase/firestore.js";
 
 import {
@@ -1047,6 +1048,174 @@ export async function rejectSubmission(
     rejected: true,
     submission:
       rejectedSubmission,
+  };
+}
+
+/**
+ * Reverse an approval: hide published results from pupils again,
+ * send the submission back to "rejected" (so the teacher can edit
+ * drafts and resubmit), and remove the result lock that
+ * approveSubmission() created.
+ *
+ * This feature didn't exist on the Worker at all before — the old
+ * browser code wrote directly to `results`/`result_submissions`
+ * with its own ad-hoc batch, and never touched `result_locks` at
+ * all. That was a latent bug: approveSubmission() refuses to
+ * re-approve anything with an existing lock
+ * (RESULT_LOCK_ALREADY_EXISTS), so unlocking without deleting the
+ * lock would have silently blocked every resubmission from ever
+ * being re-approved. That's fixed here, not carried forward.
+ */
+export async function unlockSubmission(
+  request,
+  env,
+  submissionId,
+  reason,
+) {
+  const admin = await requireAdmin(request, env);
+
+  if (!submissionId) {
+    throw new ResultValidationError(
+      "Submission ID is required.",
+      "MISSING_SUBMISSION_ID",
+    );
+  }
+
+  const unlockReason =
+    normalise(reason) || "Results unlocked by admin for correction";
+
+  const snapshot = await loadSubmission(env, submissionId);
+  const submission = snapshot.document;
+
+  if (submission.status !== "approved") {
+    throw new ResultValidationError(
+      `Only approved submissions can be unlocked. Current status: "${submission.status}".`,
+      "INVALID_SUBMISSION_STATE",
+    );
+  }
+
+  const { classId, term, subject, session } = submission;
+
+  const matchingResults = await runQuery(env, {
+    from: [{ collectionId: "results" }],
+    where: {
+      compositeFilter: {
+        op: "AND",
+        filters: [
+          {
+            fieldFilter: {
+              field: { fieldPath: "classId" },
+              op: "EQUAL",
+              value: { stringValue: classId },
+            },
+          },
+          {
+            fieldFilter: {
+              field: { fieldPath: "term" },
+              op: "EQUAL",
+              value: { stringValue: term },
+            },
+          },
+          {
+            fieldFilter: {
+              field: { fieldPath: "subject" },
+              op: "EQUAL",
+              value: { stringValue: subject },
+            },
+          },
+          {
+            fieldFilter: {
+              field: { fieldPath: "session" },
+              op: "EQUAL",
+              value: { stringValue: session },
+            },
+          },
+        ],
+      },
+    },
+  });
+
+  const unlockedAt = nowIso();
+
+  // commitWrites only supports full-document "set" operations (no
+  // partial update, no delete) — so each result is re-sent in full,
+  // with just the relevant fields changed, same pattern drafts.js
+  // uses for saveDraft().
+  const resultOperations = matchingResults.map((resultDoc) => ({
+    type: "set",
+    collection: "results",
+    documentId: resultDoc.id ?? makeResultId({
+      pupilId: resultDoc.pupilId,
+      session,
+      term,
+      subject,
+    }),
+    data: {
+      ...resultDoc,
+      status: "draft",
+      unlockedAt,
+      unlockedBy: admin.uid,
+      unlockReason,
+    },
+  }));
+
+  const rejectedSubmission = {
+    ...submission,
+    id: submissionId,
+    status: "rejected",
+    rejectedBy: admin.uid,
+    rejectedAt: unlockedAt,
+    rejectionReason: unlockReason,
+    unlockedByAdmin: true,
+    unlockReason,
+    unlockedAt,
+    updatedAt: unlockedAt,
+  };
+
+  await commitWrites(env, [
+    ...resultOperations,
+    {
+      type: "set",
+      collection: "result_submissions",
+      documentId: submissionId,
+      data: rejectedSubmission,
+      precondition: snapshot.updateTime
+        ? { updateTime: snapshot.updateTime }
+        : { exists: true },
+    },
+  ]);
+
+  // Delete the result lock separately — commitWrites has no delete
+  // support. If this fails, the results are still correctly
+  // unlocked; only a stale lock would remain, blocking a future
+  // re-approval until retried.
+  const lockId = makeLockId({ classId, session, term, subject });
+  try {
+    await deleteDocument(env, "result_locks", lockId);
+  } catch (lockError) {
+    console.error("Failed to delete result lock after unlock:", lockError);
+  }
+
+  await audit(env, {
+    action: "RESULT_UNLOCKED",
+    actorUid: admin.uid,
+    targetType: "result_submission",
+    targetId: submissionId,
+    metadata: {
+      classId,
+      session,
+      term,
+      subject,
+      teacherUid: submission.teacherUid,
+      resultsReverted: matchingResults.length,
+      reason: unlockReason,
+    },
+  });
+
+  return {
+    unlocked: true,
+    resultsReverted: matchingResults.length,
+    submission: rejectedSubmission,
   };
 }
 
