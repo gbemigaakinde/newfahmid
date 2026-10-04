@@ -13155,21 +13155,14 @@ async function toggleResultPreview(submissionId, classId, term, subject, session
   }
 
   try {
-    // Fetch draft results (same query as approveResultSubmission)
-    const draftsSnap = await db.collection('results_draft')
-      .where('classId', '==', classId)
-      .where('term',    '==', term)
-      .where('subject', '==', subject)
-      .get();
-
-    // Filter by session client-side (mirrors existing approval logic)
-    const validDrafts = [];
-    draftsSnap.forEach(doc => {
-      const d = doc.data();
-      if (d.session === session) {
-        validDrafts.push(d);
-      }
-    });
+    // Previously: a direct Firestore query against results_draft,
+    // filtered by session client-side. Now: a dedicated admin
+    // endpoint — intentionally NOT the same /api/teacher/results/
+    // drafts route teacher.js uses, since that route restricts
+    // results to the calling teacher's own drafts and an admin
+    // needs to preview any teacher's submission.
+    const draftsQuery = new URLSearchParams({ classId, session, term, subject });
+    const { drafts: validDrafts } = await adminApiGet(`/api/admin/results/drafts?${draftsQuery}`);
 
     const stats = computePreviewStats(validDrafts);
     const meta  = { subject, className, term, session };
