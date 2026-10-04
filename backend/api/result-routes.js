@@ -131,7 +131,12 @@ export async function handleResultRoute(
             session,
             term,
             subject,
-            teacherUid:
+            // listDrafts' filter object key is `teacherId`, not
+            // `teacherUid` — this was silently ignored before,
+            // meaning any teacher calling this endpoint for a given
+            // class/term/subject/session saw every teacher's drafts
+            // for it, not just their own.
+            teacherId:
               user.uid,
           },
         );
@@ -478,6 +483,35 @@ export async function handleResultRoute(
     return result(200, {
       submission,
     });
+  }
+
+  /*
+   * -------------------------------------------------------------------------
+   * Admin draft preview (view a submission's underlying drafts
+   * before approving — intentionally not teacher-scoped, since an
+   * admin needs to see whichever teacher's drafts these are)
+   * -------------------------------------------------------------------------
+   */
+
+  if (
+    path === "/api/admin/results/drafts" &&
+    method === "GET"
+  ) {
+    await requireAdmin(request, env);
+
+    const url = new URL(request.url);
+
+    const drafts = await listDrafts(env, {
+      classId: requireId(url.searchParams.get("classId"), "classId"),
+      session: requireString(url.searchParams.get("session"), "session"),
+      term: requireString(url.searchParams.get("term"), "term"),
+      subject: requireString(url.searchParams.get("subject"), "subject"),
+      // No teacherId filter — admin sees all drafts for this
+      // class/session/term/subject regardless of which teacher
+      // saved them.
+    });
+
+    return result(200, { drafts });
   }
 
   /*
