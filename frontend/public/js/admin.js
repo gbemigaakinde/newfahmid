@@ -2856,14 +2856,11 @@ async function _loadApprovedResults() {
   tbody.innerHTML = '<tr><td colspan="9" class="table-loading">Loading approved results...</td></tr>';
 
   try {
-    const submissionsSnap = await db.collection('result_submissions')
-      .where('status', '==', 'approved')
-      .orderBy('approvedAt', 'desc')
-      .get();
+    const { submissions } = await adminApiGet('/api/admin/results/submissions?status=approved');
 
     tbody.innerHTML = '';
 
-    if (submissionsSnap.empty) {
+    if (submissions.length === 0) {
       tbody.innerHTML = `
         <tr>
           <td colspan="9" style="text-align:center; padding:var(--space-2xl); color:var(--color-gray-600);">
@@ -2876,16 +2873,17 @@ async function _loadApprovedResults() {
       return;
     }
 
-    for (const submissionDoc of submissionsSnap.docs) {
-      const d  = submissionDoc.data();
-      const id = submissionDoc.id;
+    for (const d of submissions) {
+      const id = d.id;
 
+      // approvedAt/submittedAt arrive as ISO strings from the
+      // Worker API now, not Firestore Timestamps.
       const approvedDate = d.approvedAt
-        ? d.approvedAt.toDate().toLocaleDateString('en-GB')
+        ? new Date(d.approvedAt).toLocaleDateString('en-GB')
         : '-';
 
       const submittedDate = d.submittedAt
-        ? d.submittedAt.toDate().toLocaleDateString('en-GB')
+        ? new Date(d.submittedAt).toLocaleDateString('en-GB')
         : '-';
 
       const resultsPublished = d.resultsPublished ?? '—';
@@ -2935,7 +2933,7 @@ async function _loadApprovedResults() {
       tbody.appendChild(tr);
     }
 
-    console.log(`✓ Loaded ${submissionsSnap.size} approved submissions`);
+    console.log(`✓ Loaded ${submissions.length} approved submissions`);
 
   } catch (error) {
     console.error('❌ Error loading approved results:', error);
@@ -2971,103 +2969,28 @@ async function unlockApprovedResult(submissionId) {
   }
 
   try {
-    // ── 1. Read submission to get classId / term / subject / session ────────
-    const submissionRef = db.collection('result_submissions').doc(submissionId);
-    const submissionDoc = await submissionRef.get();
-
-    if (!submissionDoc.exists) {
-      window.showToast?.('Submission not found', 'danger');
-      return;
-    }
-
-    const { classId, term, subject, session, className, teacherName } = submissionDoc.data();
-
-    // ── 2. Build encoded session for result doc ID pattern ─────────────────
-    const encodedSession = (session || '').replace(/\//g, '-');
-
-    // ── 3. Find all approved results for this submission ───────────────────
-    //    Results are stored as: {pupilId}_{encodedSession}_{term}_{subject}
-    //    We query by classId + term + subject and filter by session client-side.
-    const approvedResultsSnap = await db.collection('results')
-      .where('classId', '==', classId)
-      .where('term',    '==', term)
-      .where('subject', '==', subject)
-      .get();
-
-    const matchingResults = [];
-    approvedResultsSnap.forEach(doc => {
-      if (doc.data().session === session) {
-        matchingResults.push(doc);
-      }
-    });
-
-    console.log(`🔓 Unlocking ${matchingResults.length} results for ${subject} / ${term} / ${session}`);
-
-    // ── 4. Batch: revert results to 'draft', revert submission to 'rejected' 
-    const BATCH_LIMIT = 400;
-    let   batch       = db.batch();
-    let   batchCount  = 0;
-
-    for (const resultDoc of matchingResults) {
-      batch.update(resultDoc.ref, {
-        status:        'draft',
-        unlockedAt:    firebase.firestore.FieldValue.serverTimestamp(),
-        unlockedBy:    auth.currentUser.uid,
-        unlockReason:  reason.trim() || 'Unlocked by admin',
-      });
-
-      batchCount++;
-
-      if (batchCount >= BATCH_LIMIT) {
-        await batch.commit();
-        batch      = db.batch();
-        batchCount = 0;
-      }
-    }
-
-    // Revert the submission doc
-    batch.update(submissionRef, {
-      status:          'rejected',
-      rejectedBy:      auth.currentUser.uid,
-      rejectedAt:      firebase.firestore.FieldValue.serverTimestamp(),
-      rejectionReason: reason.trim() || 'Results unlocked by admin for correction',
-      // Store unlock metadata separately so teacher portal can show it clearly
-      unlockedByAdmin: true,
-      unlockReason:    reason.trim() || 'Results unlocked by admin for correction',
-      unlockedAt:      firebase.firestore.FieldValue.serverTimestamp(),
-    });
-    batchCount++;
-
-    // Commit remaining operations
-    if (batchCount > 0) {
-      await batch.commit();
-    }
-
-    // ── 5. Audit log ────────────────────────────────────────────────────────
-    await db.collection('audit_log').add({
-      action:           'unlock_results',
-      collection:       'result_submissions',
-      documentId:       submissionId,
-      changes: {
-        subject,
-        term,
-        session,
-        className,
-        teacherName,
-        resultsReverted: matchingResults.length,
-        reason:          reason.trim() || 'No reason given',
-      },
-      performedBy:      auth.currentUser.uid,
-      performedByEmail: auth.currentUser.email,
-      timestamp:        firebase.firestore.FieldValue.serverTimestamp(),
-      userAgent:        navigator.userAgent,
-    });
+    // Previously: read the submission, query results by classId/
+    // term/subject then filter by session client-side, batch-update
+    // every result doc plus the submission doc, then a separate
+    // audit_log write — four+ round-trips, and it never removed the
+    // result_locks document approveSubmission() creates, which
+    // would have silently blocked re-approval after a resubmission.
+    //
+    // This feature didn't exist on the Worker at all before this
+    // phase. unlockSubmission() now does all of the above as one
+    // atomic commit (results + submission), plus deletes the lock,
+    // plus writes a proper audit entry — see
+    // backend/business/results/approval.js.
+    const unlockResult = await adminApiPost(
+        `/api/admin/results/submissions/${encodeURIComponent(submissionId)}/unlock`,
+        { reason: reason.trim() }
+    );
 
     window.showToast?.(
       `✅ Results unlocked!\n\n` +
-      `• ${matchingResults.length} result(s) hidden from pupils\n` +
+      `• ${unlockResult.resultsReverted} result(s) hidden from pupils\n` +
       `• Teacher can now re-edit and resubmit\n` +
-      `• Reason sent to teacher: "${reason.trim() || 'Results unlocked by admin for correction'}"`,
+      `• Reason sent to teacher: "${unlockResult.submission.unlockReason}"`,
       'success',
       8000
     );
@@ -12778,16 +12701,14 @@ async function approveAllPendingResults() {
     submissionIds = targetIds;
   } else {
     try {
-      const snap = await db.collection('result_submissions')
-        .where('status', '==', 'pending')
-        .get();
+      const { submissions } = await adminApiGet('/api/admin/results/submissions?status=pending');
 
-      if (snap.empty) {
+      if (submissions.length === 0) {
         window.showToast?.('No pending result submissions found.', 'info');
         return;
       }
 
-      submissionIds = snap.docs.map(doc => doc.id);
+      submissionIds = submissions.map(s => s.id);
     } catch (error) {
       console.error('❌ Error fetching pending submissions:', error);
       window.showToast?.('Failed to fetch pending submissions.', 'danger');
@@ -12818,30 +12739,28 @@ async function approveAllPendingResults() {
   let skipCount = 0;
   let failCount = 0;
 
+  // Previously: a manual re-check-then-transaction dance per
+  // submission, duplicated almost line-for-line from
+  // approveResultSubmission() into a separate "_silently" copy. The
+  // Worker's approveSubmission() is already atomic and already
+  // rejects anything that isn't "pending" (INVALID_SUBMISSION_STATE),
+  // so that race-condition guard now lives in one place on the
+  // server instead of two places in the browser.
   for (const submissionId of submissionIds) {
     try {
-      // Re-check status to avoid double-approving (race condition safety)
-      const submissionDoc = await db.collection('result_submissions').doc(submissionId).get();
-
-      if (!submissionDoc.exists) {
-        console.warn(`⚠️ Submission ${submissionId} not found, skipping`);
-        skipCount++;
-        continue;
-      }
-
-      if (submissionDoc.data().status !== 'pending') {
-        console.log(`⏭️ Submission ${submissionId} already processed (${submissionDoc.data().status}), skipping`);
-        skipCount++;
-        continue;
-      }
-
-      // Reuse existing approval logic
-      await _approveSubmissionSilently(submissionId, submissionDoc.data());
+      await adminApiPost(
+        `/api/admin/results/submissions/${encodeURIComponent(submissionId)}/approve`,
+        {}
+      );
       successCount++;
-
     } catch (error) {
-      console.error(`❌ Failed to approve submission ${submissionId}:`, error);
-      failCount++;
+      if (error.code === 'SUBMISSION_NOT_FOUND' || error.code === 'INVALID_SUBMISSION_STATE') {
+        console.log(`⏭️ Submission ${submissionId} not available to approve (${error.code}), skipping`);
+        skipCount++;
+      } else {
+        console.error(`❌ Failed to approve submission ${submissionId}:`, error);
+        failCount++;
+      }
     }
   }
 
@@ -12860,98 +12779,6 @@ async function approveAllPendingResults() {
     btn.disabled = false;
     btn.innerHTML = '✓ Approve All Pending';
   }
-}
-
-/**
- * Internal: approve one submission without UI refresh or confirm dialog.
- * Mirrors approveResultSubmission() exactly, minus the confirm + reload.
- */
-async function _approveSubmissionSilently(submissionId, submissionDataHint) {
-  const submissionRef = db.collection('result_submissions').doc(submissionId);
-  let submissionData;
-
-  // ✅ IDEMPOTENCY GUARD — same as approveResultSubmission
-  try {
-    await db.runTransaction(async (transaction) => {
-      const doc = await transaction.get(submissionRef);
-
-      if (!doc.exists) throw new Error('SUBMISSION_NOT_FOUND');
-
-      const data = doc.data();
-
-      if (data.status === 'approved') throw new Error('ALREADY_APPROVED');
-
-      if (data.status !== 'pending') throw new Error(`INVALID_STATUS:${data.status}`);
-
-      transaction.update(submissionRef, {
-        status: 'approving',
-        approvingBy: auth.currentUser.uid,
-        approvingStartedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      submissionData = data;
-    });
-  } catch (txError) {
-    if (txError.message === 'ALREADY_APPROVED') {
-      console.log(`⏭️ Submission ${submissionId} already approved, skipping`);
-      return; // Not a failure — treat as success for bulk count
-    }
-    throw txError;
-  }
-
-  const { classId, term, subject, session } = submissionData;
-
-  const draftsSnap = await db.collection('results_draft')
-    .where('classId', '==', classId)
-    .where('term',    '==', term)
-    .where('subject', '==', subject)
-    .get();
-
-  if (draftsSnap.empty) {
-    // Roll back before throwing
-    await submissionRef.update({ status: 'pending' });
-    throw new Error(`No draft results found for submission ${submissionId}`);
-  }
-
-  const validDrafts = [];
-  draftsSnap.forEach(doc => {
-    if (doc.data().session === session) validDrafts.push(doc);
-  });
-
-  if (validDrafts.length === 0) {
-    await submissionRef.update({ status: 'pending' });
-    throw new Error(`Session mismatch for submission ${submissionId}`);
-  }
-
-  const batch = db.batch();
-  let copiedCount = 0;
-
-  validDrafts.forEach(draftDoc => {
-    const draftData = draftDoc.data();
-    const encodedSession = session.replace(/\//g, '-');
-    const finalDocId = `${draftData.pupilId}_${encodedSession}_${term}_${subject}`;
-
-    batch.set(db.collection('results').doc(finalDocId), {
-      ...draftData,
-      status:      'approved',
-      approvedAt:  firebase.firestore.FieldValue.serverTimestamp(),
-      approvedBy:  auth.currentUser.uid,
-      publishedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    copiedCount++;
-  });
-
-  batch.update(submissionRef, {
-    status:           'approved',
-    approvedBy:       auth.currentUser.uid,
-    approvedAt:       firebase.firestore.FieldValue.serverTimestamp(),
-    resultsPublished: copiedCount
-  });
-
-  await batch.commit();
-
-  console.log(`✅ Silently approved submission ${submissionId}: ${copiedCount} results published`);
 }
 
 /**
