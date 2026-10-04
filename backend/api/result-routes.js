@@ -25,6 +25,7 @@ import {
 
 import {
   approveSubmission,
+  unlockSubmission,
 } from "../business/results/approval.js";
 
 import {
@@ -552,6 +553,37 @@ export async function handleResultRoute(
     return result(200, {
       submission,
     });
+  }
+
+  /*
+   * -------------------------------------------------------------------------
+   * Admin unlock (reverse an approval)
+   * -------------------------------------------------------------------------
+   */
+
+  const unlockMatch =
+    path.match(
+      /^\/api\/admin\/results\/submissions\/([^/]+)\/unlock$/,
+    );
+
+  if (
+    unlockMatch &&
+    method === "POST"
+  ) {
+    const body =
+      await readJson(request);
+
+    const unlockResult =
+      await unlockSubmission(
+        request,
+        env,
+        decodeURIComponent(
+          unlockMatch[1],
+        ),
+        body?.reason,
+      );
+
+    return result(200, unlockResult);
   }
 
   return null;
