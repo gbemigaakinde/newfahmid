@@ -630,6 +630,28 @@ async function adminApiPost(path, body) {
   return adminApiHandleResponse(response);
 }
 
+async function adminApiPatch(path, body) {
+  const token = await window.auth.currentUser.getIdToken();
+  const response = await fetch(`${ADMIN_API_BASE_URL}${path}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  return adminApiHandleResponse(response);
+}
+
+async function adminApiDelete(path) {
+  const token = await window.auth.currentUser.getIdToken();
+  const response = await fetch(`${ADMIN_API_BASE_URL}${path}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return adminApiHandleResponse(response);
+}
+
 async function adminApiHandleResponse(response) {
   const data = await response.json().catch(() => null);
   if (!response.ok) {
@@ -7918,18 +7940,36 @@ document.addEventListener('DOMContentLoaded', () => {
         specialization,
         notes,
         email,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
 
       if (teacherId) {
         console.log(`📝 Updating teacher: ${teacherId}`);
 
-        await db.collection('teachers').doc(teacherId).update(teacherData);
+        // Previously: a Firestore update() straight from the
+        // browser. Now: one PATCH call. validateTeacherPayload()
+        // on the Worker had to be extended this phase to even
+        // accept most of these fields (gender, dob, contact,
+        // address, employeeId, dateJoined, roleTitle, status,
+        // qualification, specialization, notes) — before that fix,
+        // every one of them would have been silently stripped out
+        // by the Worker's validation, discarding most of what this
+        // form actually submits.
+        await adminApiPatch(`/api/admin/teachers/${encodeURIComponent(teacherId)}`, teacherData);
 
         window.showToast?.(`✓ Teacher "${name}" updated successfully`, 'success');
 
       } else {
         // ── CREATE NEW TEACHER ────────────────────────────────────
+        // NOTE: teacher creation is intentionally NOT converted in
+        // this phase. It provisions a Firebase Auth account via a
+        // client-side "secondary app" workaround (window.
+        // createSecondaryUser) — moving account creation to the
+        // Worker is a separate, security-sensitive piece of work
+        // (it needs the Identity Toolkit REST API via a service
+        // account) that deserves its own careful phase rather than
+        // being folded into an edit-form conversion. This branch
+        // still talks to Firestore/Firebase Auth directly, exactly
+        // as before.
         console.log(`🚀 Creating new teacher: ${name} (${email})`);
 
         // Check for duplicate email
@@ -7955,6 +7995,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         teacherData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        teacherData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
         await db.collection('teachers').doc(uid).set(teacherData);
 
         console.log('✓ Teacher profile created');
@@ -8350,24 +8391,24 @@ async function loadTeachers() {
   tbody.innerHTML = '<tr><td colspan="5" class="table-loading">Loading teachers...</td></tr>';
   
   try {
-    const snapshot = await db.collection('teachers').get();
+    // Previously: a direct Firestore read of the whole teachers
+    // collection. The Worker's listTeachers() didn't exist before
+    // this phase — admin.js was the only thing that ever listed
+    // teachers, and it always did so straight from the browser.
+    const { teachers } = await adminApiGet('/api/admin/teachers');
     tbody.innerHTML = '';
-    
-    if (snapshot.empty) {
+
+    if (teachers.length === 0) {
       tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--color-gray-600);">No teachers registered yet. Add one above.</td></tr>';
       allTeachersData = [];
       return;
     }
-    
-    const teachers = [];
-    snapshot.forEach(doc => {
-      teachers.push({ id: doc.id, ...doc.data() });
-    });
-    
-    teachers.sort((a, b) => a.name.localeCompare(b.name));
-    
-    allTeachersData = teachers;
-    
+
+    // listTeachers() already returns { uid, ...data } sorted by
+    // name — but renderTeachersTable()/editTeacher() below read
+    // teacher.id, so that's kept here for compatibility.
+    allTeachersData = teachers.map(t => ({ id: t.uid, ...t }));
+
     renderTeachersTable(allTeachersData);
     
   } catch (error) {
@@ -8454,21 +8495,15 @@ async function toggleDirectPublish(teacherId, currentValue) {
   if (!confirmed) return;
 
   try {
-    await db.collection('teachers').doc(teacherId).update({
+    // Previously: an update() plus a separate hand-built audit_log
+    // write, both from the browser, with the browser itself
+    // stamping directPublishUpdatedAt/By. Now: one PATCH call — the
+    // Worker stamps those two fields from the verified admin's own
+    // token (never trusting a client-supplied uid/timestamp) and
+    // writes the audit entry itself. See the PATCH handler in
+    // backend/api/admin-routes.js.
+    await adminApiPatch(`/api/admin/teachers/${encodeURIComponent(teacherId)}`, {
       canDirectPublish: newValue,
-      directPublishUpdatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      directPublishUpdatedBy: auth.currentUser.uid
-    });
-
-    await db.collection('audit_log').add({
-      action: newValue ? 'enable_direct_publish' : 'disable_direct_publish',
-      collection: 'teachers',
-      documentId: teacherId,
-      changes: { teacherName, canDirectPublish: newValue },
-      performedBy: auth.currentUser.uid,
-      performedByEmail: auth.currentUser.email,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-      userAgent: navigator.userAgent
     });
 
     window.showToast?.(
@@ -8492,11 +8527,9 @@ async function editTeacher(uid) {
   try {
     console.log(`📝 Loading teacher for edit: ${uid}`);
 
-    const doc = await db.collection('teachers').doc(uid).get();
-    if (!doc.exists) throw new Error('Teacher not found');
+    const { teacher: data } = await adminApiGet(`/api/admin/teachers/${encodeURIComponent(uid)}`);
+    if (!data) throw new Error('Teacher not found');
     if (myToken !== _teacherEditToken) return; // a newer edit click superseded this one
-
-    const data = doc.data();
 
     document.getElementById('teacher-id').value = uid;
     document.getElementById('teacher-name').value        = data.name || '';
@@ -10522,7 +10555,10 @@ async function loadTeacherAssignments() {
   if (!teacherSelect || !classSelect || !tbody) return;
 
   try {
-    const teachers = await window.getAllTeachers();
+    // Previously: window.getAllTeachers() (an unconverted legacy
+    // helper reading Firestore directly) plus a direct classes
+    // query. Both now come from the Worker API.
+    const { teachers } = await adminApiGet('/api/admin/teachers');
 
     teacherSelect.innerHTML = '<option value="">-- Select Teacher --</option>';
 
@@ -10533,19 +10569,14 @@ async function loadTeacherAssignments() {
       teacherSelect.appendChild(opt);
     });
 
-    const classesSnap = await db.collection('classes').get();
+    const { classes: rawClasses } = await adminApiGet('/api/admin/classes');
     classSelect.innerHTML = '<option value="">-- Select Class --</option>';
 
-    const classes = [];
-
-    classesSnap.forEach(doc => {
-      const data = doc.data();
-      classes.push({
-        id: doc.id,
-        name: data.name,
-        teacherId: data.teacherId || null
-      });
-    });
+    const classes = rawClasses.map(c => ({
+      id: c.id,
+      name: c.name,
+      teacherId: c.teacherId || null
+    }));
 
     classes.sort((a, b) => a.name.localeCompare(b.name));
 
@@ -10593,35 +10624,20 @@ async function assignTeacherToClass() {
   }
 
   try {
-    const teacherDoc = await db.collection('teachers').doc(teacherUid).get();
-    const teacherName = teacherDoc.exists ? teacherDoc.data().name : '';
-
-    const pupilsSnap = await db
-      .collection('pupils')
-      .where('class.id', '==', classId)
-      .get();
-
-    await db.runTransaction(async transaction => {
-      transaction.update(db.collection('classes').doc(classId), {
-        teacherId: teacherUid,
-        teacherName: teacherName,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-
-      pupilsSnap.forEach(pupilDoc => {
-        transaction.update(db.collection('pupils').doc(pupilDoc.id), {
-          'assignedTeacher.id': teacherUid,
-          'assignedTeacher.name': teacherName,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      });
+    // Previously: a client-side transaction that updated the class
+    // doc AND denormalized assignedTeacher.id/.name onto every
+    // pupil in the class. The Worker's assign-teacher route
+    // (backend/api/admin-routes.js) deliberately does NOT cascade
+    // onto pupils — pupil-facing code (backend/business/school/
+    // pupil-profile.js) resolves the teacher by looking up the
+    // class's teacherId instead, so that denormalized copy isn't
+    // needed any more. This is an intentional behavior change, not
+    // an oversight: one less place for teacher info to go stale.
+    await adminApiPost(`/api/admin/classes/${encodeURIComponent(classId)}/assign-teacher`, {
+      teacherId: teacherUid,
     });
 
-    window.showToast?.(
-      `Teacher assigned successfully! ${pupilsSnap.size} pupil(s) updated.`,
-      'success',
-      5000
-    );
+    window.showToast?.('Teacher assigned successfully!', 'success', 5000);
 
     loadTeacherAssignments();
 
@@ -10635,43 +10651,15 @@ async function unassignTeacher(classId) {
   if (!confirm('Remove teacher assignment from this class?')) return;
 
   try {
-    const classDoc = await db.collection('classes').doc(classId).get();
-    const className = classDoc.exists ? classDoc.data().name : '';
-
-    await db.collection('classes').doc(classId).update({
-      teacherId: firebase.firestore.FieldValue.delete(),
-      teacherName: firebase.firestore.FieldValue.delete(),
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    // Same assign-teacher endpoint as assignTeacherToClass(), with
+    // teacherId: null — and the same intentional change: no pupil
+    // cascade-update, since pupils aren't denormalized with teacher
+    // info any more. See the comment in assignTeacherToClass().
+    await adminApiPost(`/api/admin/classes/${encodeURIComponent(classId)}/assign-teacher`, {
+      teacherId: null,
     });
 
-    const pupilsSnap = await db
-      .collection('pupils')
-      .where('class.id', '==', classId)
-      .get();
-
-    if (!pupilsSnap.empty) {
-      const batch = db.batch();
-      let updateCount = 0;
-
-      pupilsSnap.forEach(pupilDoc => {
-        batch.update(db.collection('pupils').doc(pupilDoc.id), {
-          'assignedTeacher.id': '',
-          'assignedTeacher.name': '-',
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        updateCount++;
-      });
-
-      await batch.commit();
-
-      window.showToast?.(
-        `Teacher unassigned successfully! ${updateCount} pupil(s) updated.`,
-        'success',
-        5000
-      );
-    } else {
-      window.showToast?.('Teacher unassigned successfully', 'success');
-    }
+    window.showToast?.('Teacher unassigned successfully', 'success');
 
     loadTeacherAssignments();
 
