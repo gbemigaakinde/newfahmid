@@ -3,6 +3,7 @@ import {
   setDocument,
   updateDocument,
   deleteDocument,
+  runQuery,
 } from "../../firebase/firestore.js";
 
 import {
@@ -28,6 +29,21 @@ export async function getTeacherDetails(
     "teachers",
     uid
   );
+}
+
+/**
+ * All teacher profiles, sorted by name — there was no list-all
+ * endpoint for teachers before this phase; admin.js read the whole
+ * `teachers` collection directly from the browser instead.
+ */
+export async function listTeachers(env) {
+  const teachers = await runQuery(env, {
+    from: [{ collectionId: "teachers" }],
+  });
+
+  return teachers
+    .map((t) => ({ uid: t.id, ...t }))
+    .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 }
 
 export function validateTeacherPayload(
@@ -67,6 +83,104 @@ export function validateTeacherPayload(
     );
   }
 
+  /*
+   * The rest of these fields are all used by the real teacher
+   * edit form (gender, dob, contact, address, employeeId,
+   * dateJoined, roleTitle, status, qualification, specialization,
+   * notes) but were never accepted here. Every one of them would
+   * have been silently stripped out before this phase — a teacher
+   * edit through the Worker would have quietly discarded most of
+   * what the form actually submits.
+   */
+
+  if (data.gender !== undefined) {
+    result.gender = optionalString(
+      data.gender,
+      "gender",
+      { maxLength: 20 }
+    );
+  }
+
+  if (data.dob !== undefined) {
+    result.dob = optionalString(
+      data.dob,
+      "dob",
+      { maxLength: 20 }
+    );
+  }
+
+  if (data.contact !== undefined) {
+    result.contact = optionalString(
+      data.contact,
+      "contact",
+      { maxLength: 50 }
+    );
+  }
+
+  if (data.address !== undefined) {
+    result.address = optionalString(
+      data.address,
+      "address",
+      { maxLength: 500 }
+    );
+  }
+
+  if (data.employeeId !== undefined) {
+    result.employeeId = optionalString(
+      data.employeeId,
+      "employeeId",
+      { maxLength: 100 }
+    );
+  }
+
+  if (data.dateJoined !== undefined) {
+    result.dateJoined = optionalString(
+      data.dateJoined,
+      "dateJoined",
+      { maxLength: 20 }
+    );
+  }
+
+  if (data.roleTitle !== undefined) {
+    result.roleTitle = optionalString(
+      data.roleTitle,
+      "roleTitle",
+      { maxLength: 100 }
+    );
+  }
+
+  if (data.status !== undefined) {
+    result.status = requireString(
+      data.status,
+      "status",
+      { maxLength: 50 }
+    );
+  }
+
+  if (data.qualification !== undefined) {
+    result.qualification = optionalString(
+      data.qualification,
+      "qualification",
+      { maxLength: 200 }
+    );
+  }
+
+  if (data.specialization !== undefined) {
+    result.specialization = optionalString(
+      data.specialization,
+      "specialization",
+      { maxLength: 200 }
+    );
+  }
+
+  if (data.notes !== undefined) {
+    result.notes = optionalString(
+      data.notes,
+      "notes",
+      { maxLength: 2000 }
+    );
+  }
+
   if (
     data.canDirectPublish !==
     undefined
@@ -76,6 +190,25 @@ export function validateTeacherPayload(
         data.canDirectPublish,
         "canDirectPublish"
       );
+  }
+
+  // Server-stamped only (see the PATCH /api/admin/teachers/:uid
+  // handler) — never taken verbatim from an arbitrary client
+  // payload, but still needs to pass through validation here.
+  if (data.directPublishUpdatedAt !== undefined) {
+    result.directPublishUpdatedAt = optionalString(
+      data.directPublishUpdatedAt,
+      "directPublishUpdatedAt",
+      { maxLength: 40 }
+    );
+  }
+
+  if (data.directPublishUpdatedBy !== undefined) {
+    result.directPublishUpdatedBy = optionalString(
+      data.directPublishUpdatedBy,
+      "directPublishUpdatedBy",
+      { maxLength: 200 }
+    );
   }
 
   if (data.active !== undefined) {
