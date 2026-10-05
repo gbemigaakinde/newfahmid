@@ -336,6 +336,50 @@ export async function setDocument(
   );
 }
 
+/**
+ * `teachers.js` and `pupils.js` both import and call `updateDocument`
+ * for partial field updates (e.g. updateTeacher only changing a
+ * `name`, leaving every other field on the document untouched) —
+ * but no such function was ever defined anywhere in this file.
+ * `setDocument` doesn't substitute for it: its PATCH has no
+ * `updateMask`, so Firestore treats it as a full-document replace —
+ * using it in place of a true partial update would have silently
+ * wiped out every field not included in the caller's `data` the
+ * next time a teacher or pupil record was edited.
+ *
+ * This does a real partial update: one updateMask.fieldPaths entry
+ * per top-level key being changed, so only those fields are touched.
+ */
+export async function updateDocument(
+  env,
+  collection,
+  documentId,
+  data,
+) {
+  const fieldPaths = Object.keys(data);
+
+  if (fieldPaths.length === 0) {
+    return getDocument(env, collection, documentId);
+  }
+
+  const maskQuery = fieldPaths
+    .map((field) => `updateMask.fieldPaths=${encodeURIComponent(field)}`)
+    .join("&");
+
+  const response = await firestoreRequest(
+    env,
+    `${documentUrl(collection, documentId)}?${maskQuery}`,
+    {
+      method: "PATCH",
+      body: {
+        fields: encodeFirestoreFields(data),
+      },
+    },
+  );
+
+  return decodeFirestoreDocument(response);
+}
+
 export async function deleteDocument(
   env,
   collection,
