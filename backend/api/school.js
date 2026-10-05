@@ -124,10 +124,16 @@ export async function getClassById(
 }
 
 export async function getAllClasses(env) {
+  // runQuery's real signature is (env, structuredQuery) — this used
+  // to call it as (env, "classes", {orderBy}), which silently sent
+  // Firestore an invalid query body ({structuredQuery: "classes"}).
+  // runQuery's own defensive "not an array? return []" fallback
+  // swallowed the resulting error, so this always returned an empty
+  // list rather than surfacing anything was wrong.
   return runQuery(
     env,
-    "classes",
     {
+      from: [{ collectionId: "classes" }],
       orderBy: [
         {
           field: {
