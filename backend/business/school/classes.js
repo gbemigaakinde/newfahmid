@@ -34,11 +34,15 @@ export async function getOrderedClasses(
       "classHierarchy"
     );
 
+  // Same bug and same fix as getAllClasses() in api/school.js:
+  // runQuery(env, structuredQuery) is the real signature — passing
+  // "classes" as a second positional argument sent Firestore an
+  // invalid query body, silently returning an empty list every time.
   const classes =
     await runQuery(
       env,
-      "classes",
       {
+        from: [{ collectionId: "classes" }],
         orderBy: [
           {
             field: {
