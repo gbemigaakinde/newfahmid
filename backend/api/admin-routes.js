@@ -32,6 +32,7 @@ import {
 
 import {
   getTeacherDetails,
+  listTeachers,
   validateTeacherPayload,
   createTeacher,
   updateTeacher,
@@ -823,6 +824,16 @@ export async function handleAdminRoute(
    * TEACHERS
    */
 
+  if (
+    path === "/api/admin/teachers" &&
+    method === "GET"
+  ) {
+    return response({
+      ok: true,
+      teachers: await listTeachers(env),
+    });
+  }
+
   const teacherMatch =
     path.match(
       /^\/api\/admin\/teachers\/([^/]+)$/
@@ -878,11 +889,25 @@ export async function handleAdminRoute(
     const payload =
       await readJson(request);
 
+    // directPublishUpdatedAt/By are stamped here, server-side, from
+    // the verified admin's own uid — never taken from the request
+    // body — whenever canDirectPublish is part of the change. The
+    // browser previously set both of these itself, which meant a
+    // crafted request could claim the change came from someone else.
+    const effectivePayload =
+      payload?.canDirectPublish !== undefined
+        ? {
+            ...payload,
+            directPublishUpdatedAt: new Date().toISOString(),
+            directPublishUpdatedBy: admin.uid,
+          }
+        : payload;
+
     const updated =
       await updateTeacher(
         env,
         uid,
-        payload
+        effectivePayload
       );
 
     if (!updated) {
@@ -903,7 +928,12 @@ export async function handleAdminRoute(
       env,
       {
         user: admin,
-        action: "update_item",
+        action:
+          payload?.canDirectPublish !== undefined
+            ? (payload.canDirectPublish
+                ? "enable_direct_publish"
+                : "disable_direct_publish")
+            : "update_item",
         collection: "teachers",
         documentId: uid,
         changes: payload,
