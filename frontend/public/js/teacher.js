@@ -2581,17 +2581,31 @@ let promotionData = {
   promotionPeriodActive: false
 };
 
+// Cache of the last /api/teacher/promotion/overview response, so
+// loadPromotionPupils() below doesn't have to make a second,
+// identical API call right after loadPromotionSection() already
+// fetched everything it needs.
+let _promotionOverviewCache = null;
+
 async function loadPromotionSection() {
   try {
-    // Check if promotion period is active
-    const settings = await window.getCurrentSettings();
-    promotionData.promotionPeriodActive = settings.promotionPeriodActive || false;
-    
+    // Previously: window.getCurrentSettings() for the period flag,
+    // then window.classHierarchy.getNextClass()/isTerminalClass()
+    // (another unconverted legacy module, each re-reading the whole
+    // class list from Firestore). Now: one call to the Worker's
+    // getPromotionOverview(), which resolves all of this —
+    // including which class position is genuinely terminal versus
+    // just missing from the hierarchy — server-side.
+    const overview = await teacherApiGet('/api/teacher/promotion/overview');
+    _promotionOverviewCache = overview;
+
+    promotionData.promotionPeriodActive = overview.promotionPeriodActive || false;
+
     const statusBanner = document.getElementById('promotion-status-banner');
     const disabledBanner = document.getElementById('promotion-disabled-banner');
     const controls = document.getElementById('promotion-controls');
     const tableContainer = document.getElementById('promotion-table-container');
-    
+
     if (promotionData.promotionPeriodActive) {
       if (statusBanner) statusBanner.style.display = 'flex';
       if (disabledBanner) disabledBanner.style.display = 'none';
@@ -2602,9 +2616,9 @@ async function loadPromotionSection() {
       if (tableContainer) tableContainer.style.display = 'none';
       return;
     }
-    
+
     // Check if teacher has assigned classes
-    if (assignedClasses.length === 0) {
+    if (!overview.hasClass) {
       document.getElementById('no-class-message').style.display = 'block';
       if (controls) controls.style.display = 'none';
       if (tableContainer) tableContainer.style.display = 'none';
@@ -2612,26 +2626,18 @@ async function loadPromotionSection() {
     } else {
       document.getElementById('no-class-message').style.display = 'none';
     }
-    
-    // Get first assigned class (teacher should only have one for promotion)
-    const currentClass = assignedClasses[0];
-    promotionData.currentClassName = currentClass.name;
-    
-    // Display current class
-    document.getElementById('promotion-current-class').textContent = currentClass.name;
-    
-    // Get next class in hierarchy
-    const nextClass = await window.classHierarchy.getNextClass(currentClass.name);
-    promotionData.nextClassName = nextClass;
-    
-    // Check if terminal class
-    promotionData.isTerminalClass = await window.classHierarchy.isTerminalClass(currentClass.name);
-    
-    if (promotionData.isTerminalClass) {
+
+    promotionData.currentClassName = overview.currentClass.name;
+    document.getElementById('promotion-current-class').textContent = overview.currentClass.name;
+
+    promotionData.nextClassName = overview.nextClass?.name || null;
+    promotionData.isTerminalClass = overview.isTerminalClass;
+
+    if (overview.isTerminalClass) {
       document.getElementById('promotion-next-class').textContent = 'Graduation (Alumni)';
       document.getElementById('terminal-class-message').style.display = 'block';
-    } else if (nextClass) {
-      document.getElementById('promotion-next-class').textContent = nextClass;
+    } else if (overview.nextClass) {
+      document.getElementById('promotion-next-class').textContent = overview.nextClass.name;
       document.getElementById('terminal-class-message').style.display = 'none';
     } else {
       document.getElementById('promotion-next-class').textContent = 'Not defined';
@@ -2640,14 +2646,14 @@ async function loadPromotionSection() {
       if (tableContainer) tableContainer.style.display = 'none';
       return;
     }
-    
-    // Load pupils with performance data
+
+    // Render pupils with performance data (already fetched above)
     await loadPromotionPupils();
-    
+
     // Show controls and table
     if (controls) controls.style.display = 'flex';
     if (tableContainer) tableContainer.style.display = 'block';
-    
+
   } catch (error) {
     console.error('Error loading promotion section:', error);
     window.showToast?.('Failed to load promotion section', 'danger');
@@ -2664,24 +2670,14 @@ async function loadPromotionPupils() {
   tbody.innerHTML = '<tr><td colspan="5" class="table-loading">Loading pupils and calculating averages...</td></tr>';
 
   try {
-    const settings = await window.getCurrentSettings();
-    const currentTerm = settings.term;
-    // BUG 4 FIX: Also capture the current session to pass to calculatePupilAverage
-    const currentSession = settings.session;
-
-    const pupilsWithScores = await Promise.all(
-      allPupils.map(async pupil => {
-        // BUG 4 FIX: Pass currentSession so only this year's results are used
-        const average = await calculatePupilAverage(pupil.id, currentTerm, currentSession);
-        return {
-          ...pupil,
-          average: average.average,
-          grade: average.grade
-        };
-      })
-    );
-
-    pupilsWithScores.sort((a, b) => b.average - a.average);
+    // Previously: a Firestore query per pupil (results, filtered by
+    // pupilId/term/session) run from the browser, computed into an
+    // average/grade right here. Now: getPromotionOverview() on the
+    // Worker already computed and sorted this for every pupil in
+    // the class, as part of the single call loadPromotionSection()
+    // made — reused here via the module-level cache instead of
+    // fetching it all over again.
+    const pupilsWithScores = _promotionOverviewCache?.pupils || [];
 
     tbody.innerHTML = '';
 
@@ -2718,65 +2714,10 @@ async function loadPromotionPupils() {
   }
 }
 
-// BUG 4 FIX: Added `session` parameter — only returns results from the current school year
-async function calculatePupilAverage(pupilId, term, session) {
-  try {
-    let resultsSnap;
-
-    if (session) {
-      // With session: only this year's approved results for this term
-      resultsSnap = await db.collection('results')
-        .where('pupilId', '==', pupilId)
-        .where('term', '==', term)
-        .where('session', '==', session)
-        .get();
-    } else {
-      // Fallback if session not provided (original behaviour — kept for safety)
-      resultsSnap = await db.collection('results')
-        .where('pupilId', '==', pupilId)
-        .where('term', '==', term)
-        .get();
-    }
-
-    if (resultsSnap.empty) {
-      return { average: 0, grade: null };
-    }
-
-    let totalScore = 0;
-    let subjectCount = 0;
-
-    resultsSnap.forEach(doc => {
-      const data = doc.data();
-      const ca = parseFloat(data.caScore) || 0;
-      const exam = parseFloat(data.examScore) || 0;
-      const score = ca + exam;
-
-      totalScore += score;
-      subjectCount++;
-    });
-
-    const average = subjectCount > 0 ? Math.round((totalScore / subjectCount) * 10) / 10 : 0;
-    const grade = getGradeFromScore(average);
-
-    return { average, grade };
-
-  } catch (error) {
-    console.error('Error calculating average for pupil:', pupilId, error);
-    return { average: 0, grade: null };
-  }
-}
-
-function getGradeFromScore(score) {
-  if (score >= 75) return 'A1';
-  if (score >= 70) return 'B2';
-  if (score >= 65) return 'B3';
-  if (score >= 60) return 'C4';
-  if (score >= 55) return 'C5';
-  if (score >= 50) return 'C6';
-  if (score >= 45) return 'D7';
-  if (score >= 40) return 'D8';
-  return 'F9';
-}
+// calculatePupilAverage()/getGradeFromScore() were removed here —
+// both are now computed server-side in getPromotionOverview() (see
+// backend/business/school/promotions.js), which already returns
+// each pupil's average and grade directly.
 
 function selectAllForPromotion() {
   document.querySelectorAll('.pupil-promote-checkbox').forEach(checkbox => {
@@ -2868,71 +2809,28 @@ async function submitPromotionRequest() {
   }
 
   try {
-    const settings = await window.getCurrentSettings();
-    const currentSession = settings.session;
-
-    let toClassId = null;
-    if (!promotionData.isTerminalClass) {
-      const classesSnap = await db.collection('classes')
-        .where('name', '==', promotionData.nextClassName)
-        .limit(1)
-        .get();
-
-      if (!classesSnap.empty) {
-        toClassId = classesSnap.docs[0].id;
-      } else {
-        window.showToast?.('Next class not found in database. Contact admin.', 'danger');
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '📋 Submit Promotion List';
-        }
-        return;
-      }
-    }
-
-    const promotionRequest = {
-      fromSession: currentSession,
-      fromClass: {
-        id: assignedClasses[0].id,
-        name: promotionData.currentClassName
-      },
-      toClass: promotionData.isTerminalClass
-        ? { id: 'alumni', name: 'Alumni' }
-        : { id: toClassId, name: promotionData.nextClassName },
-      isTerminalClass: promotionData.isTerminalClass,
-      promotedPupils: promotedPupils.map(p => p.id),
-      promotedPupilsDetails: promotedPupils,
-      heldBackPupils: heldBackPupils.map(p => p.id),
-      heldBackPupilsDetails: heldBackPupils,
-      initiatedBy: currentUser.uid,
-      status: 'pending',
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
-
-    // BUG 6 FIX: Check if a promotion request already exists for this class and session.
-    // If one exists, update it. If not, create a new one.
-    const existingSnap = await db.collection('promotions')
-      .where('fromClass.id', '==', assignedClasses[0].id)
-      .where('fromSession', '==', currentSession)
-      .where('status', '==', 'pending')
-      .limit(1)
-      .get();
-
-    if (!existingSnap.empty) {
-      // Update the existing pending request instead of creating a duplicate
-      await db.collection('promotions').doc(existingSnap.docs[0].id).set(promotionRequest, { merge: true });
-      console.log('✅ Existing promotion request updated:', existingSnap.docs[0].id);
-    } else {
-      // No existing request — create a new one
-      promotionRequest.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-      await db.collection('promotions').add(promotionRequest);
-      console.log('✅ New promotion request created');
-    }
+    // Previously: a query against `classes` to resolve the next
+    // class's ID by name, then a query against `promotions` to find
+    // any existing pending request for this class/session (the
+    // "BUG 6 FIX" the original comments mention), then either an
+    // update or an add() depending on what that query found.
+    //
+    // Now: one POST. The Worker resolves the next class itself (via
+    // the same hierarchy data it already used in
+    // getPromotionOverview), and writes to a deterministic
+    // classId_session document ID instead of searching for an
+    // existing pending request — so a resubmission always lands on
+    // the exact same document, and the search-then-branch logic
+    // isn't needed at all any more.
+    const { promotion } = await teacherApiPost('/api/teacher/promotion/submit', {
+      promotedPupilIds: promotedPupils.map(p => p.id),
+      heldBackPupilIds: heldBackPupils.map(p => p.id),
+    });
 
     console.log('✅ Promotion request submitted:', {
-      type: promotionData.isTerminalClass ? 'Terminal → Alumni' : 'Regular',
-      from: promotionData.currentClassName,
-      to: destinationText,
+      type: promotion.isTerminalClass ? 'Terminal → Alumni' : 'Regular',
+      from: promotion.fromClass.name,
+      to: promotion.toClass.name,
       promoted: promotedPupils.length,
       heldBack: heldBackPupils.length
     });
